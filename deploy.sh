@@ -5,12 +5,12 @@
 echo "🚀 API Hub 배포를 시작합니다..."
 
 # 1. Docker 설치 확인
-if ! command -v docker &> /dev/null; then
+if ! which docker &> /dev/null && ! [ -x "/usr/bin/docker" ]; then
   echo "❌ Error: Docker가 설치되어 있지 않습니다. Docker를 먼저 설치해주세요." >&2
   exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+if ! which docker-compose &> /dev/null && ! [ -x "/usr/bin/docker-compose" ] && ! [ -x "/usr/local/bin/docker-compose" ]; then
   echo "❌ Error: Docker Compose가 설치되어 있지 않습니다. Docker Compose를 먼저 설치해주세요." >&2
   exit 1
 fi
