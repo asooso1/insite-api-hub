@@ -17,14 +17,21 @@ interface ImportResult {
     };
 }
 
-export async function importRepository(gitUrl: string, branch: string = "main"): Promise<ImportResult> {
+export async function importRepository(gitUrl: string, branch: string = "main", gitToken?: string): Promise<ImportResult> {
     const tempId = Math.random().toString(36).substring(7);
     const tempDir = path.join("/tmp", `apihub-${tempId}`);
 
     try {
-        // 1. Git Clone
+        // 1. Git Clone with authentication if token provided
+        let cloneUrl = gitUrl;
+        if (gitToken) {
+            // Insert token into URL (works for GitHub, GitLab, etc.)
+            // https://github.com/user/repo.git -> https://token@github.com/user/repo.git
+            cloneUrl = gitUrl.replace(/^(https?:\/\/)/, `$1${gitToken}@`);
+        }
+
         console.log(`Cloning ${gitUrl} (${branch}) to ${tempDir}...`);
-        execSync(`git clone --depth 1 --branch ${branch} ${gitUrl} ${tempDir}`, { stdio: 'inherit' });
+        execSync(`git clone --depth 1 --branch ${branch} ${cloneUrl} ${tempDir}`, { stdio: 'inherit' });
 
         const endpoints: ApiEndpoint[] = [];
         const models: Record<string, ApiModel> = {};
