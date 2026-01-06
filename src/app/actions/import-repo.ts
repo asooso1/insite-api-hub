@@ -81,25 +81,63 @@ export async function importRepository(gitUrl: string, branch: string = "main", 
 
         scanDir(tempDir);
 
-        // 3. 계층 구조 재귀적 매핑 (Recursive Mapping)
-        const resolveFields = (fields: ApiField[], currentDepth: number = 0): ApiField[] => {
-            if (currentDepth > 10) return fields; // 무한 루프 방지
+        // 3. 계층 구조 재귀적 매핑 (Recursive Mapping with Memoization)
+        const resolvedCache = new Map<string, ApiField[]>();
+        const processingStack = new Set<string>(); // 순환 참조 감지
+
+        const resolveFields = (fields: ApiField[], modelName: string, currentDepth: number = 0): ApiField[] => {
+            if (currentDepth > 5) return fields; // 깊이 제한 (10 -> 5로 축소)
 
             return fields.map(field => {
                 const baseType = SpringParser.extractBaseType(field.type);
-                if (field.isComplex && models[baseType]) {
+
+                // 복잡한 타입이 아니거나 모델이 없으면 그대로 반환
+                if (!field.isComplex || !models[baseType]) {
+                    return field;
+                }
+
+                // 순환 참조 감지
+                if (processingStack.has(baseType)) {
+                    console.warn(`Circular reference detected: ${modelName} -> ${baseType}`);
+                    return field;
+                }
+
+                // 캐시 확인
+                if (resolvedCache.has(baseType)) {
                     return {
                         ...field,
-                        refFields: resolveFields(models[baseType].fields, currentDepth + 1)
+                        refFields: resolvedCache.get(baseType)
                     };
                 }
-                return field;
+
+                // 처리 중 표시
+                processingStack.add(baseType);
+
+                // 재귀 처리
+                const resolvedFields = resolveFields(models[baseType].fields, baseType, currentDepth + 1);
+
+                // 캐시에 저장
+                resolvedCache.set(baseType, resolvedFields);
+
+                // 처리 완료 표시
+                processingStack.delete(baseType);
+
+                return {
+                    ...field,
+                    refFields: resolvedFields
+                };
             });
         };
 
+        // 각 모델에 대해 한 번만 처리
+        console.log(`Processing ${Object.keys(models).length} models...`);
         Object.keys(models).forEach(name => {
-            models[name].fields = resolveFields(models[name].fields);
+            if (!resolvedCache.has(name)) {
+                models[name].fields = resolveFields(models[name].fields, name);
+                resolvedCache.set(name, models[name].fields);
+            }
         });
+        console.log(`Model processing completed.`);
 
         const finalEndpoints = endpoints.map(e => ({
             ...e,
