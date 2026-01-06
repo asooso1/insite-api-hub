@@ -31,7 +31,16 @@ export async function importRepository(gitUrl: string, branch: string = "main", 
         }
 
         console.log(`Cloning ${gitUrl} (${branch}) to ${tempDir}...`);
-        execSync(`git clone --depth 1 --branch ${branch} ${cloneUrl} ${tempDir}`, { stdio: 'inherit' });
+
+        // Add timeout to prevent hanging on large repositories (5 minutes)
+        try {
+            execSync(`git clone --depth 1 --branch ${branch} ${cloneUrl} ${tempDir}`, {
+                stdio: 'inherit',
+                timeout: 300000 // 5 minutes in milliseconds
+            });
+        } catch (error) {
+            throw new Error(`Git clone failed or timed out after 5 minutes. The repository might be too large. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
 
         const endpoints: ApiEndpoint[] = [];
         const models: Record<string, ApiModel> = {};
