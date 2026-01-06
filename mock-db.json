@@ -1,0 +1,23 @@
+{
+  "projects": [],
+  "endpoints": [],
+  "models": [],
+  "environments": {
+    "DEV": {
+      "baseUrl": "http://localhost:8080",
+      "token": "",
+      "doorayWebhookUrl": ""
+    },
+    "STG": {
+      "baseUrl": "https://stg-api.example.com",
+      "token": "",
+      "doorayWebhookUrl": ""
+    },
+    "PRD": {
+      "baseUrl": "https://api.example.com",
+      "token": "",
+      "doorayWebhookUrl": ""
+    }
+  },
+  "testCases": []
+}
