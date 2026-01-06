@@ -1,56 +1,208 @@
-# 🚀 API Hub: Spring 2.x API Management Platform
+# 🚀 API Hub: Enterprise API Management Platform
 
-API Hub는 Spring 2.x 마이크로서비스 프로젝트의 소스 코드를 분석하여 API 명세를 자동으로 추출하고, DTO/VO 구조를 시각화하며, 프론트엔드 협업 도구(Excel, TS Type)를 제공하는 플랫폼입니다.
+Spring 2.x 마이크로서비스의 API 명세를 자동으로 추출하고, 복잡한 DTO/VO 구조를 무제한 계층으로 시각화하며, 프론트엔드 협업을 위한 통합 도구를 제공하는 엔터프라이즈급 플랫폼입니다.
 
-## 📋 사전 요구 사항 (Requirements)
+## ✨ 주요 기능
 
-프로젝트를 실행하기 위해 다음 도구들이 시스템에 설치되어 있어야 합니다.
+### 🔍 스마트 API 분석
+- **자동 추출**: Git 저장소를 분석하여 Spring Controller의 모든 엔드포인트를 자동으로 발견
+- **재귀적 DTO 파싱**: `List<UserDTO>` 같은 제네릭 타입을 포함한 무제한 계층 구조 분석
+- **실시간 시각화**: 아코디언 방식으로 각 API의 Request/Response 모델을 트리 구조로 탐색
 
-- **Node.js**: v18.17.0 이상 (Next.js 15 지원)
-- **Git**: 서버 사이드에서 저장소를 클론하기 위해 필요합니다. `git` 명령어가 터미널에서 실행 가능해야 합니다.
-- **OS**: macOS, Linux (Unix 기반 환경 권장 - `/tmp` 디렉토리 사용)
+### 🧪 통합 API 테스터
+- **자동 페이로드 생성**: 선택한 API의 VO 구조에 맞는 샘플 JSON을 자동으로 생성
+- **다중 환경 지원**: DEV, STG, PRD 환경별로 서버 설정을 관리하고 즉시 테스트
 
-## ⚙️ 설정 가이드 (Setup)
+### 🐘 PostgreSQL & Docker
+- **완전한 데이터 영속성**: 로컬 또는 원격 PostgreSQL 데이터베이스 지원
+- **원클릭 배포**: Docker Compose를 통한 통합 배포 (App + DB)
+- **커스텀 포트**: 기본 포트 충돌 방지 (DB: 7000, App: 3000)
 
-### 1. 의존성 설치
+### 🛠 협업 도구
+- **Excel 내보내기**: 전체 API 명세를 엑셀 파일로 다운로드
+- **TypeScript 타입 생성**: DTO를 TypeScript 인터페이스로 자동 변환
+- **Dooray 연동**: API 변경사항을 NHN Dooray로 알림
+
+## 📋 사전 요구 사항
+
+### 로컬 개발
+- **Node.js**: v20 이상
+- **Git**: 저장소 클론을 위해 필요
+- **PostgreSQL**: Docker 사용 시 자동 설치
+
+### 원격 배포
+- **Docker**: v20.10 이상
+- **Docker Compose**: v2.0 이상
+
+## 🚀 빠른 시작
+
+### 로컬 개발 환경
+
 ```bash
+# 1. 저장소 클론
+git clone https://github.com/asooso1/insite-api-hub.git
+cd insite-api-hub
+
+# 2. 의존성 설치
 npm install
-```
 
-### 2. 환경 변수 설정 (Optional)
-현재 버전은 로컬 개발을 위해 `mock-db.json`을 사용하므로 별도의 환경 변수 없이 즉시 실행 가능합니다. 추후 Supabase 연동 시 다음 변수가 필요합니다.
+# 3. PostgreSQL 시작 (Docker)
+docker-compose up -d db
 
-```env
-# .env.local 파일 생성 시
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-## 🚀 실행 방법 (Usage)
-
-### 1. 개발 서버 실행
-```bash
+# 4. 개발 서버 실행
 npm run dev
 ```
-실행 후 [http://localhost:3000](http://localhost:3000)으로 접속합니다.
 
-### 2. API 가져오기 (Import)
-- 대시보드 상단의 **"Quick Discovery"** 섹션에서 분석할 Spring 프로젝트의 **Git URL**과 **브랜치**(예: main)를 입력합니다.
-- **"Import API"** 버튼을 클릭하면 서버에서 클론 및 분석이 시작됩니다.
-- 완료 후 자동으로 페이지가 갱신되며 추출된 API 목록이 표시됩니다.
+브라우저에서 [http://localhost:3000](http://localhost:3000)으로 접속하세요.
 
-### 3. 주요 기능 활용
-- **API 목록**: 추출된 API의 Method, Path, Summary를 확인하고 필터링할 수 있습니다.
-- **DTO 시각화**: 오른쪽 사이드바에서 중첩된 DTO 구조를 트리 형태로 확인하세요.
-- **TypeScript 추출**: 모델 정보 하단의 코드 블록에서 TS 인터페이스를 복사(`Copy` 버튼)할 수 있습니다.
-- **Excel 다운로드**: API 목록 우측 상단의 **"Export Excel"** 버튼을 클릭하여 전체 명세를 엑셀로 저장하세요.
-- **환경 관리**: 사이드바의 **"Environments"** 메뉴에서 DEV/STG/PRD 서버 정보를 설정하고 Dooray 알림 웹훅을 등록하세요.
+### 원격 서버 배포 (Docker)
 
-## 📁 주요 파일 구조
-- `src/lib/parser/spring-parser.ts`: Java 소스 정적 분석 엔진
-- `src/app/actions/import-repo.ts`: Git 클론 및 분석 워크플로우
-- `src/components/ApiModelTree.tsx`: 재귀적 DTO/VO 시각화 컴포넌트
-- `src/lib/utils/`: 엑셀 내보내기, TS 생성기, Dooray 연동 유틸리티
+```bash
+# 1. 저장소 클론
+git clone https://github.com/asooso1/insite-api-hub.git
+cd insite-api-hub
+
+# 2. 원클릭 배포
+sh deploy.sh
+```
+
+배포 완료 후:
+- **App**: http://your-server-ip:3000
+- **DB**: your-server-ip:7000 (외부 접속용)
+
+## 🎯 사용 가이드
+
+### 1. API 가져오기
+1. 대시보드의 **"간편 API 분석"** 섹션으로 이동
+2. Spring 프로젝트의 **Git URL**과 **브랜치**를 입력
+3. **"API 분석 및 가져오기"** 클릭
+4. 분석 완료 후 자동으로 API 목록이 표시됩니다
+
+### 2. API 상세 확인
+- API 목록에서 원하는 엔드포인트를 **클릭**
+- Request Body와 Response의 **VO 구조**가 트리 형태로 펼쳐집니다
+- 중첩된 객체는 클릭하여 계속 탐색할 수 있습니다
+
+### 3. API 테스트
+1. 사이드바에서 **"API 통합 테스트"** 선택
+2. 테스트할 엔드포인트 선택
+3. 환경(DEV/STG/PRD) 선택
+4. **자동 생성된 JSON 페이로드** 확인 및 수정
+5. **"요청 전송"** 클릭하여 응답 확인
+
+### 4. 환경 설정
+1. 사이드바에서 **"환경 및 서버 설정"** 선택
+2. 각 환경(DEV/STG/PRD)의 서버 URL, 인증 토큰 입력
+3. Dooray 웹훅 URL 설정 (선택사항)
+4. **"설정 저장"** 클릭
+
+## 🏗 프로젝트 구조
+
+```
+insite-api-hub/
+├── src/
+│   ├── app/
+│   │   ├── actions/          # Server Actions
+│   │   │   ├── import-repo.ts    # Git 분석 및 DB 저장
+│   │   │   └── save-env.ts       # 환경 설정 저장
+│   │   └── page.tsx          # 메인 페이지
+│   ├── components/
+│   │   ├── ApiList.tsx       # API 목록 + 상세 아코디언
+│   │   ├── ApiTester.tsx     # 통합 테스터
+│   │   ├── ApiModelTree.tsx  # 재귀적 DTO 트리
+│   │   └── EnvironmentManager.tsx
+│   └── lib/
+│       ├── db.ts             # PostgreSQL 클라이언트
+│       ├── data-service.ts   # 데이터 조회 서비스
+│       ├── parser/
+│       │   └── spring-parser.ts  # Java 파서 엔진
+│       └── utils/
+│           ├── json-generator.ts # 샘플 JSON 생성
+│           ├── excel-export.ts
+│           └── ts-generator.ts
+├── Dockerfile                # Next.js 앱 이미지
+├── docker-compose.yml        # 통합 배포 설정
+├── init.sql                  # DB 초기화 스크립트
+└── deploy.sh                 # 원클릭 배포 스크립트
+```
+
+## 🔧 환경 변수
+
+`.env` 파일을 생성하고 다음 변수를 설정하세요:
+
+```env
+# PostgreSQL 연결 (로컬)
+DATABASE_URL="postgresql://apihub:apihub_password@localhost:7000/apihub"
+
+# PostgreSQL 연결 (Docker 내부)
+DATABASE_URL="postgresql://apihub:apihub_password@db:5432/apihub"
+```
+
+## 🐳 Docker 명령어
+
+```bash
+# 전체 시스템 시작 (App + DB)
+docker-compose up -d
+
+# DB만 시작
+docker-compose up -d db
+
+# 로그 확인
+docker-compose logs -f
+
+# 중지
+docker-compose down
+
+# 데이터 포함 완전 삭제
+docker-compose down -v
+```
+
+## 🛠 개발 명령어
+
+```bash
+# 개발 서버 (Hot Reload)
+npm run dev
+
+# 프로덕션 빌드
+npm run build
+
+# 프로덕션 서버 실행
+npm start
+
+# 린트 검사
+npm run lint
+```
+
+## 📊 데이터베이스 스키마
+
+주요 테이블:
+- **projects**: 프로젝트 정보
+- **endpoints**: API 엔드포인트 목록
+- **api_models**: DTO/VO 모델 (JSONB 필드로 계층 구조 저장)
+- **environments**: 서버 환경 설정 (DEV/STG/PRD)
+
+자세한 스키마는 `init.sql` 파일을 참조하세요.
+
+## 🔐 보안 고려사항
+
+- 프로덕션 환경에서는 `.env` 파일의 비밀번호를 반드시 변경하세요
+- PostgreSQL 외부 포트(7000)는 방화벽으로 보호하는 것을 권장합니다
+- 인증 토큰은 암호화되어 저장되지 않으므로 주의하세요
+
+## 🚧 알려진 제한사항
+
+- 현재 Spring 2.x만 지원 (Spring 3.x는 추후 지원 예정)
+- Git 클론 시 대용량 저장소는 시간이 소요될 수 있습니다
+- 실제 HTTP 요청은 아직 시뮬레이션 모드입니다 (추후 업데이트 예정)
+
+## 📝 라이선스
+
+© 2026 API Hub Team. All rights reserved.
+
+## 🤝 기여
+
+이슈 및 풀 리퀘스트는 언제나 환영합니다!
 
 ---
-© 2026 API Hub Team. Designed for Seamless Developer Experience.
+
+**Built with**: Next.js 16 (Canary) • PostgreSQL 15 • Docker • TypeScript
