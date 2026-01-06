@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: apihub-db
+    restart: always
+    environment:
+      POSTGRES_USER: apihub
+      POSTGRES_PASSWORD: apihub_password
+      POSTGRES_DB: apihub
+    ports:
+      - "7000:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - apihub-network
+
+  app:
+    build: .
+    container_name: apihub-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://apihub:apihub_password@db:5432/apihub
+    depends_on:
+      - db
+    networks:
+      - apihub-network
+
+networks:
+  apihub-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
