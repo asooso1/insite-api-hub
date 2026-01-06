@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export function RepoImporter() {
     const [gitUrl, setGitUrl] = useState("");
     const [branch, setBranch] = useState("main");
+    const [gitToken, setGitToken] = useState("");
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<string | null>(null);
 
@@ -17,7 +18,7 @@ export function RepoImporter() {
         setStatus("저장소 분석 중...");
 
         try {
-            const result = await importRepository(gitUrl, branch);
+            const result = await importRepository(gitUrl, branch, gitToken || undefined);
             if (result.success) {
                 setStatus("가져오기 성공! 페이지를 새로고침합니다...");
                 setTimeout(() => {
@@ -64,6 +65,19 @@ export function RepoImporter() {
                 >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "API 분석 및 가져오기"}
                 </button>
+            </div>
+
+            <div className="relative">
+                <input
+                    type="password"
+                    placeholder="Git 토큰 (프라이빗 저장소용, 선택사항)"
+                    className="w-full px-4 py-2 bg-muted/30 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+                    value={gitToken}
+                    onChange={(e) => setGitToken(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground mt-1 px-1">
+                    프라이빗 저장소의 경우 Personal Access Token을 입력하세요
+                </p>
             </div>
 
             <AnimatePresence>
