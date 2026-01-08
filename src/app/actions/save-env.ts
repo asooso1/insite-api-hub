@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { EnvConfig } from "@/lib/mock-db";
+import { EnvConfig } from "@/lib/api-types";
 import { revalidatePath } from "next/cache";
 
 export async function saveEnvironments(environments: Record<'DEV' | 'STG' | 'PRD', EnvConfig>) {

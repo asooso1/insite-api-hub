@@ -47,3 +47,30 @@ INSERT INTO environments (env_type, base_url) VALUES
 ('STG', 'https://stg-api.example.com'),
 ('PRD', 'https://api.example.com')
 ON CONFLICT (env_type) DO NOTHING;
+
+-- 테스트 케이스 테이블
+CREATE TABLE IF NOT EXISTS test_cases (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    api_id VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    payload TEXT,
+    headers TEXT,
+    expected_status INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_test_cases_api_id ON test_cases(api_id);
+
+-- 테스트 히스토리 테이블
+CREATE TABLE IF NOT EXISTS test_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    api_id VARCHAR(255) NOT NULL,
+    test_case_id UUID,
+    env VARCHAR(50) NOT NULL,
+    status INTEGER,
+    response_time INTEGER,
+    success BOOLEAN,
+    response_body TEXT,
+    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_test_history_api_id ON test_history(api_id);
+CREATE INDEX IF NOT EXISTS idx_test_history_executed_at ON test_history(executed_at DESC);
