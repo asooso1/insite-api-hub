@@ -1,57 +1,9 @@
 import fs from "fs";
 import path from "path";
+import { ApiEndpoint, ApiModel, EnvConfig, ApiTestCase, MockDB, ApiField } from "./api-types";
+export type { ApiEndpoint, ApiModel, EnvConfig, ApiTestCase, MockDB, ApiField };
 
 const DB_PATH = path.join(process.cwd(), "mock-db.json");
-
-export interface ApiEndpoint {
-    id?: string;
-    path: string;
-    method: string;
-    className: string;
-    methodName: string;
-    summary: string;
-    requestBody?: string;
-    responseType?: string;
-    syncedAt?: string;
-    version?: string;
-}
-
-export interface ApiModel {
-    name: string;
-    fields: ApiField[];
-}
-
-export interface ApiField {
-    name: string;
-    type: string;
-    description?: string;
-    isRequired?: boolean;
-    isComplex?: boolean;
-    refFields?: ApiField[];
-}
-
-export interface EnvConfig {
-    baseUrl: string;
-    token: string;
-    doorayWebhookUrl?: string;
-}
-
-export interface ApiTestCase {
-    id: string;
-    apiId: string;
-    name: string;
-    requestPayload: string;
-    expectedResponse?: string;
-    createdAt: string;
-}
-
-export interface MockDB {
-    projects: unknown[];
-    endpoints: ApiEndpoint[];
-    models: ApiModel[];
-    environments: Record<'DEV' | 'STG' | 'PRD', EnvConfig>;
-    testCases: ApiTestCase[];
-}
 
 export const getMockDB = (): MockDB => {
     const initial: MockDB = {

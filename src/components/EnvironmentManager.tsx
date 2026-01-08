@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Globe, Shield, Zap, Settings2, Save, MessageSquare, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { saveEnvironments } from "@/app/actions/save-env";
-import { EnvConfig } from "@/lib/mock-db";
+import { EnvConfig } from "@/lib/api-types";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface EnvironmentManagerProps {

@@ -6,7 +6,7 @@ import path from "path";
 import { SpringParser } from "@/lib/parser/spring-parser";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { ApiEndpoint, ApiModel, ApiField } from "@/lib/mock-db";
+import { ApiEndpoint, ApiModel, ApiField } from "@/lib/api-types";
 
 interface ImportResult {
     success: boolean;

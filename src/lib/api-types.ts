@@ -1,0 +1,71 @@
+export interface ApiEndpoint {
+    id?: string;
+    path: string;
+    method: string;
+    className: string;
+    methodName: string;
+    summary: string;
+    requestBody?: string;
+    responseType?: string;
+    syncedAt?: string;
+    version?: string;
+}
+
+export interface ApiModel {
+    name: string;
+    fields: ApiField[];
+}
+
+export interface ApiField {
+    name: string;
+    type: string;
+    description?: string;
+    isRequired?: boolean;
+    isComplex?: boolean;
+    refFields?: ApiField[];
+}
+
+export interface EnvConfig {
+    baseUrl: string;
+    token: string;
+    doorayWebhookUrl?: string;
+}
+
+export interface ApiTestCase {
+    id: string;
+    apiId: string;
+    name: string;
+    requestPayload: string;
+    expectedResponse?: string;
+    createdAt: string;
+}
+
+export interface MockDB {
+    projects: unknown[];
+    endpoints: ApiEndpoint[];
+    models: ApiModel[];
+    environments: Record<'DEV' | 'STG' | 'PRD', EnvConfig>;
+    testCases: ApiTestCase[];
+}
+
+// Added for Test Case Management
+export interface TestCase {
+    id: string;
+    api_id: string;
+    name: string;
+    payload: string;
+    headers: string; // JSON string
+    expected_status?: number;
+    created_at: Date;
+}
+
+export interface TestHistory {
+    id: string;
+    api_id: string;
+    test_case_id?: string;
+    env: string;
+    status: number;
+    response_time: number;
+    success: boolean;
+    executed_at: Date;
+}

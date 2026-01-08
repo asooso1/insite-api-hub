@@ -1,19 +1,11 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { Loader2, Send, Wand2 } from "lucide-react";
-import { ApiEndpoint, EnvConfig, ApiModel } from "@/lib/mock-db";
+import { Loader2, Send, Wand2, Plus, Trash2, Save, History, BookMarked, Play, Clock, CheckCircle2, XCircle } from "lucide-react";
+import type { ApiEndpoint, EnvConfig, ApiModel } from "@/lib/api-types";
 import { generateSampleJson } from "@/lib/utils/json-generator";
-
-interface ApiResponse {
-    status: number;
-    statusText?: string;
-    url?: string;
-    method?: string;
-    data?: unknown;
-    error?: string;
-    message?: string;
-}
+import { testApi, ApiTestResponse } from "@/app/actions/test-api";
+import { saveTestCase, getTestCases, deleteTestCase, saveTestHistory, getTestHistory } from "@/app/actions/test-case";
+import type { TestCase, TestHistory } from "@/lib/api-types";
+import { ApiResponseViewer } from "./ApiResponseViewer";
 
 interface ApiTesterProps {
     endpoints: ApiEndpoint[];
@@ -25,12 +17,24 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
     const [selectedApiId, setSelectedApiId] = useState("");
     const [env, setEnv] = useState<'DEV' | 'STG' | 'PRD'>('DEV');
     const [payload, setPayload] = useState("{}");
-    const [response, setResponse] = useState<ApiResponse | null>(null);
+    const [headers, setHeaders] = useState<{ key: string; value: string }[]>([
+        { key: "Content-Type", value: "application/json" }
+    ]);
+    const [response, setResponse] = useState<ApiTestResponse | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Tabs state
+    const [activeTab, setActiveTab] = useState<'response' | 'cases' | 'history'>('response');
+
+    // Test Cases & History state
+    const [testCases, setTestCases] = useState<TestCase[]>([]);
+    const [history, setHistory] = useState<TestHistory[]>([]);
+    const [caseName, setCaseName] = useState("");
+    const [savingCase, setSavingCase] = useState(false);
 
     const selectedApi = endpoints.find(api => api.id === selectedApiId);
 
-    // API 선택 시 자동 페이로드 생성
+    // API 선택 시 초기화 및 데이터 로드
     useEffect(() => {
         if (selectedApi) {
             if (selectedApi.requestBody) {
@@ -40,42 +44,124 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
             } else {
                 setPayload("{}");
             }
+            setResponse(null);
+            setActiveTab('response');
+            loadTestCases();
+            loadHistory();
         }
     }, [selectedApiId, allModels, selectedApi]);
+
+    const loadTestCases = async () => {
+        if (!selectedApiId) return;
+        const cases = await getTestCases(selectedApiId);
+        setTestCases(cases);
+    };
+
+    const loadHistory = async () => {
+        if (!selectedApiId) return;
+        const hists = await getTestHistory(selectedApiId);
+        setHistory(hists);
+    };
+
+    const handleAddHeader = () => {
+        setHeaders([...headers, { key: "", value: "" }]);
+    };
+
+    const handleRemoveHeader = (index: number) => {
+        setHeaders(headers.filter((_, i) => i !== index));
+    };
+
+    const handleHeaderChange = (index: number, field: 'key' | 'value', value: string) => {
+        const newHeaders = [...headers];
+        newHeaders[index][field] = value;
+        setHeaders(newHeaders);
+    };
 
     const handleTest = async () => {
         if (!selectedApi) return;
         setLoading(true);
         setResponse(null);
+        setActiveTab('response');
 
         try {
-            const baseUrl = environments[env].baseUrl;
-            const url = `${baseUrl}${selectedApi.path}`;
+            const envConfig = environments[env];
+            const baseUrl = envConfig.baseUrl.replace(/\/$/, "");
+            const path = selectedApi.path.startsWith("/") ? selectedApi.path : `/${selectedApi.path}`;
+            const url = `${baseUrl}${path}`;
 
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            setResponse({
-                status: 200,
-                statusText: "OK",
-                url: url,
-                method: selectedApi.method,
-                data: {
-                    success: true,
-                    message: `${selectedApi.path} 호출 성공 (${env} 환경)`,
-                    timestamp: new Date().toISOString(),
-                    requestBody: JSON.parse(payload || "{}")
-                }
+            const headerObj: Record<string, string> = {};
+            headers.forEach(h => {
+                if (h.key) headerObj[h.key] = h.value;
             });
+
+            if (envConfig.token) {
+                headerObj['Authorization'] = `Bearer ${envConfig.token}`;
+            }
+
+            const result = await testApi({
+                url,
+                method: selectedApi.method as any,
+                headers: headerObj,
+                body: payload,
+                timeout: 30000
+            });
+
+            setResponse(result);
+
+            // Save History
+            await saveTestHistory(
+                selectedApi.id!,
+                env,
+                result.statusCode || 0,
+                result.responseTime || 0,
+                result.success
+            );
+            loadHistory(); // Refresh history
+
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "unknown error";
             setResponse({
-                status: 500,
-                error: "요청 처리 중 오류가 발생했습니다.",
-                message: message
+                success: false,
+                error: message,
+                responseTime: 0
             });
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSaveTestCase = async () => {
+        if (!selectedApi || !caseName.trim()) return;
+        setSavingCase(true);
+
+        const headerObj: Record<string, string> = {};
+        headers.forEach(h => { if (h.key) headerObj[h.key] = h.value; });
+
+        await saveTestCase(selectedApi.id!, caseName, payload, headerObj);
+        setCaseName("");
+        await loadTestCases();
+        setSavingCase(false);
+        setActiveTab('cases');
+    };
+
+    const handleDeleteTestCase = async (id: string) => {
+        if (confirm("정말 삭제하시겠습니까?")) {
+            await deleteTestCase(id);
+            await loadTestCases();
+        }
+    };
+
+    const handleLoadTestCase = (tc: TestCase) => {
+        setPayload(tc.payload);
+        if (tc.headers) {
+            try {
+                const parsed = JSON.parse(tc.headers);
+                setHeaders(Object.entries(parsed).map(([key, value]) => ({ key, value: value as string })));
+            } catch (e) {
+                console.error("Failed to parse headers", e);
+            }
+        }
+        alert(`테스트 케이스 '${tc.name}' 불러오기 완료`);
     };
 
     const handleGenerateSample = () => {
@@ -89,7 +175,26 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="glass-panel p-6 rounded-2xl space-y-4">
+                {/* Left Panel: Request Configuration */}
+                <div className="glass-panel p-6 rounded-2xl space-y-5 h-fit">
+                    {/* Environment Selection */}
+                    <div>
+                        <label className="text-xs font-bold text-muted-foreground uppercase mb-2 block">테스트 환경</label>
+                        <div className="flex gap-2">
+                            {(['DEV', 'STG', 'PRD'] as const).map(e => (
+                                <button
+                                    key={e}
+                                    onClick={() => setEnv(e)}
+                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all border ${env === e ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/30 border-border text-muted-foreground hover:bg-muted/50'
+                                        }`}
+                                >
+                                    {e}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* API Selection */}
                     <div>
                         <label className="text-xs font-bold text-muted-foreground uppercase mb-2 block">API 엔드포인트 선택</label>
                         <select
@@ -104,22 +209,41 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
                         </select>
                     </div>
 
+                    {/* Headers Configuration */}
                     <div>
-                        <label className="text-xs font-bold text-muted-foreground uppercase mb-2 block">테스트 환경</label>
-                        <div className="flex gap-2">
-                            {(['DEV', 'STG', 'PRD'] as const).map(e => (
-                                <button
-                                    key={e}
-                                    onClick={() => setEnv(e)}
-                                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${env === e ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/30 border-border text-muted-foreground hover:bg-muted/50'
-                                        }`}
-                                >
-                                    {e}
-                                </button>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-bold text-muted-foreground uppercase">요청 헤더 (Headers)</label>
+                            <button onClick={handleAddHeader} className="text-[10px] flex items-center gap-1 bg-muted/50 px-2 py-1 rounded hover:bg-muted font-bold">
+                                <Plus className="w-3 h-3" /> 추가
+                            </button>
+                        </div>
+                        <div className="space-y-2">
+                            {headers.map((header, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <input
+                                        placeholder="Key"
+                                        className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary/20"
+                                        value={header.key}
+                                        onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
+                                    />
+                                    <input
+                                        placeholder="Value"
+                                        className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary/20"
+                                        value={header.value}
+                                        onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
+                                    />
+                                    <button
+                                        onClick={() => handleRemoveHeader(index)}
+                                        className="text-muted-foreground hover:text-red-500 p-1"
+                                    >
+                                        <Trash2 className="w-3 h-3" />
+                                    </button>
+                                </div>
                             ))}
                         </div>
                     </div>
 
+                    {/* Request Body */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-xs font-bold text-muted-foreground uppercase block">요청 본문 (JSON Payload)</label>
@@ -134,12 +258,35 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
                             )}
                         </div>
                         <textarea
-                            className="w-full h-60 bg-muted/30 border border-border rounded-xl p-4 text-xs font-mono outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                            className="w-full h-60 bg-muted/30 border border-border rounded-xl p-4 text-xs font-mono outline-none focus:ring-2 focus:ring-primary/20 resize-none leading-relaxed"
                             placeholder="{}"
                             value={payload}
                             onChange={(e) => setPayload(e.target.value)}
                         />
                     </div>
+
+                    {/* Test Case Save Input */}
+                    {selectedApiId && (
+                        <div className="pt-4 border-t border-border/50">
+                            <label className="text-xs font-bold text-muted-foreground uppercase mb-2 block">현재 설정을 테스트 케이스로 저장</label>
+                            <div className="flex gap-2">
+                                <input
+                                    className="flex-1 bg-muted/30 border border-border rounded-xl px-4 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20"
+                                    placeholder="케이스 이름 입력 (예: 정상 로그인)"
+                                    value={caseName}
+                                    onChange={(e) => setCaseName(e.target.value)}
+                                />
+                                <button
+                                    onClick={handleSaveTestCase}
+                                    disabled={!caseName || savingCase}
+                                    className="bg-muted hover:bg-primary hover:text-primary-foreground text-muted-foreground px-4 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-50"
+                                >
+                                    <Save className="w-3.5 h-3.5" />
+                                    저장
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     <button
                         onClick={handleTest}
@@ -149,20 +296,123 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                         요청 전송 (Send Request)
                     </button>
+
+                    {environments[env].token && (
+                        <p className="text-[10px] text-muted-foreground text-center">
+                            * 환경 설정에 저장된 인증 토큰이 자동으로 포함됩니다.
+                        </p>
+                    )}
                 </div>
 
-                <div className="glass-panel p-6 rounded-2xl flex flex-col min-h-[400px]">
-                    <label className="text-xs font-bold text-muted-foreground uppercase mb-2 block">응답 (Response)</label>
-                    <div className="flex-1 bg-black/20 rounded-xl p-4 font-mono text-[11px] overflow-auto border border-border/50">
-                        {response ? (
-                            <pre className={response.status === 200 ? 'text-green-400' : 'text-red-400'}>
-                                {JSON.stringify(response, null, 2)}
-                            </pre>
-                        ) : (
-                            <div className="h-full flex items-center justify-center text-muted-foreground opacity-50">
-                                요청을 보내면 응답이 여기에 표시됩니다.
-                                {selectedApi?.requestBody && (
-                                    <p className="text-[10px] mt-2 italic text-center">선택된 모델: {selectedApi.requestBody}</p>
+                {/* Right Panel: Response & History & Cases */}
+                <div className="glass-panel p-6 rounded-2xl flex flex-col min-h-[600px] h-full">
+                    {/* Panel Tabs */}
+                    <div className="flex mb-4 p-1 bg-muted/50 rounded-xl">
+                        <button
+                            onClick={() => setActiveTab('response')}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'response' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            <Send className="w-3.5 h-3.5" /> 응답 (Response)
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('cases')}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'cases' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            <BookMarked className="w-3.5 h-3.5" /> 케이스 ({testCases.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('history')}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'history' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            <History className="w-3.5 h-3.5" /> 히스토리 ({history.length})
+                        </button>
+                    </div>
+
+                    <div className="flex-1 rounded-xl overflow-hidden border border-border/50 bg-black/5 relative">
+                        {/* Tab Content: Response */}
+                        {activeTab === 'response' && (
+                            response ? (
+                                <div className="absolute inset-0 overflow-auto p-4">
+                                    <ApiResponseViewer response={response} />
+                                </div>
+                            ) : (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground opacity-50 p-6 text-center">
+                                    <Send className="w-12 h-12 mb-4 opacity-20" />
+                                    <p className="font-medium">요청을 보내면 응답이 여기에 표시됩니다.</p>
+                                    {selectedApi?.requestBody && (
+                                        <p className="text-xs mt-2 opacity-70">
+                                            Tip: 왼쪽의 "VO 샘플 재생성" 버튼을 눌러 테스트 데이터를 자동으로 생성해보세요.
+                                        </p>
+                                    )}
+                                </div>
+                            )
+                        )}
+
+                        {/* Tab Content: Test Cases */}
+                        {activeTab === 'cases' && (
+                            <div className="absolute inset-0 overflow-auto p-4 space-y-3">
+                                {testCases.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
+                                        <BookMarked className="w-10 h-10 mb-2 opacity-20" />
+                                        <p className="text-sm">저장된 테스트 케이스가 없습니다.</p>
+                                    </div>
+                                ) : (
+                                    testCases.map(tc => (
+                                        <div key={tc.id} className="bg-card border border-border/50 p-4 rounded-xl hover:border-primary/50 transition-colors group">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <h4 className="font-bold text-sm">{tc.name}</h4>
+                                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleDeleteTestCase(tc.id)} className="p-1 hover:text-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                </div>
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground bg-muted/30 p-2 rounded-lg font-mono mb-3 line-clamp-2">
+                                                {tc.payload.substring(0, 100)}...
+                                            </div>
+                                            <button
+                                                onClick={() => handleLoadTestCase(tc)}
+                                                className="w-full py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg flex items-center justify-center gap-1 transition-colors"
+                                            >
+                                                <Play className="w-3 h-3" /> 불러오기
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+
+                        {/* Tab Content: History */}
+                        {activeTab === 'history' && (
+                            <div className="absolute inset-0 overflow-auto p-4 space-y-2">
+                                {history.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
+                                        <History className="w-10 h-10 mb-2 opacity-20" />
+                                        <p className="text-sm">테스트 실행 기록이 없습니다.</p>
+                                    </div>
+                                ) : (
+                                    history.map(h => (
+                                        <div key={h.id} className="flex items-center justify-between p-3 bg-card border border-border/50 rounded-xl text-xs">
+                                            <div className="flex items-center gap-3">
+                                                {h.success ? (
+                                                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                                ) : (
+                                                    <XCircle className="w-4 h-4 text-red-500" />
+                                                )}
+                                                <div>
+                                                    <div className="font-bold">{h.env} 환경 테스트</div>
+                                                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                        <Clock className="w-3 h-3" />
+                                                        {new Date(h.executed_at).toLocaleString()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className={`font-bold ${h.status >= 200 && h.status < 300 ? 'text-green-500' : 'text-red-500'}`}>
+                                                    {h.status || 'Error'}
+                                                </div>
+                                                <div className="text-[10px] text-muted-foreground">{h.response_time}ms</div>
+                                            </div>
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         )}
