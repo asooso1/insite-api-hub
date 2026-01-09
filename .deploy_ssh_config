@@ -1,0 +1,5 @@
+Host insite-develop
+    HostName 121.133.17.22
+    User leejs
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
