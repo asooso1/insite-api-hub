@@ -11,14 +11,18 @@ interface ApiListProps {
     allModels: ApiModel[];
 }
 
+import { EmptyState } from "./ui/EmptyState";
+
 export function ApiList({ endpoints, allModels }: ApiListProps) {
     const [expandedApiId, setExpandedApiId] = useState<string | null>(null);
 
     if (endpoints.length === 0) {
         return (
-            <div className="text-center py-12 glass-panel rounded-2xl border-dashed">
-                <p className="text-muted-foreground">분석된 엔드포인트가 없습니다. 저장소를 가져와서 시작하세요.</p>
-            </div>
+            <EmptyState
+                icon={Database}
+                title="데이터가 없습니다"
+                description="분석된 엔드포인트가 없습니다. 우측 하단의 분석기를 통해 저장소를 임포트하여 시작하세요."
+            />
         );
     }
 

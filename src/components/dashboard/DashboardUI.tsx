@@ -35,6 +35,7 @@ import { ApiModelTree } from "@/components/ApiModelTree";
 import { VersionHistoryManager } from "@/components/VersionHistoryManager";
 import { ApiDiffViewer } from "@/components/ApiDiffViewer";
 import { ApiVersion } from "@/lib/api-types";
+import { useToast } from "@/components/ui/Toast";
 
 export type DashboardTab = 'endpoints' | 'environments' | 'test' | 'scenarios' | 'versions';
 
@@ -48,10 +49,28 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
     const [diffVersion, setDiffVersion] = useState<ApiVersion | null>(null);
+    const { showToast } = useToast();
 
     const handleProjectSelect = (projectId: string) => {
         document.cookie = `current_project_id=${projectId}; path=/; max-age=31536000`;
-        window.location.reload();
+        showToast("프로젝트가 전환되었습니다.", "info");
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    };
+
+    const handleExportExcel = () => {
+        try {
+            exportApisToExcel(filteredEndpoints);
+            showToast(`${filteredEndpoints.length}개의 API 목록을 엑셀로 내보냈습니다.`, "success");
+        } catch (err) {
+            showToast("엑셀 내보내기에 실패했습니다.", "error");
+        }
+    };
+
+    const handleCopyTS = (type: string) => {
+        navigator.clipboard.writeText(type);
+        showToast("TypeScript 인터페이스가 클립보드에 복사되었습니다.", "success");
     };
 
     const filteredEndpoints = initialData.endpoints.filter(e => {
@@ -234,7 +253,7 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                                                     <div className="flex gap-2">
                                                         <button
                                                             className="px-3 py-1.5 bg-muted/50 rounded-lg text-xs font-bold flex items-center gap-2 border border-border/50 hover:bg-muted"
-                                                            onClick={() => exportApisToExcel(filteredEndpoints)}
+                                                            onClick={handleExportExcel}
                                                         >
                                                             <Download className="w-3.5 h-3.5" /> 엑셀 내보내기
                                                         </button>
@@ -306,7 +325,7 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                                                                 {generateTypeScriptType(model)}
                                                             </pre>
                                                             <button
-                                                                onClick={() => navigator.clipboard.writeText(generateTypeScriptType(model))}
+                                                                onClick={() => handleCopyTS(generateTypeScriptType(model))}
                                                                 className="absolute top-2 right-2 p-1.5 bg-card border border-border rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-muted"
                                                             >
                                                                 <Copy className="w-3 h-3 text-muted-foreground" />

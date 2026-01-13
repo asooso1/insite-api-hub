@@ -10,11 +10,13 @@ interface EnvironmentManagerProps {
     initialConfigs: Record<'DEV' | 'STG' | 'PRD', EnvConfig>;
 }
 
+import { useToast } from "@/components/ui/Toast";
+
 export function EnvironmentManager({ initialConfigs }: EnvironmentManagerProps) {
     const [activeEnv, setActiveEnv] = useState<'DEV' | 'STG' | 'PRD'>('DEV');
     const [configs, setConfigs] = useState<Record<'DEV' | 'STG' | 'PRD', EnvConfig>>(initialConfigs);
     const [saving, setSaving] = useState(false);
-    const [status, setStatus] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const { showToast } = useToast();
 
     const handleUpdate = (field: keyof EnvConfig, value: string) => {
         setConfigs(prev => ({
@@ -25,17 +27,15 @@ export function EnvironmentManager({ initialConfigs }: EnvironmentManagerProps) 
 
     const handleSave = async () => {
         setSaving(true);
-        setStatus(null);
         try {
             const result = await saveEnvironments(configs);
             if (result.success) {
-                setStatus({ type: 'success', text: result.message });
-                setTimeout(() => setStatus(null), 3000);
+                showToast(result.message, "success");
             } else {
-                setStatus({ type: 'error', text: result.message });
+                showToast(result.message, "error");
             }
         } catch {
-            setStatus({ type: 'error', text: "저장 중 오류가 발생했습니다." });
+            showToast("저장 중 오류가 발생했습니다.", "error");
         } finally {
             setSaving(false);
         }
@@ -58,20 +58,6 @@ export function EnvironmentManager({ initialConfigs }: EnvironmentManagerProps) 
                 </button>
             </div>
 
-            <AnimatePresence>
-                {status && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className={`mb-4 p-3 rounded-xl border flex items-center gap-2 text-xs font-medium ${status.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'
-                            }`}
-                    >
-                        {status.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                        {status.text}
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
             <div className="flex p-1 bg-muted rounded-xl mb-6">
                 <EnvTab active={activeEnv === 'DEV'} onClick={() => setActiveEnv('DEV')} icon={<Zap className="w-3.5 h-3.5" />} label="개발 (DEV)" />
