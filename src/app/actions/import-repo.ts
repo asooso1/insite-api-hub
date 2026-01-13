@@ -106,13 +106,36 @@ export async function importRepository(projectId: string, gitUrl: string, branch
             syncedAt: new Date().toISOString()
         }));
 
+        // 4. Save to PostgreSQL
         const client = await db.getClient();
         try {
             await client.query('BEGIN');
 
+            // 4a. Save existing data as a version snapshot before deleting
+            const currentEndpoints = await client.query('SELECT * FROM endpoints WHERE project_id = $1', [projectId]);
+            const currentModels = await client.query('SELECT * FROM api_models WHERE project_id = $1', [projectId]);
+
+            if (currentEndpoints.rows.length > 0) {
+                const versionTag = `v_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+                await client.query(
+                    `INSERT INTO api_versions (project_id, version_tag, description, endpoints_snapshot, models_snapshot)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [
+                        projectId,
+                        versionTag,
+                        `Snapshot before import at ${new Date().toLocaleString()}`,
+                        JSON.stringify(currentEndpoints.rows),
+                        JSON.stringify(currentModels.rows)
+                    ]
+                );
+                console.log(`[Snapshot] Saved ${currentEndpoints.rows.length} endpoints as version ${versionTag}`);
+            }
+
+            // Fetch existing endpoints to compare (for new API notification)
             const existingRes = await client.query('SELECT path, method FROM endpoints WHERE project_id = $1', [projectId]);
             const existingApis = new Set(existingRes.rows.map(r => `${r.method} ${r.path}`));
 
+            // 기존 데이터 초기화 (특정 프로젝트의 데이터만 삭제)
             await client.query('DELETE FROM endpoints WHERE project_id = $1', [projectId]);
             await client.query('DELETE FROM api_models WHERE project_id = $1', [projectId]);
 
