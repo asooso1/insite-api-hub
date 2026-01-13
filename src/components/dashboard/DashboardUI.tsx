@@ -23,7 +23,8 @@ import {
     Box,
     Download,
     Copy,
-    Terminal
+    Terminal,
+    Filter
 } from "lucide-react";
 import { ApiEndpoint, MockDB } from "@/lib/mock-db";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,6 +39,7 @@ interface DashboardUIProps {
 export default function DashboardUI({ initialData, selectedProjectId }: DashboardUIProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<DashboardTab>('endpoints');
+    const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
 
     const handleProjectSelect = (id: string) => {
         document.cookie = `current_project_id=${id}; path=/; max-age=31536000`; // 1 year
@@ -46,10 +48,39 @@ export default function DashboardUI({ initialData, selectedProjectId }: Dashboar
 
     const currentProjectId = selectedProjectId || (initialData.projects.length > 0 ? initialData.projects[0].id : null);
 
-    const filteredEndpoints = initialData.endpoints.filter((e: ApiEndpoint) =>
-        e.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.summary?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredEndpoints = initialData.endpoints.filter((e: ApiEndpoint) => {
+        const query = searchQuery.toLowerCase();
+
+        // 1. Method Filter
+        if (selectedMethods.length > 0 && !selectedMethods.includes(e.method)) {
+            return false;
+        }
+
+        if (!query) return true;
+
+        // 2. Direct Search (Path, Summary, Class, Method)
+        const matchesDirect =
+            e.path.toLowerCase().includes(query) ||
+            (e.summary && e.summary.toLowerCase().includes(query)) ||
+            e.className.toLowerCase().includes(query) ||
+            e.methodName.toLowerCase().includes(query);
+
+        if (matchesDirect) return true;
+
+        // 3. DTO Field Search (Reverse track)
+        const relevantModels = initialData.models.filter(m =>
+            (m.name === e.requestBody || m.name === e.responseType) &&
+            m.fields?.some(f => f.name.toLowerCase().includes(query))
+        );
+
+        return relevantModels.length > 0;
+    });
+
+    const toggleMethod = (method: string) => {
+        setSelectedMethods(prev =>
+            prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]
+        );
+    };
 
     return (
         <div className="flex h-screen bg-background overflow-hidden text-foreground">
@@ -179,9 +210,35 @@ export default function DashboardUI({ initialData, selectedProjectId }: Dashboar
 
                                             <section>
                                                 <div className="flex items-center justify-between mb-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <Database className="w-5 h-5 text-primary" />
-                                                        <h3 className="text-lg font-semibold">API 엔드포인트 목록</h3>
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="flex items-center gap-2">
+                                                            <Database className="w-5 h-5 text-primary" />
+                                                            <h3 className="text-lg font-semibold">API 엔드포인트 목록</h3>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {['GET', 'POST', 'PUT', 'DELETE'].map(m => (
+                                                                <button
+                                                                    key={m}
+                                                                    onClick={() => toggleMethod(m)}
+                                                                    className={`
+                                                                        px-2.5 py-1 rounded text-[10px] font-bold transition-all border
+                                                                        ${selectedMethods.includes(m)
+                                                                            ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                                                            : 'bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted'}
+                                                                    `}
+                                                                >
+                                                                    {m}
+                                                                </button>
+                                                            ))}
+                                                            {selectedMethods.length > 0 && (
+                                                                <button
+                                                                    onClick={() => setSelectedMethods([])}
+                                                                    className="text-[10px] text-muted-foreground hover:text-primary transition-colors ml-1"
+                                                                >
+                                                                    초기화
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <div className="flex items-center gap-3">
                                                         <span className="text-xs text-muted-foreground mr-2">{filteredEndpoints.length}개의 API 발견</span>
