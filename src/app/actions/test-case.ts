@@ -108,21 +108,25 @@ export async function deleteTestCase(id: string) {
 
 export async function saveTestHistory(
     projectId: string,
-    apiId: string,
-    env: string,
-    status: number,
-    responseTime: number,
-    success: boolean,
-    testCaseId?: string
+    data: {
+        apiId: string;
+        testCaseId?: string;
+        env: string;
+        status: number;
+        responseTime: number;
+        success: boolean;
+        responseBody?: string;
+    }
 ) {
     await ensureTablesExist();
     const client = await db.getClient();
     try {
         await client.query(
-            `INSERT INTO test_history (project_id, api_id, env, status, response_time, success, test_case_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [projectId, apiId, env, status, responseTime, success, testCaseId]
+            `INSERT INTO test_history (project_id, api_id, test_case_id, env, status, response_time, success, response_body)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [projectId, data.apiId, data.testCaseId, data.env, data.status, data.responseTime, data.success, data.responseBody]
         );
+        revalidatePath('/');
         return { success: true };
     } catch (error) {
         console.error("Failed to save history:", error);

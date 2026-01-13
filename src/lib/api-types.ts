@@ -3,7 +3,8 @@ export interface Project {
     name: string;
     description?: string;
     gitUrl?: string;
-    createdAt?: Date;
+    doorayWebhookUrl?: string;
+    createdAt: string;
 }
 
 export interface ApiEndpoint {

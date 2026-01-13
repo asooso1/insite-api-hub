@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { TestScenario, ScenarioStep, BatchTestResult, BatchTestSummary } from '@/lib/api-types';
 import { testApi } from './test-api';
 import { saveTestHistory } from './test-case';
+import { sendDoorayMessage } from './notification';
 
 export async function saveScenario(projectId: string, scenario: Partial<TestScenario>) {
     const client = await db.getClient();
@@ -38,8 +39,14 @@ export async function getScenarios(projectId: string): Promise<TestScenario[]> {
     );
     return res.rows.map(row => ({
         ...row,
+        id: row.id,
+        projectId: row.project_id,
+        name: row.name,
+        description: row.description,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
         steps: typeof row.steps === 'string' ? JSON.parse(row.steps) : row.steps
-    }));
+    })) as TestScenario[];
 }
 
 export async function deleteScenario(id: string) {
@@ -56,9 +63,15 @@ export async function runScenario(
     const scenarioRes = await db.query("SELECT * FROM scenarios WHERE id = $1", [scenarioId]);
     if (scenarioRes.rows.length === 0) throw new Error("Scenario not found");
 
+    const row = scenarioRes.rows[0];
     const scenario: TestScenario = {
-        ...scenarioRes.rows[0],
-        steps: typeof scenarioRes.rows[0].steps === 'string' ? JSON.parse(scenarioRes.rows[0].steps) : scenarioRes.rows[0].steps
+        id: row.id,
+        projectId: row.project_id,
+        name: row.name,
+        description: row.description,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        steps: typeof row.steps === 'string' ? JSON.parse(row.steps) : row.steps
     };
 
     const results: BatchTestResult[] = [];
@@ -144,10 +157,28 @@ export async function runScenario(
         });
     }
 
-    return {
+    const summary = {
         total: results.length,
         successCount: results.filter(r => r.success).length,
         failCount: results.filter(r => !r.success).length,
         results
     };
+
+    // Send notification if failed
+    if (summary.failCount > 0) {
+        const failedTests = results.filter(r => !r.success)
+            .map(r => `• ${r.testCaseName} (Status: ${r.status})`)
+            .join('\n');
+
+        await sendDoorayMessage(projectId,
+            `🚨 **시나리오 테스트 실패 알림**\n\n` +
+            `**시나리오:** ${scenario.name}\n` +
+            `**환경:** ${env}\n` +
+            `**결과:** 성공 ${summary.successCount} / 실패 ${summary.failCount}\n\n` +
+            `**실패 목록:**\n${failedTests}\n\n` +
+            `[API HUB에서 확인하기](http://localhost:3000)`
+        );
+    }
+
+    return summary;
 }

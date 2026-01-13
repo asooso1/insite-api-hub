@@ -116,14 +116,14 @@ export function ApiTester({ projectId, endpoints, environments, allModels }: Api
 
             // Save History
             if (projectId) {
-                await saveTestHistory(
-                    projectId,
-                    selectedApi.id!,
+                await saveTestHistory(projectId, {
+                    apiId: selectedApi.id!,
                     env,
-                    result.statusCode || 0,
-                    result.responseTime || 0,
-                    result.success
-                );
+                    status: result.statusCode || 0,
+                    responseTime: result.responseTime || 0,
+                    success: result.success,
+                    responseBody: JSON.stringify(result.data)
+                });
                 loadHistory(); // Refresh history
             }
 
