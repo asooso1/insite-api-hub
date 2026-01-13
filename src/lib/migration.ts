@@ -6,9 +6,16 @@ const QUERIES = [
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name TEXT NOT NULL,
         description TEXT,
-        git_url TEXT,
+        dooray_webhook_url TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );`,
+    `DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='projects' AND column_name='dooray_webhook_url') THEN
+            ALTER TABLE projects ADD COLUMN dooray_webhook_url TEXT;
+        END IF;
+    END
+    $$;`,
     `CREATE TABLE IF NOT EXISTS endpoints (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         project_id UUID REFERENCES projects(id) ON DELETE CASCADE,

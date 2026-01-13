@@ -4,6 +4,7 @@ import { testApi } from "./test-api";
 import { saveTestHistory, getTestCases } from "./test-case";
 import { BatchTestSummary, BatchTestResult, EnvConfig, ApiEndpoint } from "@/lib/api-types";
 import { db } from "@/lib/db";
+import { sendDoorayMessage } from "./notification";
 
 export async function runBatchTest(
     projectId: string,
@@ -25,7 +26,7 @@ export async function runBatchTest(
     let successCount = 0;
 
     const envConfig = environments[env];
-    const baseUrl = envConfig.baseUrl.replace(/\/$/, "");
+    const baseUrl = envConfig.baseUrl?.replace(/\/$/, "") || "";
     const path = endpoint.path.startsWith("/") ? endpoint.path : `/${endpoint.path}`;
     const url = `${baseUrl}${path}`;
 
@@ -59,15 +60,15 @@ export async function runBatchTest(
             if (result.success) successCount++;
 
             // 3. Save to History
-            await saveTestHistory(
-                projectId,
+            await saveTestHistory(projectId, {
                 apiId,
+                testCaseId: tc.id,
                 env,
-                result.status,
-                result.responseTime,
-                result.success,
-                tc.id
-            );
+                status: result.status,
+                responseTime: result.responseTime,
+                success: result.success,
+                responseBody: JSON.stringify(apiResponse.data)
+            });
 
         } catch (error) {
             results.push({
@@ -81,10 +82,23 @@ export async function runBatchTest(
         }
     }
 
-    return {
+    const summary = {
         total: casesToRun.length,
         successCount,
         failCount: casesToRun.length - successCount,
         results
     };
+
+    // Send notification if failed
+    if (summary.failCount > 0) {
+        await sendDoorayMessage(projectId,
+            `🚨 **배치 테스트 실패 알림**\n\n` +
+            `**API:** ${endpoint.summary || endpoint.path}\n` +
+            `**환경:** ${env}\n` +
+            `**결과:** 성공 ${summary.successCount} / 실패 ${summary.failCount}\n\n` +
+            `[API HUB에서 확인하기](http://localhost:3000)`
+        );
+    }
+
+    return summary;
 }

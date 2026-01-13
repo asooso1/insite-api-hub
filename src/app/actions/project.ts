@@ -17,18 +17,28 @@ export async function getProjects(): Promise<Project[]> {
     }
 }
 
-export async function createProject(name: string, gitUrl: string, description: string) {
+export async function createProject(name: string, description: string, doorayWebhookUrl?: string) {
     const client = await db.getClient();
     try {
-        const result = await client.query(
-            "INSERT INTO projects (name, git_url, description) VALUES ($1, $2, $3) RETURNING *",
-            [name, gitUrl, description]
+        const res = await client.query(
+            "INSERT INTO projects (name, description, dooray_webhook_url) VALUES ($1, $2, $3) RETURNING *",
+            [name, description, doorayWebhookUrl]
         );
-        revalidatePath('/');
-        return { success: true, project: result.rows[0] };
-    } catch (error) {
-        console.error("Failed to create project:", error);
-        return { success: false, message: "프로젝트 생성 실패" };
+        revalidatePath("/");
+        return res.rows[0];
+    } finally {
+        client.release();
+    }
+}
+
+export async function updateProjectWebhook(projectId: string, url: string) {
+    const client = await db.getClient();
+    try {
+        await client.query(
+            "UPDATE projects SET dooray_webhook_url = $1 WHERE id = $2",
+            [url, projectId]
+        );
+        revalidatePath("/");
     } finally {
         client.release();
     }

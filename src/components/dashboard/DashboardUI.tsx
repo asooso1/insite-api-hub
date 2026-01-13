@@ -36,7 +36,7 @@ export type DashboardTab = 'endpoints' | 'environments' | 'test' | 'scenarios';
 
 interface DashboardUIProps {
     initialData: MockDB;
-    currentProjectId?: string;
+    currentProjectId: string | null;
 }
 
 export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps) {
@@ -139,7 +139,7 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                 </div>
 
                 <div className="mt-auto p-6 border-t border-border bg-muted/30">
-                    <RepoImporter projectId={currentProjectId} />
+                    <RepoImporter projectId={currentProjectId || undefined} />
                 </div>
             </aside>
 
@@ -195,8 +195,8 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                                                     key={m}
                                                     onClick={() => toggleMethod(m)}
                                                     className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${selectedMethods.includes(m)
-                                                            ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20'
-                                                            : 'bg-card border-border text-muted-foreground hover:border-primary/50'
+                                                        ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20'
+                                                        : 'bg-card border-border text-muted-foreground hover:border-primary/50'
                                                         }`}
                                                 >
                                                     {m}

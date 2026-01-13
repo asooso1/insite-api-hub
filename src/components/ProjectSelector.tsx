@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Folder, Plus, Check, ChevronDown, Trash2, Github, ExternalLink } from "lucide-react";
+import { Folder, Plus, Check, ChevronDown, Trash2, Github, ExternalLink, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Project } from "@/lib/api-types";
 import { createProject, deleteProject } from "@/app/actions/project";
@@ -18,6 +18,7 @@ export function ProjectSelector({ projects, currentProjectId, onSelect }: Projec
     const [newName, setNewName] = useState("");
     const [newGitUrl, setNewGitUrl] = useState("");
     const [newDesc, setNewDesc] = useState("");
+    const [newWebhook, setNewWebhook] = useState("");
     const [loading, setLoading] = useState(false);
 
     const currentProject = projects.find(p => p.id === currentProjectId) || projects[0];
@@ -25,13 +26,14 @@ export function ProjectSelector({ projects, currentProjectId, onSelect }: Projec
     const handleCreate = async () => {
         if (!newName) return;
         setLoading(true);
-        const res = await createProject(newName, newGitUrl, newDesc);
-        if (res.success && res.project) {
-            onSelect(res.project.id);
+        const res = await createProject(newName, newDesc, newWebhook);
+        if (res) {
+            onSelect(res.id);
             setIsModalOpen(false);
             setNewName("");
             setNewGitUrl("");
             setNewDesc("");
+            setNewWebhook("");
         }
         setLoading(false);
     };
@@ -84,8 +86,8 @@ export function ProjectSelector({ projects, currentProjectId, onSelect }: Projec
                                             setIsOpen(false);
                                         }}
                                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group ${project.id === currentProjectId
-                                                ? 'bg-primary/10 border border-primary/20'
-                                                : 'hover:bg-muted border border-transparent'
+                                            ? 'bg-primary/10 border border-primary/20'
+                                            : 'hover:bg-muted border border-transparent'
                                             }`}
                                     >
                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${project.id === currentProjectId ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/10 text-muted-foreground'
@@ -100,16 +102,23 @@ export function ProjectSelector({ projects, currentProjectId, onSelect }: Projec
                                                 </p>
                                             )}
                                         </div>
-                                        {project.id === currentProjectId ? (
-                                            <Check className="w-4 h-4 text-primary" />
-                                        ) : (
-                                            <button
-                                                onClick={(e) => handleDelete(e, project.id)}
-                                                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-destructive/10 hover:text-destructive rounded-md transition-all text-muted-foreground"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        )}
+                                        <div className="flex items-center gap-1">
+                                            {project.doorayWebhookUrl && (
+                                                <div className="p-1.5 text-primary bg-primary/10 rounded-md" title="Dooray 알림 활성화됨">
+                                                    <Share2 className="w-3.5 h-3.5" />
+                                                </div>
+                                            )}
+                                            {project.id === currentProjectId ? (
+                                                <Check className="w-4 h-4 text-primary" />
+                                            ) : (
+                                                <button
+                                                    onClick={(e) => handleDelete(e, project.id)}
+                                                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-destructive/10 hover:text-destructive rounded-md transition-all text-muted-foreground"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </button>
                                 ))}
                             </div>
@@ -186,9 +195,23 @@ export function ProjectSelector({ projects, currentProjectId, onSelect }: Projec
                                             value={newDesc}
                                             onChange={(e) => setNewDesc(e.target.value)}
                                             placeholder="프로젝트에 대한 간단한 설명..."
-                                            rows={3}
+                                            rows={2}
                                             className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
                                         />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-1">Dooray Webhook URL (Optional)</label>
+                                        <div className="relative">
+                                            <ExternalLink className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                            <input
+                                                type="text"
+                                                value={newWebhook}
+                                                onChange={(e) => setNewWebhook(e.target.value)}
+                                                placeholder="https://hook.dooray.com/..."
+                                                className="w-full pl-11 pr-4 py-3 bg-secondary/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
