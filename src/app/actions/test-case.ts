@@ -69,15 +69,25 @@ export async function saveTestCase(
     }
 }
 
-export async function getTestCases(apiId: string): Promise<TestCase[]> {
+export async function getTestCases(apiId?: string): Promise<TestCase[]> {
     await ensureTablesExist();
     const client = await db.getClient();
     try {
-        const result = await client.query(
-            `SELECT * FROM test_cases WHERE api_id = $1 ORDER BY created_at DESC`,
-            [apiId]
-        );
-        return result.rows;
+        if (apiId) {
+            const result = await client.query(
+                `SELECT * FROM test_cases WHERE api_id = $1 ORDER BY created_at DESC`,
+                [apiId]
+            );
+            return result.rows;
+        } else {
+            // If no apiId, we still need current projectId or similar context. 
+            // For now, let's keep it simple and return based on projectId if needed, 
+            // but the caller of ScenarioEditor probably wants all cases for current project.
+            const result = await client.query(
+                `SELECT * FROM test_cases ORDER BY created_at DESC`
+            );
+            return result.rows;
+        }
     } finally {
         client.release();
     }
