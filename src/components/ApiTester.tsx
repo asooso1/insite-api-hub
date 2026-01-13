@@ -7,6 +7,8 @@ import { saveTestCase, getTestCases, deleteTestCase, saveTestHistory, getTestHis
 import { runBatchTest } from "@/app/actions/batch-test";
 import type { TestCase, TestHistory, BatchTestSummary } from "@/lib/api-types";
 import { ApiResponseViewer } from "./ApiResponseViewer";
+import { useToast } from "@/components/ui/Toast";
+import { EmptyState } from "./ui/EmptyState";
 
 interface ApiTesterProps {
     projectId?: string;
@@ -24,6 +26,7 @@ export function ApiTester({ projectId, endpoints, environments, allModels }: Api
     ]);
     const [response, setResponse] = useState<ApiTestResponse | null>(null);
     const [loading, setLoading] = useState(false);
+    const { showToast } = useToast();
 
     // Tabs state
     const [activeTab, setActiveTab] = useState<'response' | 'cases' | 'history'>('response');
@@ -151,6 +154,7 @@ export function ApiTester({ projectId, endpoints, environments, allModels }: Api
         await loadTestCases();
         setSavingCase(false);
         setActiveTab('cases');
+        showToast(`테스트 케이스 '${caseName}' 저장 완료`, "success");
     };
 
     const handleDeleteTestCase = async (id: string) => {
@@ -170,7 +174,7 @@ export function ApiTester({ projectId, endpoints, environments, allModels }: Api
                 console.error("Failed to parse headers", e);
             }
         }
-        alert(`테스트 케이스 '${tc.name}' 불러오기 완료`);
+        showToast(`테스트 케이스 '${tc.name}' 불러오기 완료`, "info");
     };
 
     const handleRunBatchTest = async () => {
@@ -189,8 +193,9 @@ export function ApiTester({ projectId, endpoints, environments, allModels }: Api
             );
             setBatchSummary(summary);
             loadHistory();
+            showToast(`${summary.total}개 케이스 일괄 실행 완료 (${summary.successCount} 패스)`, summary.failCount > 0 ? "info" : "success");
         } catch (err) {
-            alert("일괄 실행 중 오류가 발생했습니다.");
+            showToast("일괄 실행 중 오류가 발생했습니다.", "error");
         } finally {
             setRunningBatch(false);
         }
@@ -368,14 +373,12 @@ export function ApiTester({ projectId, endpoints, environments, allModels }: Api
                                     <ApiResponseViewer response={response} />
                                 </div>
                             ) : (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground opacity-50 p-6 text-center">
-                                    <Send className="w-12 h-12 mb-4 opacity-20" />
-                                    <p className="font-medium">요청을 보내면 응답이 여기에 표시됩니다.</p>
-                                    {selectedApi?.requestBody && (
-                                        <p className="text-xs mt-2 opacity-70">
-                                            Tip: 왼쪽의 "VO 샘플 재생성" 버튼을 눌러 테스트 데이터를 자동으로 생성해보세요.
-                                        </p>
-                                    )}
+                                <div className="absolute inset-0 flex items-center justify-center p-6">
+                                    <EmptyState
+                                        icon={Send}
+                                        title="Ready to Test"
+                                        description="요청을 보내면 응답이 여기에 표시됩니다. 왼쪽의 'VO 샘플 재생성' 버튼을 눌러 테스트 데이터를 자동으로 생성해보세요."
+                                    />
                                 </div>
                             )
                         )}
@@ -436,9 +439,12 @@ export function ApiTester({ projectId, endpoints, environments, allModels }: Api
                                 )}
 
                                 {testCases.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50 pt-10">
-                                        <BookMarked className="w-10 h-10 mb-2 opacity-20" />
-                                        <p className="text-sm">저장된 테스트 케이스가 없습니다.</p>
+                                    <div className="h-full flex items-center justify-center pt-10">
+                                        <EmptyState
+                                            icon={BookMarked}
+                                            title="No Test Cases"
+                                            description="저장된 테스트 케이스가 없습니다. 왼쪽 하단에서 설정을 저장하여 케이스를 만드세요."
+                                        />
                                     </div>
                                 ) : (
                                     testCases.map(tc => (
@@ -468,9 +474,12 @@ export function ApiTester({ projectId, endpoints, environments, allModels }: Api
                         {activeTab === 'history' && (
                             <div className="absolute inset-0 overflow-auto p-4 space-y-2">
                                 {history.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                                        <History className="w-10 h-10 mb-2 opacity-20" />
-                                        <p className="text-sm">테스트 실행 기록이 없습니다.</p>
+                                    <div className="h-full flex items-center justify-center">
+                                        <EmptyState
+                                            icon={History}
+                                            title="No History"
+                                            description="테스트 실행 기록이 아직 없습니다. 첫 번째 요청을 보내보세요."
+                                        />
                                     </div>
                                 ) : (
                                     history.map(h => (

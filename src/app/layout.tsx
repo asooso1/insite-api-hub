@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Spring 2.x 마이크로서비스를 위한 자동 API 분석 및 통합 관리 솔루션",
 };
 
+import { ToastProvider } from "@/components/ui/Toast";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +29,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );
