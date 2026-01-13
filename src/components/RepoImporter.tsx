@@ -5,7 +5,11 @@ import { GitBranch, Globe, Loader2, CheckCircle2, AlertCircle } from "lucide-rea
 import { importRepository } from "@/app/actions/import-repo";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function RepoImporter() {
+interface RepoImporterProps {
+    projectId?: string;
+}
+
+export function RepoImporter({ projectId }: RepoImporterProps) {
     const [gitUrl, setGitUrl] = useState("");
     const [branch, setBranch] = useState("main");
     const [gitToken, setGitToken] = useState("");
@@ -13,12 +17,12 @@ export function RepoImporter() {
     const [status, setStatus] = useState<string | null>(null);
 
     const handleImport = async () => {
-        if (!gitUrl) return;
+        if (!gitUrl || !projectId) return;
         setLoading(true);
         setStatus("저장소 분석 중...");
 
         try {
-            const result = await importRepository(gitUrl, branch, gitToken || undefined);
+            const result = await importRepository(projectId, gitUrl, branch, gitToken || undefined);
             if (result.success) {
                 setStatus("가져오기 성공! 페이지를 새로고침합니다...");
                 setTimeout(() => {
@@ -60,12 +64,15 @@ export function RepoImporter() {
                 </div>
                 <button
                     onClick={handleImport}
-                    disabled={loading || !gitUrl}
+                    disabled={loading || !gitUrl || !projectId}
                     className="bg-primary text-primary-foreground font-bold py-2 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "API 분석 및 가져오기"}
                 </button>
             </div>
+            {!projectId && (
+                <p className="text-xs text-destructive font-medium px-1">⚠️ 프로젝트를 먼저 선택하거나 생성해야 분석이 가능합니다.</p>
+            )}
 
             <div className="relative">
                 <input

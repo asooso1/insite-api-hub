@@ -17,7 +17,7 @@ interface ImportResult {
     };
 }
 
-export async function importRepository(gitUrl: string, branch: string = "main", gitToken?: string): Promise<ImportResult> {
+export async function importRepository(projectId: string, gitUrl: string, branch: string = "main", gitToken?: string): Promise<ImportResult> {
     const tempId = Math.random().toString(36).substring(7);
     const tempDir = path.join("/tmp", `apihub-${tempId}`);
 
@@ -150,24 +150,24 @@ export async function importRepository(gitUrl: string, branch: string = "main", 
         try {
             await client.query('BEGIN');
 
-            // 기존 데이터 초기화 (단순화를 위해 전체 삭제 후 재삽입)
-            await client.query('DELETE FROM endpoints');
-            await client.query('DELETE FROM api_models');
+            // 기존 데이터 초기화 (특정 프로젝트의 데이터만 삭제)
+            await client.query('DELETE FROM endpoints WHERE project_id = $1', [projectId]);
+            await client.query('DELETE FROM api_models WHERE project_id = $1', [projectId]);
 
             // 모델 저장
             for (const model of Object.values(models)) {
                 await client.query(
-                    'INSERT INTO api_models (name, fields) VALUES ($1, $2)',
-                    [model.name, JSON.stringify(model.fields)]
+                    'INSERT INTO api_models (project_id, name, fields) VALUES ($1, $2, $3)',
+                    [projectId, model.name, JSON.stringify(model.fields)]
                 );
             }
 
             // 엔드포인트 저장
             for (const ep of finalEndpoints) {
                 await client.query(
-                    `INSERT INTO endpoints (path, method, class_name, method_name, summary, request_body_model, response_type, version, synced_at)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                    [ep.path, ep.method, ep.className, ep.methodName, ep.summary, ep.requestBody, ep.responseType, ep.version, ep.syncedAt]
+                    `INSERT INTO endpoints (project_id, path, method, class_name, method_name, summary, request_body_model, response_type, version, synced_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                    [projectId, ep.path, ep.method, ep.className, ep.methodName, ep.summary, ep.requestBody, ep.responseType, ep.version, ep.syncedAt]
                 );
             }
 

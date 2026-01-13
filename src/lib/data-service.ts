@@ -1,12 +1,30 @@
 import { db } from "./db";
-import { MockDB, ApiEndpoint, ApiModel, EnvConfig, ApiTestCase } from "./mock-db";
+import { MockDB, ApiEndpoint, ApiModel, EnvConfig, ApiTestCase, Project } from "./api-types";
 
-export async function getAppData(): Promise<MockDB> {
+export async function getAppData(projectId?: string): Promise<MockDB> {
     try {
-        // 1. Fetch Projects (currently empty in mock)
-        const projectsRes = await db.query('SELECT * FROM projects ORDER BY created_at DESC');
+        // 1. Fetch Projects
+        const projectsRes = await db.query('SELECT id, name, description, git_url as "gitUrl", created_at as "createdAt" FROM projects ORDER BY created_at DESC');
+        const projects = projectsRes.rows as unknown as Project[];
 
-        // 2. Fetch Endpoints
+        // If no projectId specifically provided, use the first one available
+        const targetProjectId = projectId || (projects.length > 0 ? projects[0].id : null);
+
+        if (!targetProjectId) {
+            return {
+                projects: projects,
+                endpoints: [],
+                models: [],
+                environments: {
+                    DEV: { baseUrl: "", token: "" },
+                    STG: { baseUrl: "", token: "" },
+                    PRD: { baseUrl: "", token: "" }
+                },
+                testCases: []
+            };
+        }
+
+        // 2. Fetch Endpoints for specific project
         const endpointsRes = await db.query(`
             SELECT 
                 id::text, 
@@ -20,20 +38,21 @@ export async function getAppData(): Promise<MockDB> {
                 synced_at as "syncedAt", 
                 version 
             FROM endpoints 
+            WHERE project_id = $1
             ORDER BY synced_at DESC
-        `);
+        `, [targetProjectId]);
 
-        // 3. Fetch Models
+        // 3. Fetch Models for specific project
         const modelsRes = await db.query(`
-            SELECT name, fields FROM api_models
-        `);
+            SELECT name, fields FROM api_models WHERE project_id = $1
+        `, [targetProjectId]);
 
-        // 4. Fetch Environments
+        // 4. Fetch Environments (Still global for now, or could be per project if needed)
         const envsRes = await db.query(`
             SELECT env_type, base_url, token, dooray_webhook_url FROM environments
         `);
 
-        // Transform environments to Record<'DEV' | 'STG' | 'PRD', EnvConfig>
+        // Transform environments
         const environments: Record<'DEV' | 'STG' | 'PRD', EnvConfig> = {
             DEV: { baseUrl: "", token: "" },
             STG: { baseUrl: "", token: "" },
@@ -49,15 +68,12 @@ export async function getAppData(): Promise<MockDB> {
             };
         });
 
-        // 5. Fetch Test Cases
-        const testCasesRes = await db.query('SELECT * FROM environments'); // Placeholder or actual table
-
         return {
-            projects: projectsRes.rows,
+            projects: projects,
             endpoints: endpointsRes.rows as ApiEndpoint[],
             models: modelsRes.rows as ApiModel[],
             environments: environments,
-            testCases: [] // testCases table is optional for now
+            testCases: []
         };
     } catch (err) {
         console.error("DB Fetch Error:", err);

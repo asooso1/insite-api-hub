@@ -44,6 +44,7 @@ const QUERIES = [
         ON CONFLICT (env_type) DO NOTHING;`,
     `CREATE TABLE IF NOT EXISTS test_cases (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
         api_id VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
         payload TEXT,
@@ -51,9 +52,11 @@ const QUERIES = [
         expected_status INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`,
+    `CREATE INDEX IF NOT EXISTS idx_test_cases_project_id ON test_cases(project_id);`,
     `CREATE INDEX IF NOT EXISTS idx_test_cases_api_id ON test_cases(api_id);`,
     `CREATE TABLE IF NOT EXISTS test_history (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
         api_id VARCHAR(255) NOT NULL,
         test_case_id UUID,
         env VARCHAR(50) NOT NULL,
@@ -63,18 +66,46 @@ const QUERIES = [
         response_body TEXT,
         executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`,
+    `CREATE INDEX IF NOT EXISTS idx_test_history_project_id ON test_history(project_id);`,
     `CREATE INDEX IF NOT EXISTS idx_test_history_api_id ON test_history(api_id);`,
     `CREATE INDEX IF NOT EXISTS idx_test_history_executed_at ON test_history(executed_at DESC);`
 ];
+
+async function ensureDefaultProject(client: any) {
+    const res = await client.query("SELECT id FROM projects LIMIT 1");
+    if (res.rows.length === 0) {
+        console.log("🐘 [Migration] Creating Default Project...");
+        const insertRes = await client.query(
+            "INSERT INTO projects (name, description) VALUES ($1, $2) RETURNING id",
+            ["Default Project", "자동 생성된 기본 프로젝트입니다."]
+        );
+        return insertRes.rows[0].id;
+    }
+    return res.rows[0].id;
+}
 
 export async function runMigrations() {
     console.log("🐘 [Migration] Starting database check...", new Date().toISOString());
     const client = await db.getClient();
     try {
         await client.query("BEGIN");
+
+        // Ensure tables exist first
         for (const query of QUERIES) {
             await client.query(query);
         }
+
+        const defaultProjectId = await ensureDefaultProject(client);
+
+        // Update existing rows that don't have project_id (Migration for forward compatibility)
+        const tablesToUpdate = ['endpoints', 'api_models', 'test_cases', 'test_history'];
+        for (const table of tablesToUpdate) {
+            await client.query(
+                `UPDATE ${table} SET project_id = $1 WHERE project_id IS NULL`,
+                [defaultProjectId]
+            );
+        }
+
         await client.query("COMMIT");
         console.log("✅ [Migration] Database schema is up to date.");
     } catch (e) {

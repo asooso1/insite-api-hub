@@ -4,16 +4,18 @@ import type { ApiEndpoint, EnvConfig, ApiModel } from "@/lib/api-types";
 import { generateSampleJson } from "@/lib/utils/json-generator";
 import { testApi, ApiTestResponse } from "@/app/actions/test-api";
 import { saveTestCase, getTestCases, deleteTestCase, saveTestHistory, getTestHistory } from "@/app/actions/test-case";
-import type { TestCase, TestHistory } from "@/lib/api-types";
+import { runBatchTest } from "@/app/actions/batch-test";
+import type { TestCase, TestHistory, BatchTestSummary } from "@/lib/api-types";
 import { ApiResponseViewer } from "./ApiResponseViewer";
 
 interface ApiTesterProps {
+    projectId?: string;
     endpoints: ApiEndpoint[];
     environments: Record<'DEV' | 'STG' | 'PRD', EnvConfig>;
     allModels: ApiModel[];
 }
 
-export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps) {
+export function ApiTester({ projectId, endpoints, environments, allModels }: ApiTesterProps) {
     const [selectedApiId, setSelectedApiId] = useState("");
     const [env, setEnv] = useState<'DEV' | 'STG' | 'PRD'>('DEV');
     const [payload, setPayload] = useState("{}");
@@ -31,6 +33,10 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
     const [history, setHistory] = useState<TestHistory[]>([]);
     const [caseName, setCaseName] = useState("");
     const [savingCase, setSavingCase] = useState(false);
+
+    // Batch Runner state
+    const [batchSummary, setBatchSummary] = useState<BatchTestSummary | null>(null);
+    const [runningBatch, setRunningBatch] = useState(false);
 
     const selectedApi = endpoints.find(api => api.id === selectedApiId);
 
@@ -109,14 +115,17 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
             setResponse(result);
 
             // Save History
-            await saveTestHistory(
-                selectedApi.id!,
-                env,
-                result.statusCode || 0,
-                result.responseTime || 0,
-                result.success
-            );
-            loadHistory(); // Refresh history
+            if (projectId) {
+                await saveTestHistory(
+                    projectId,
+                    selectedApi.id!,
+                    env,
+                    result.statusCode || 0,
+                    result.responseTime || 0,
+                    result.success
+                );
+                loadHistory(); // Refresh history
+            }
 
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "unknown error";
@@ -131,13 +140,13 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
     };
 
     const handleSaveTestCase = async () => {
-        if (!selectedApi || !caseName.trim()) return;
+        if (!selectedApi || !caseName.trim() || !projectId) return;
         setSavingCase(true);
 
         const headerObj: Record<string, string> = {};
         headers.forEach(h => { if (h.key) headerObj[h.key] = h.value; });
 
-        await saveTestCase(selectedApi.id!, caseName, payload, headerObj);
+        await saveTestCase(projectId, selectedApi.id!, caseName, payload, headerObj);
         setCaseName("");
         await loadTestCases();
         setSavingCase(false);
@@ -162,6 +171,29 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
             }
         }
         alert(`테스트 케이스 '${tc.name}' 불러오기 완료`);
+    };
+
+    const handleRunBatchTest = async () => {
+        if (!selectedApi || !projectId || testCases.length === 0) return;
+        setRunningBatch(true);
+        setBatchSummary(null);
+        setActiveTab('cases');
+
+        try {
+            const summary = await runBatchTest(
+                projectId,
+                selectedApi.id!,
+                env,
+                environments,
+                selectedApi
+            );
+            setBatchSummary(summary);
+            loadHistory();
+        } catch (err) {
+            alert("일괄 실행 중 오류가 발생했습니다.");
+        } finally {
+            setRunningBatch(false);
+        }
     };
 
     const handleGenerateSample = () => {
@@ -350,9 +382,61 @@ export function ApiTester({ endpoints, environments, allModels }: ApiTesterProps
 
                         {/* Tab Content: Test Cases */}
                         {activeTab === 'cases' && (
-                            <div className="absolute inset-0 overflow-auto p-4 space-y-3">
+                            <div className="absolute inset-0 overflow-auto p-4 space-y-4">
+                                {testCases.length > 0 && !batchSummary && (
+                                    <button
+                                        onClick={handleRunBatchTest}
+                                        disabled={runningBatch}
+                                        className="w-full py-2 bg-chart-2 text-white rounded-xl text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 mb-4 sticky top-0 z-10 shadow-lg"
+                                    >
+                                        {runningBatch ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                                        모든 케이스 일괄 실행 ({testCases.length})
+                                    </button>
+                                )}
+
+                                {batchSummary && (
+                                    <div className="bg-card border-2 border-primary/20 rounded-xl p-4 mb-4 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="font-bold text-sm flex items-center gap-2">
+                                                <History className="w-4 h-4 text-primary" />
+                                                일괄 실행 리포트
+                                            </h4>
+                                            <button
+                                                onClick={() => setBatchSummary(null)}
+                                                className="text-[10px] text-muted-foreground hover:text-foreground"
+                                            >
+                                                닫기
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div className="bg-muted/50 p-2 rounded-lg text-center">
+                                                <div className="text-[10px] text-muted-foreground">전체</div>
+                                                <div className="text-sm font-bold">{batchSummary.total}</div>
+                                            </div>
+                                            <div className="bg-green-500/10 p-2 rounded-lg text-center">
+                                                <div className="text-[10px] text-green-600">성공</div>
+                                                <div className="text-sm font-bold text-green-600">{batchSummary.successCount}</div>
+                                            </div>
+                                            <div className="bg-red-500/10 p-2 rounded-lg text-center">
+                                                <div className="text-[10px] text-red-600">실패</div>
+                                                <div className="text-sm font-bold text-red-600">{batchSummary.failCount}</div>
+                                            </div>
+                                        </div>
+                                        <div className="max-h-40 overflow-y-auto space-y-1 border-t border-border/50 pt-2">
+                                            {batchSummary.results.map((r, i) => (
+                                                <div key={i} className="flex items-center justify-between text-[10px] py-1">
+                                                    <span className="truncate flex-1 mr-2">{r.testCaseName}</span>
+                                                    <span className={r.success ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
+                                                        {r.success ? "SUCCESS" : "FAIL"}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {testCases.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
+                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50 pt-10">
                                         <BookMarked className="w-10 h-10 mb-2 opacity-20" />
                                         <p className="text-sm">저장된 테스트 케이스가 없습니다.</p>
                                     </div>
