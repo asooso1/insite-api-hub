@@ -6,6 +6,7 @@ import { ApiModelTree } from "@/components/ApiModelTree";
 import { ApiList } from "@/components/ApiList";
 import { EnvironmentManager } from "@/components/EnvironmentManager";
 import { ApiTester } from "@/components/ApiTester";
+import { ProjectSelector } from "@/components/ProjectSelector";
 import { exportApisToExcel } from "@/lib/utils/excel-export";
 import { generateTypeScriptType } from "@/lib/utils/ts-generator";
 import {
@@ -31,11 +32,19 @@ export type DashboardTab = 'endpoints' | 'environments' | 'test';
 
 interface DashboardUIProps {
     initialData: MockDB;
+    selectedProjectId?: string;
 }
 
-export default function DashboardUI({ initialData }: DashboardUIProps) {
+export default function DashboardUI({ initialData, selectedProjectId }: DashboardUIProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<DashboardTab>('endpoints');
+
+    const handleProjectSelect = (id: string) => {
+        document.cookie = `current_project_id=${id}; path=/; max-age=31536000`; // 1 year
+        window.location.reload();
+    };
+
+    const currentProjectId = selectedProjectId || (initialData.projects.length > 0 ? initialData.projects[0].id : null);
 
     const filteredEndpoints = initialData.endpoints.filter((e: ApiEndpoint) =>
         e.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -51,6 +60,14 @@ export default function DashboardUI({ initialData }: DashboardUIProps) {
                         <Layout className="w-6 h-6 text-primary" />
                         API Hub
                     </h1>
+                </div>
+
+                <div className="px-4 mb-6">
+                    <ProjectSelector
+                        projects={initialData.projects}
+                        currentProjectId={currentProjectId}
+                        onSelect={handleProjectSelect}
+                    />
                 </div>
 
                 <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
@@ -85,10 +102,9 @@ export default function DashboardUI({ initialData }: DashboardUIProps) {
                 </nav>
 
                 <div className="p-4 border-t border-border/50">
-                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all font-medium whitespace-nowrap">
-                        <Plus className="w-4 h-4" />
-                        새 프로젝트 추가
-                    </button>
+                    <p className="text-[10px] text-muted-foreground text-center mb-2 italic">
+                        Logged in as Guest
+                    </p>
                 </div>
             </aside>
 
@@ -145,7 +161,7 @@ export default function DashboardUI({ initialData }: DashboardUIProps) {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <StatCard label="연동된 API 수" value={initialData.endpoints.length.toString()} icon={<Code className="w-5 h-5" />} color="primary" />
                                     <StatCard label="추출된 데이터 모델" value={initialData.models.length.toString()} icon={<Box className="w-5 h-5" />} color="chart-2" />
-                                    <StatCard label="참여 중인 프로젝트" value="1" icon={<Users className="w-5 h-5" />} color="chart-3" />
+                                    <StatCard label="참여 중인 프로젝트" value={initialData.projects.length.toString()} icon={<Users className="w-5 h-5" />} color="chart-3" />
                                 </div>
                             )}
 
@@ -158,7 +174,7 @@ export default function DashboardUI({ initialData }: DashboardUIProps) {
                                                     <Activity className="w-5 h-5 text-primary" />
                                                     <h3 className="text-lg font-semibold">간편 API 분석</h3>
                                                 </div>
-                                                <RepoImporter />
+                                                <RepoImporter projectId={currentProjectId || undefined} />
                                             </section>
 
                                             <section>
@@ -188,6 +204,7 @@ export default function DashboardUI({ initialData }: DashboardUIProps) {
                                     ) : (
                                         <section>
                                             <ApiTester
+                                                projectId={currentProjectId || undefined}
                                                 endpoints={initialData.endpoints}
                                                 environments={initialData.environments}
                                                 allModels={initialData.models}
@@ -239,9 +256,9 @@ export default function DashboardUI({ initialData }: DashboardUIProps) {
                             </div>
                         </motion.div>
                     </AnimatePresence>
-                </div>
-            </main>
-        </div>
+                </div >
+            </main >
+        </div >
     );
 }
 

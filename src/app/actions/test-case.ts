@@ -6,12 +6,14 @@ import { revalidatePath } from "next/cache";
 import { TestCase, TestHistory } from "@/lib/api-types";
 
 // Lazy migration to ensure tables exist
+// Lazy migration to ensure tables exist
 async function ensureTablesExist() {
     const client = await db.getClient();
     try {
         await client.query(`
             CREATE TABLE IF NOT EXISTS test_cases (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
                 api_id VARCHAR(255) NOT NULL,
                 name VARCHAR(255) NOT NULL,
                 payload TEXT,
@@ -23,6 +25,7 @@ async function ensureTablesExist() {
         await client.query(`
             CREATE TABLE IF NOT EXISTS test_history (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
                 api_id VARCHAR(255) NOT NULL,
                 test_case_id UUID,
                 env VARCHAR(50) NOT NULL,
@@ -33,9 +36,6 @@ async function ensureTablesExist() {
                 executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        // Indexes (Succinct checks to avoid errors if they exist)
-        await client.query(`CREATE INDEX IF NOT EXISTS idx_test_cases_api_id ON test_cases(api_id);`);
-        await client.query(`CREATE INDEX IF NOT EXISTS idx_test_history_api_id ON test_history(api_id);`);
     } catch (e) {
         console.error("Migration error:", e);
     } finally {
@@ -43,8 +43,8 @@ async function ensureTablesExist() {
     }
 }
 
-
 export async function saveTestCase(
+    projectId: string,
     apiId: string,
     name: string,
     payload: string,
@@ -55,9 +55,9 @@ export async function saveTestCase(
     const client = await db.getClient();
     try {
         await client.query(
-            `INSERT INTO test_cases (api_id, name, payload, headers, expected_status)
-             VALUES ($1, $2, $3, $4, $5)`,
-            [apiId, name, payload, JSON.stringify(headers), expectedStatus]
+            `INSERT INTO test_cases (project_id, api_id, name, payload, headers, expected_status)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [projectId, apiId, name, payload, JSON.stringify(headers), expectedStatus]
         );
         revalidatePath('/');
         return { success: true, message: "테스트 케이스가 저장되었습니다." };
@@ -97,6 +97,7 @@ export async function deleteTestCase(id: string) {
 }
 
 export async function saveTestHistory(
+    projectId: string,
     apiId: string,
     env: string,
     status: number,
@@ -108,11 +109,10 @@ export async function saveTestHistory(
     const client = await db.getClient();
     try {
         await client.query(
-            `INSERT INTO test_history (api_id, env, status, response_time, success, test_case_id)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [apiId, env, status, responseTime, success, testCaseId]
+            `INSERT INTO test_history (project_id, api_id, env, status, response_time, success, test_case_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [projectId, apiId, env, status, responseTime, success, testCaseId]
         );
-        // 히스토리는 revalidatePath 필요 없음 (클라이언트에서 즉시 갱신 가능 or 별도 탭에서 로드)
         return { success: true };
     } catch (error) {
         console.error("Failed to save history:", error);

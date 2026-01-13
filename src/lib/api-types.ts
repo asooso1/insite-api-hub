@@ -1,3 +1,11 @@
+export interface Project {
+    id: string;
+    name: string;
+    description?: string;
+    gitUrl?: string;
+    createdAt?: Date;
+}
+
 export interface ApiEndpoint {
     id?: string;
     path: string;
@@ -41,7 +49,7 @@ export interface ApiTestCase {
 }
 
 export interface MockDB {
-    projects: unknown[];
+    projects: Project[];
     endpoints: ApiEndpoint[];
     models: ApiModel[];
     environments: Record<'DEV' | 'STG' | 'PRD', EnvConfig>;
@@ -68,4 +76,20 @@ export interface TestHistory {
     response_time: number;
     success: boolean;
     executed_at: Date;
+}
+
+export interface BatchTestResult {
+    testCaseId: string;
+    testCaseName: string;
+    success: boolean;
+    status: number;
+    responseTime: number;
+    error?: string;
+}
+
+export interface BatchTestSummary {
+    total: number;
+    successCount: number;
+    failCount: number;
+    results: BatchTestResult[];
 }
