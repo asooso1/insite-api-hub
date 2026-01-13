@@ -93,3 +93,21 @@ export interface BatchTestSummary {
     failCount: number;
     results: BatchTestResult[];
 }
+
+export interface ScenarioStep {
+    id: string;
+    testCaseId: string;
+    testCaseName: string;
+    order: number;
+    variableMappings: Record<string, string>; // { "jsonPath": "variableName" }
+}
+
+export interface TestScenario {
+    id: string;
+    projectId: string;
+    name: string;
+    description?: string;
+    steps: ScenarioStep[];
+    createdAt: string;
+    updatedAt: string;
+}

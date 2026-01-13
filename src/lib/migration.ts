@@ -68,7 +68,17 @@ const QUERIES = [
     );`,
     `CREATE INDEX IF NOT EXISTS idx_test_history_project_id ON test_history(project_id);`,
     `CREATE INDEX IF NOT EXISTS idx_test_history_api_id ON test_history(api_id);`,
-    `CREATE INDEX IF NOT EXISTS idx_test_history_executed_at ON test_history(executed_at DESC);`
+    `CREATE INDEX IF NOT EXISTS idx_test_history_executed_at ON test_history(executed_at DESC);`,
+    `CREATE TABLE IF NOT EXISTS scenarios (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        steps JSONB NOT NULL DEFAULT '[]',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );`,
+    `CREATE INDEX IF NOT EXISTS idx_scenarios_project_id ON scenarios(project_id);`
 ];
 
 async function ensureDefaultProject(client: any) {
@@ -98,7 +108,7 @@ export async function runMigrations() {
         const defaultProjectId = await ensureDefaultProject(client);
 
         // Update existing rows that don't have project_id (Migration for forward compatibility)
-        const tablesToUpdate = ['endpoints', 'api_models', 'test_cases', 'test_history'];
+        const tablesToUpdate = ['endpoints', 'api_models', 'test_cases', 'test_history', 'scenarios'];
         for (const table of tablesToUpdate) {
             await client.query(
                 `UPDATE ${table} SET project_id = $1 WHERE project_id IS NULL`,

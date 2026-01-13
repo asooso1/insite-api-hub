@@ -1,64 +1,61 @@
-"use client";
+'use client';
 
 import { useState } from "react";
-import { RepoImporter } from "@/components/RepoImporter";
-import { ApiModelTree } from "@/components/ApiModelTree";
-import { ApiList } from "@/components/ApiList";
-import { EnvironmentManager } from "@/components/EnvironmentManager";
-import { ApiTester } from "@/components/ApiTester";
-import { ProjectSelector } from "@/components/ProjectSelector";
-import { exportApisToExcel } from "@/lib/utils/excel-export";
-import { generateTypeScriptType } from "@/lib/utils/ts-generator";
 import {
-    Search,
-    Database,
-    Layout,
-    Plus,
-    Globe,
-    Code,
-    FileText,
-    MessageSquare,
-    Users,
     Activity,
     Box,
+    Database,
+    Layers,
+    Layout,
+    Lock,
+    Server,
+    Share2,
+    FileText,
+    Cpu,
+    Github,
+    Search,
     Download,
     Copy,
     Terminal,
-    Filter
+    Filter,
+    ArrowUpDown
 } from "lucide-react";
 import { ApiEndpoint, MockDB } from "@/lib/mock-db";
 import { motion, AnimatePresence } from "framer-motion";
+import { RepoImporter } from "@/components/RepoImporter";
+import { ApiList } from "@/components/ApiList";
+import { EnvironmentManager } from "@/components/EnvironmentManager";
+import { ApiTester } from "@/components/ApiTester";
+import { ScenarioManager } from "@/components/ScenarioManager";
+import { ProjectSelector } from "@/components/ProjectSelector";
+import { exportApisToExcel } from "@/lib/utils/excel-export";
+import { generateTypeScriptType } from "@/lib/utils/ts-generator";
+import { ApiModelTree } from "@/components/ApiModelTree";
 
-export type DashboardTab = 'endpoints' | 'environments' | 'test';
+export type DashboardTab = 'endpoints' | 'environments' | 'test' | 'scenarios';
 
 interface DashboardUIProps {
     initialData: MockDB;
-    selectedProjectId?: string;
+    currentProjectId?: string;
 }
 
-export default function DashboardUI({ initialData, selectedProjectId }: DashboardUIProps) {
-    const [searchQuery, setSearchQuery] = useState("");
+export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps) {
     const [activeTab, setActiveTab] = useState<DashboardTab>('endpoints');
+    const [searchQuery, setSearchQuery] = useState("");
     const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
 
-    const handleProjectSelect = (id: string) => {
-        document.cookie = `current_project_id=${id}; path=/; max-age=31536000`; // 1 year
+    const handleProjectSelect = (projectId: string) => {
+        document.cookie = `current_project_id=${projectId}; path=/; max-age=31536000`;
         window.location.reload();
     };
 
-    const currentProjectId = selectedProjectId || (initialData.projects.length > 0 ? initialData.projects[0].id : null);
-
-    const filteredEndpoints = initialData.endpoints.filter((e: ApiEndpoint) => {
-        const query = searchQuery.toLowerCase();
-
+    const filteredEndpoints = initialData.endpoints.filter(e => {
         // 1. Method Filter
-        if (selectedMethods.length > 0 && !selectedMethods.includes(e.method)) {
-            return false;
-        }
+        if (selectedMethods.length > 0 && !selectedMethods.includes(e.method)) return false;
 
-        if (!query) return true;
-
-        // 2. Direct Search (Path, Summary, Class, Method)
+        // 2. Direct Search
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
         const matchesDirect =
             e.path.toLowerCase().includes(query) ||
             (e.summary && e.summary.toLowerCase().includes(query)) ||
@@ -83,36 +80,37 @@ export default function DashboardUI({ initialData, selectedProjectId }: Dashboar
     };
 
     return (
-        <div className="flex h-screen bg-background overflow-hidden text-foreground">
+        <div className="flex h-screen bg-background overflow-hidden font-sans">
             {/* Sidebar */}
-            <aside className="w-64 border-r border-border/50 bg-card/30 backdrop-blur-xl flex flex-col shrink-0">
+            <aside className="w-72 bg-card border-r border-border flex flex-col shadow-2xl z-20">
                 <div className="p-6">
-                    <h1 className="text-xl font-bold gradient-text flex items-center gap-2">
-                        <Layout className="w-6 h-6 text-primary" />
-                        API Hub
-                    </h1>
-                </div>
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
+                            <Cpu className="text-primary w-6 h-6 animate-pulse" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-black tracking-tighter text-foreground">API HUB</h1>
+                            <p className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase opacity-70">Unified Endpoint Manager</p>
+                        </div>
+                    </div>
 
-                <div className="px-4 mb-6">
                     <ProjectSelector
                         projects={initialData.projects}
                         currentProjectId={currentProjectId}
                         onSelect={handleProjectSelect}
                     />
-                </div>
 
-                <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-                    <div className="pb-4">
-                        <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">탐색</p>
+                    <div className="space-y-1 mt-8">
                         <SidebarItem
-                            icon={<Database className="w-4 h-4" />}
-                            label="프로젝트 및 API"
+                            icon={<Box className="w-4 h-4" />}
+                            label="엔드포인트 대시보드"
                             active={activeTab === 'endpoints'}
                             onClick={() => setActiveTab('endpoints')}
+                            badge={initialData.endpoints.length.toString()}
                         />
                         <SidebarItem
-                            icon={<Globe className="w-4 h-4" />}
-                            label="환경 및 서버 설정"
+                            icon={<Database className="w-4 h-4" />}
+                            label="서버 환경 설정"
                             active={activeTab === 'environments'}
                             onClick={() => setActiveTab('environments')}
                         />
@@ -122,51 +120,62 @@ export default function DashboardUI({ initialData, selectedProjectId }: Dashboar
                             active={activeTab === 'test'}
                             onClick={() => setActiveTab('test')}
                         />
+                        <SidebarItem
+                            icon={<ArrowUpDown className="w-4 h-4" />}
+                            label="시나리오 테스트"
+                            active={activeTab === 'scenarios'}
+                            onClick={() => setActiveTab('scenarios')}
+                        />
                         <SidebarItem icon={<FileText className="w-4 h-4" />} label="문서 및 가이드" />
                     </div>
 
-                    <div className="pb-4">
-                        <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">협업 및 알림</p>
-                        <SidebarItem icon={<MessageSquare className="w-4 h-4" />} label="댓글 및 피드백" badge="3" />
-                        <SidebarItem icon={<Users className="w-4 h-4" />} label="팀 멤버 관리" />
+                    <div className="mt-12">
+                        <h4 className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 opacity-50">외부 연동</h4>
+                        <div className="space-y-1">
+                            <SidebarItem icon={<Github className="w-4 h-4" />} label="Git 리포지토리" />
+                            <SidebarItem icon={<Share2 className="w-4 h-4" />} label="Dooray 알림" />
+                        </div>
                     </div>
-                </nav>
+                </div>
 
-                <div className="p-4 border-t border-border/50">
-                    <p className="text-[10px] text-muted-foreground text-center mb-2 italic">
-                        Logged in as Guest
-                    </p>
+                <div className="mt-auto p-6 border-t border-border bg-muted/30">
+                    <RepoImporter projectId={currentProjectId} />
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
-                <header className="h-16 border-b border-border/50 bg-card/30 backdrop-blur-xl flex items-center justify-between px-8 shrink-0">
-                    <div className="flex items-center gap-4 flex-1 max-w-xl">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <input
-                                type="text"
-                                placeholder="API 경로, DTO 또는 문서 검색..."
-                                className="w-full pl-10 pr-4 py-2 bg-muted/50 border border-border/50 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/50 text-sm"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+            <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
+                <div className="max-w-[1600px] mx-auto p-8">
+                    {/* Header Controls */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight">
+                                {activeTab === 'endpoints' ? "대시보드 개요" :
+                                    activeTab === 'environments' ? "서버 환경 설정" :
+                                        activeTab === 'test' ? "API 통합 테스트" : "시나리오 자동화 테스트"}
+                            </h2>
+                            <p className="text-muted-foreground">
+                                {activeTab === 'endpoints' ? "Spring 2.x 마이크로서비스 생태계를 모든 환경에서 효율적으로 관리하세요." :
+                                    activeTab === 'environments' ? "전역 서버 정보 및 인증 토큰, 웹훅 연동 정보를 관리합니다." :
+                                        activeTab === 'test' ? "등록된 모든 API를 대상으로 실제 요청을 시뮬레이션하고 응답을 확인합니다." :
+                                            "여러 API 케이스를 논리적 순서로 연결하고 변환하여 복합 비즈니스 흐름을 검증합니다."}
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <div className="relative group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="경로, 클래스, 혹은 DTO 필드명 검색..."
+                                    className="pl-10 pr-4 py-2.5 bg-card border border-border rounded-xl w-72 md:w-96 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary text-secondary-foreground rounded-full text-xs font-medium border border-border">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            동기화 중: main
-                        </div>
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-chart-2" />
-                    </div>
-                </header>
-
-                {/* Dashboard View */}
-                <div className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
@@ -174,97 +183,83 @@ export default function DashboardUI({ initialData, selectedProjectId }: Dashboar
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
-                            className="space-y-8"
                         >
-                            <div>
-                                <h2 className="text-2xl font-bold tracking-tight">
-                                    {activeTab === 'endpoints' ? "대시보드 개요" :
-                                        activeTab === 'environments' ? "서버 환경 설정" : "API 통합 테스트"}
-                                </h2>
-                                <p className="text-muted-foreground">
-                                    {activeTab === 'endpoints' ? "Spring 2.x 마이크로서비스 생태계를 모든 환경에서 효율적으로 관리하세요." :
-                                        activeTab === 'environments' ? "전역 서버 정보 및 인증 토큰, 웹훅 연동 정보를 관리합니다." :
-                                            "등록된 모든 API를 대상으로 실제 요청을 시뮬레이션하고 응답을 확인합니다."}
-                                </p>
-                            </div>
+                            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                                <div className="xl:col-span-3 space-y-8">
+                                    {/* HTTP Method Filters (Only in Endpoints Tab) */}
+                                    {activeTab === 'endpoints' && (
+                                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-4 duration-500 delay-150">
+                                            <Filter className="w-4 h-4 text-muted-foreground mr-2" />
+                                            {['GET', 'POST', 'PUT', 'DELETE'].map(m => (
+                                                <button
+                                                    key={m}
+                                                    onClick={() => toggleMethod(m)}
+                                                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${selectedMethods.includes(m)
+                                                            ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20'
+                                                            : 'bg-card border-border text-muted-foreground hover:border-primary/50'
+                                                        }`}
+                                                >
+                                                    {m}
+                                                </button>
+                                            ))}
+                                            <button
+                                                onClick={() => setSelectedMethods([])}
+                                                className="ml-2 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors"
+                                            >
+                                                초기화
+                                            </button>
+                                        </div>
+                                    )}
 
-                            {activeTab === 'endpoints' && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <StatCard label="연동된 API 수" value={initialData.endpoints.length.toString()} icon={<Code className="w-5 h-5" />} color="primary" />
-                                    <StatCard label="추출된 데이터 모델" value={initialData.models.length.toString()} icon={<Box className="w-5 h-5" />} color="chart-2" />
-                                    <StatCard label="참여 중인 프로젝트" value={initialData.projects.length.toString()} icon={<Users className="w-5 h-5" />} color="chart-3" />
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                                <div className="xl:col-span-2 space-y-8">
-                                    {activeTab === 'endpoints' ? (
+                                    {activeTab === 'endpoints' && (
                                         <>
-                                            <section>
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <Activity className="w-5 h-5 text-primary" />
-                                                    <h3 className="text-lg font-semibold">간편 API 분석</h3>
-                                                </div>
-                                                <RepoImporter projectId={currentProjectId || undefined} />
-                                            </section>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <StatCard label="총 엔드포인트" value={initialData.endpoints.length.toString()} icon={<Layers className="w-5 h-5" />} color="primary" />
+                                                <StatCard label="데이터 모델" value={initialData.models.length.toString()} icon={<Database className="w-5 h-5" />} color="chart-2" />
+                                                <StatCard label="활성 서버 환경" value={Object.keys(initialData.environments).length.toString()} icon={<Server className="w-5 h-5" />} color="chart-3" />
+                                            </div>
 
-                                            <section>
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="flex items-center gap-2">
-                                                            <Database className="w-5 h-5 text-primary" />
-                                                            <h3 className="text-lg font-semibold">API 엔드포인트 목록</h3>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            {['GET', 'POST', 'PUT', 'DELETE'].map(m => (
-                                                                <button
-                                                                    key={m}
-                                                                    onClick={() => toggleMethod(m)}
-                                                                    className={`
-                                                                        px-2.5 py-1 rounded text-[10px] font-bold transition-all border
-                                                                        ${selectedMethods.includes(m)
-                                                                            ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                                                            : 'bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted'}
-                                                                    `}
-                                                                >
-                                                                    {m}
-                                                                </button>
-                                                            ))}
-                                                            {selectedMethods.length > 0 && (
-                                                                <button
-                                                                    onClick={() => setSelectedMethods([])}
-                                                                    className="text-[10px] text-muted-foreground hover:text-primary transition-colors ml-1"
-                                                                >
-                                                                    초기화
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-xs text-muted-foreground mr-2">{filteredEndpoints.length}개의 API 발견</span>
+                                            <section className="bg-card/50 backdrop-blur-xl border border-border/50 rounded-2xl p-6">
+                                                <div className="flex items-center justify-between mb-6">
+                                                    <h3 className="text-lg font-bold flex items-center gap-2">
+                                                        <Box className="w-5 h-5 text-primary" /> API 목록 및 탐색
+                                                    </h3>
+                                                    <div className="flex gap-2">
                                                         <button
-                                                            onClick={() => exportApisToExcel(initialData.endpoints)}
-                                                            className="flex items-center gap-2 px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-xs font-semibold border border-border transition-all"
+                                                            className="px-3 py-1.5 bg-muted/50 rounded-lg text-xs font-bold flex items-center gap-2 border border-border/50 hover:bg-muted"
+                                                            onClick={() => exportApisToExcel(filteredEndpoints)}
                                                         >
-                                                            <Download className="w-3.5 h-3.5" />
-                                                            엑셀 내보내기
+                                                            <Download className="w-3.5 h-3.5" /> 엑셀 내보내기
                                                         </button>
                                                     </div>
                                                 </div>
                                                 <ApiList endpoints={filteredEndpoints} allModels={initialData.models} />
                                             </section>
                                         </>
-                                    ) : activeTab === 'environments' ? (
+                                    )}
+
+                                    {activeTab === 'environments' && (
                                         <section>
                                             <EnvironmentManager initialConfigs={initialData.environments} />
                                         </section>
-                                    ) : (
+                                    )}
+
+                                    {activeTab === 'test' && (
                                         <section>
                                             <ApiTester
                                                 projectId={currentProjectId || undefined}
                                                 endpoints={initialData.endpoints}
                                                 environments={initialData.environments}
                                                 allModels={initialData.models}
+                                            />
+                                        </section>
+                                    )}
+
+                                    {activeTab === 'scenarios' && (
+                                        <section>
+                                            <ScenarioManager
+                                                projectId={currentProjectId || ""}
+                                                environments={initialData.environments}
                                             />
                                         </section>
                                     )}
