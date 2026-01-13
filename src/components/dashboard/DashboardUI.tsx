@@ -18,9 +18,10 @@ import {
     Copy,
     Terminal,
     Filter,
-    ArrowUpDown
+    ArrowUpDown,
+    History as HistoryIcon
 } from "lucide-react";
-import { ApiEndpoint, MockDB } from "@/lib/mock-db";
+import { MockDB } from "@/lib/mock-db";
 import { motion, AnimatePresence } from "framer-motion";
 import { RepoImporter } from "@/components/RepoImporter";
 import { ApiList } from "@/components/ApiList";
@@ -31,8 +32,11 @@ import { ProjectSelector } from "@/components/ProjectSelector";
 import { exportApisToExcel } from "@/lib/utils/excel-export";
 import { generateTypeScriptType } from "@/lib/utils/ts-generator";
 import { ApiModelTree } from "@/components/ApiModelTree";
+import { VersionHistoryManager } from "@/components/VersionHistoryManager";
+import { ApiDiffViewer } from "@/components/ApiDiffViewer";
+import { ApiVersion } from "@/lib/api-types";
 
-export type DashboardTab = 'endpoints' | 'environments' | 'test' | 'scenarios';
+export type DashboardTab = 'endpoints' | 'environments' | 'test' | 'scenarios' | 'versions';
 
 interface DashboardUIProps {
     initialData: MockDB;
@@ -43,6 +47,7 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
     const [activeTab, setActiveTab] = useState<DashboardTab>('endpoints');
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
+    const [diffVersion, setDiffVersion] = useState<ApiVersion | null>(null);
 
     const handleProjectSelect = (projectId: string) => {
         document.cookie = `current_project_id=${projectId}; path=/; max-age=31536000`;
@@ -50,11 +55,9 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
     };
 
     const filteredEndpoints = initialData.endpoints.filter(e => {
-        // 1. Method Filter
         if (selectedMethods.length > 0 && !selectedMethods.includes(e.method)) return false;
-
-        // 2. Direct Search
         if (!searchQuery) return true;
+
         const query = searchQuery.toLowerCase();
         const matchesDirect =
             e.path.toLowerCase().includes(query) ||
@@ -64,7 +67,6 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
 
         if (matchesDirect) return true;
 
-        // 3. DTO Field Search (Reverse track)
         const relevantModels = initialData.models.filter(m =>
             (m.name === e.requestBody || m.name === e.responseType) &&
             m.fields?.some(f => f.name.toLowerCase().includes(query))
@@ -83,7 +85,7 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
         <div className="flex h-screen bg-background overflow-hidden font-sans">
             {/* Sidebar */}
             <aside className="w-72 bg-card border-r border-border flex flex-col shadow-2xl z-20">
-                <div className="p-6">
+                <div className="p-6 flex-1 overflow-y-auto no-scrollbar">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
                             <Cpu className="text-primary w-6 h-6 animate-pulse" />
@@ -126,6 +128,12 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                             active={activeTab === 'scenarios'}
                             onClick={() => setActiveTab('scenarios')}
                         />
+                        <SidebarItem
+                            icon={<HistoryIcon className="w-4 h-4" />}
+                            label="버전 및 변경 이력"
+                            active={activeTab === 'versions'}
+                            onClick={() => setActiveTab('versions')}
+                        />
                         <SidebarItem icon={<FileText className="w-4 h-4" />} label="문서 및 가이드" />
                     </div>
 
@@ -138,7 +146,7 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                     </div>
                 </div>
 
-                <div className="mt-auto p-6 border-t border-border bg-muted/30">
+                <div className="p-6 border-t border-border bg-muted/30">
                     <RepoImporter projectId={currentProjectId || undefined} />
                 </div>
             </aside>
@@ -152,13 +160,15 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                             <h2 className="text-2xl font-bold tracking-tight">
                                 {activeTab === 'endpoints' ? "대시보드 개요" :
                                     activeTab === 'environments' ? "서버 환경 설정" :
-                                        activeTab === 'test' ? "API 통합 테스트" : "시나리오 자동화 테스트"}
+                                        activeTab === 'test' ? "API 통합 테스트" :
+                                            activeTab === 'scenarios' ? "시나리오 자동화 테스트" : "API 버전 및 변경 이력"}
                             </h2>
                             <p className="text-muted-foreground">
                                 {activeTab === 'endpoints' ? "Spring 2.x 마이크로서비스 생태계를 모든 환경에서 효율적으로 관리하세요." :
                                     activeTab === 'environments' ? "전역 서버 정보 및 인증 토큰, 웹훅 연동 정보를 관리합니다." :
                                         activeTab === 'test' ? "등록된 모든 API를 대상으로 실제 요청을 시뮬레이션하고 응답을 확인합니다." :
-                                            "여러 API 케이스를 논리적 순서로 연결하고 변환하여 복합 비즈니스 흐름을 검증합니다."}
+                                            activeTab === 'scenarios' ? "연속된 API 호출 흐름을 정의하고 자동화 테스트를 수행합니다." :
+                                                "임포트 시점별 스냅샷 데이터를 통해 변경 사항을 추적합니다."}
                             </p>
                         </div>
 
@@ -186,33 +196,30 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                         >
                             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
                                 <div className="xl:col-span-3 space-y-8">
-                                    {/* HTTP Method Filters (Only in Endpoints Tab) */}
-                                    {activeTab === 'endpoints' && (
-                                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-4 duration-500 delay-150">
-                                            <Filter className="w-4 h-4 text-muted-foreground mr-2" />
-                                            {['GET', 'POST', 'PUT', 'DELETE'].map(m => (
-                                                <button
-                                                    key={m}
-                                                    onClick={() => toggleMethod(m)}
-                                                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${selectedMethods.includes(m)
-                                                        ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20'
-                                                        : 'bg-card border-border text-muted-foreground hover:border-primary/50'
-                                                        }`}
-                                                >
-                                                    {m}
-                                                </button>
-                                            ))}
-                                            <button
-                                                onClick={() => setSelectedMethods([])}
-                                                className="ml-2 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors"
-                                            >
-                                                초기화
-                                            </button>
-                                        </div>
-                                    )}
-
                                     {activeTab === 'endpoints' && (
                                         <>
+                                            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-4 duration-500 delay-150">
+                                                <Filter className="w-4 h-4 text-muted-foreground mr-2" />
+                                                {['GET', 'POST', 'PUT', 'DELETE'].map(m => (
+                                                    <button
+                                                        key={m}
+                                                        onClick={() => toggleMethod(m)}
+                                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${selectedMethods.includes(m)
+                                                            ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20'
+                                                            : 'bg-card border-border text-muted-foreground hover:border-primary/50'
+                                                            }`}
+                                                    >
+                                                        {m}
+                                                    </button>
+                                                ))}
+                                                <button
+                                                    onClick={() => setSelectedMethods([])}
+                                                    className="ml-2 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors"
+                                                >
+                                                    초기화
+                                                </button>
+                                            </div>
+
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                 <StatCard label="총 엔드포인트" value={initialData.endpoints.length.toString()} icon={<Layers className="w-5 h-5" />} color="primary" />
                                                 <StatCard label="데이터 모델" value={initialData.models.length.toString()} icon={<Database className="w-5 h-5" />} color="chart-2" />
@@ -263,6 +270,23 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                                             />
                                         </section>
                                     )}
+
+                                    {activeTab === 'versions' && (
+                                        <section>
+                                            {diffVersion ? (
+                                                <ApiDiffViewer
+                                                    currentEndpoints={initialData.endpoints}
+                                                    oldVersion={diffVersion}
+                                                    onBack={() => setDiffVersion(null)}
+                                                />
+                                            ) : (
+                                                <VersionHistoryManager
+                                                    projectId={currentProjectId || ""}
+                                                    onSelectForDiff={(v) => setDiffVersion(v)}
+                                                />
+                                            )}
+                                        </section>
+                                    )}
                                 </div>
 
                                 {/* Preview Sidebar */}
@@ -284,7 +308,6 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                                                             <button
                                                                 onClick={() => navigator.clipboard.writeText(generateTypeScriptType(model))}
                                                                 className="absolute top-2 right-2 p-1.5 bg-card border border-border rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-muted"
-                                                                title="TS 인터페이스 복사"
                                                             >
                                                                 <Copy className="w-3 h-3 text-muted-foreground" />
                                                             </button>
@@ -308,9 +331,9 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                             </div>
                         </motion.div>
                     </AnimatePresence>
-                </div >
-            </main >
-        </div >
+                </div>
+            </main>
+        </div>
     );
 }
 

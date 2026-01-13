@@ -112,3 +112,13 @@ export interface TestScenario {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface ApiVersion {
+    id: string;
+    projectId: string;
+    versionTag: string;
+    description?: string;
+    endpointsSnapshot: ApiEndpoint[];
+    modelsSnapshot: ApiModel[];
+    createdAt: string;
+}
