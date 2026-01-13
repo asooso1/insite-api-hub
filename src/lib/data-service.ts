@@ -24,33 +24,31 @@ export async function getAppData(projectId?: string): Promise<MockDB> {
             };
         }
 
-        // 2. Fetch Endpoints for specific project
-        const endpointsRes = await db.query(`
-            SELECT 
-                id::text, 
-                path, 
-                method, 
-                class_name as "className", 
-                method_name as "methodName", 
-                summary, 
-                request_body_model as "requestBody", 
-                response_type as "responseType", 
-                synced_at as "syncedAt", 
-                version 
-            FROM endpoints 
-            WHERE project_id = $1
-            ORDER BY synced_at DESC
-        `, [targetProjectId]);
-
-        // 3. Fetch Models for specific project
-        const modelsRes = await db.query(`
-            SELECT name, fields FROM api_models WHERE project_id = $1
-        `, [targetProjectId]);
-
-        // 4. Fetch Environments (Still global for now, or could be per project if needed)
-        const envsRes = await db.query(`
-            SELECT env_type, base_url, token, dooray_webhook_url FROM environments
-        `);
+        // 2, 3, 4. Fetch data in parallel
+        const [endpointsRes, modelsRes, envsRes] = await Promise.all([
+            db.query(`
+                SELECT 
+                    id::text, 
+                    path, 
+                    method, 
+                    class_name as "className", 
+                    method_name as "methodName", 
+                    summary, 
+                    request_body_model as "requestBody", 
+                    response_type as "responseType", 
+                    synced_at as "syncedAt", 
+                    version 
+                FROM endpoints 
+                WHERE project_id = $1
+                ORDER BY path ASC, synced_at DESC
+            `, [targetProjectId]),
+            db.query(`
+                SELECT id::text, name, jsonb_array_length(fields) as "fieldCount" FROM api_models WHERE project_id = $1 ORDER BY name ASC
+            `, [targetProjectId]),
+            db.query(`
+                SELECT env_type, base_url, token, dooray_webhook_url FROM environments
+            `)
+        ]);
 
         // Transform environments
         const environments: Record<'DEV' | 'STG' | 'PRD', EnvConfig> = {

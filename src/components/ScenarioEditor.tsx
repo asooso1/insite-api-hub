@@ -41,8 +41,9 @@ export function ScenarioEditor({ projectId, initialScenario, onClose }: Scenario
     }
 
     const handleAddStep = () => {
+        const uuid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
         const newStep: ScenarioStep = {
-            id: crypto.randomUUID(),
+            id: uuid,
             testCaseId: '',
             testCaseName: '',
             order: steps.length,

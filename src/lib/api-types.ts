@@ -21,8 +21,10 @@ export interface ApiEndpoint {
 }
 
 export interface ApiModel {
+    id?: string;
     name: string;
-    fields: ApiField[];
+    fields?: ApiField[];
+    fieldCount?: number;
 }
 
 export interface ApiField {

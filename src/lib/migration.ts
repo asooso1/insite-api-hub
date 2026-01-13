@@ -95,7 +95,26 @@ const QUERIES = [
         models_snapshot JSONB NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );`,
-    `CREATE INDEX IF NOT EXISTS idx_api_versions_project_id ON api_versions(project_id);`
+    `CREATE INDEX IF NOT EXISTS idx_api_versions_project_id ON api_versions(project_id);`,
+    `CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        name TEXT,
+        role TEXT DEFAULT 'USER', -- ADMIN, USER
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );`,
+    `CREATE TABLE IF NOT EXISTS project_members (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        role TEXT DEFAULT 'MEMBER', -- OWNER, MEMBER
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(project_id, user_id)
+    );`,
+    `CREATE INDEX IF NOT EXISTS idx_endpoints_project_id ON endpoints(project_id);`,
+    `CREATE INDEX IF NOT EXISTS idx_api_models_project_id ON api_models(project_id);`,
+    `CREATE INDEX IF NOT EXISTS idx_api_models_fields_gin ON api_models USING gin (fields);`
 ];
 
 async function ensureDefaultProject(client: any) {
