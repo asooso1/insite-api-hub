@@ -54,85 +54,114 @@ export function RepoImporter({ projectId }: RepoImporterProps) {
     };
 
     return (
-        <div className="glass-panel p-6 rounded-2xl space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-                <Globe className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">자동 API 분석기</h3>
-            </div>
+        <div className="relative group">
+            {/* Ambient Background Glow */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-chart-2/20 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-2 relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Git 저장소 URL (https://github.com/...)"
-                        className="w-full pl-10 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm transition-all"
-                        value={gitUrl}
-                        onChange={(e) => setGitUrl(e.target.value)}
-                        disabled={loading}
-                    />
+            <div className="relative glass-panel p-6 rounded-2xl space-y-5 border-white/10 bg-card/80 backdrop-blur-2xl shadow-xl">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                            <Globe className="w-4 h-4 text-primary animate-pulse" />
+                        </div>
+                        <div>
+                            <h3 className="text-xs font-black uppercase tracking-tighter text-foreground">자동 API 분석 엔진</h3>
+                            <p className="text-[9px] text-muted-foreground font-bold tracking-widest opacity-60">Static Code Analysis v2.0</p>
+                        </div>
+                    </div>
                 </div>
-                <div className="relative">
-                    <GitBranch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="브랜치 (예: main)"
-                        className="w-full pl-10 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm transition-all"
-                        value={branch}
-                        onChange={(e) => setBranch(e.target.value)}
-                        disabled={loading}
-                    />
+
+                <div className="space-y-3">
+                    <div className="relative group/input">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within/input:text-primary transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="Git Repository URL"
+                            className="w-full pl-9 pr-4 py-2.5 bg-background/50 border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-xs transition-all placeholder:text-[10px] placeholder:font-bold placeholder:uppercase hover:border-primary/30"
+                            value={gitUrl}
+                            onChange={(e) => setGitUrl(e.target.value)}
+                            disabled={loading}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="relative group/input">
+                            <GitBranch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within/input:text-primary transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="Branch (main)"
+                                className="w-full pl-9 pr-4 py-2.5 bg-background/50 border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-xs transition-all placeholder:text-[10px] placeholder:font-bold placeholder:uppercase hover:border-primary/30"
+                                value={branch}
+                                onChange={(e) => setBranch(e.target.value)}
+                                disabled={loading}
+                            />
+                        </div>
+                        <div className="relative group/input">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within/input:text-primary transition-colors" />
+                            <input
+                                type="password"
+                                placeholder="Git Token (Private)"
+                                className="w-full pl-9 pr-4 py-2.5 bg-background/50 border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-[10px] transition-all placeholder:text-[10px] placeholder:font-bold placeholder:uppercase hover:border-primary/30"
+                                value={gitToken}
+                                onChange={(e) => setGitToken(e.target.value)}
+                                disabled={loading}
+                            />
+                        </div>
+                    </div>
                 </div>
+
                 <button
                     onClick={handleImport}
                     disabled={loading || !gitUrl || !projectId}
-                    className="bg-primary text-primary-foreground font-black py-2.5 rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2 text-sm uppercase tracking-tighter"
+                    className="group/btn relative w-full overflow-hidden bg-primary text-primary-foreground font-black py-3 rounded-xl transition-all shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95"
                 >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Start Analysis"}
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]" />
+                    <div className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-tighter">
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+                        {loading ? "코드 분석 진행 중..." : "자동 분석 엔진 시작"}
+                    </div>
                 </button>
-            </div>
 
-            <AnimatePresence>
-                {loading && (
+                <AnimatePresence>
+                    {loading && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="space-y-3 pt-2"
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                                    </span>
+                                    {progress < 40 ? '저장소 클론 중' : progress < 80 ? 'DTO 구조 분석 중' : 'API 엔드포인트 매핑 중'}
+                                </span>
+                                <span className="text-[10px] font-mono font-bold text-primary">{Math.floor(progress)}%</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden border border-white/5">
+                                <motion.div
+                                    className="h-full bg-gradient-to-r from-primary to-chart-2"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progress}%` }}
+                                    transition={{ type: 'spring', stiffness: 50 }}
+                                />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {!projectId && (
                     <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="space-y-2 overflow-hidden"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex items-center gap-2 text-[10px] text-destructive font-black px-3 py-2 bg-destructive/5 rounded-xl border border-destructive/10 uppercase tracking-tight"
                     >
-                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-primary">
-                            <span>{progress < 40 ? 'Cloning Repository...' : progress < 80 ? 'Static Analysis...' : 'Syncing Database...'}</span>
-                            <span>{Math.floor(progress)}%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden border border-white/5">
-                            <motion.div
-                                className="h-full bg-primary"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                transition={{ type: 'spring', stiffness: 50 }}
-                            />
-                        </div>
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span>분석을 위해 프로젝트 선택이 필요합니다</span>
                     </motion.div>
                 )}
-            </AnimatePresence>
-
-            {!projectId && (
-                <div className="flex items-center gap-2 text-xs text-destructive font-bold px-1 py-1 bg-destructive/5 rounded-lg border border-destructive/10 animate-pulse">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    <span>프로젝트를 먼저 선택하거나 생성해야 분석이 가능합니다.</span>
-                </div>
-            )}
-
-            <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                <input
-                    type="password"
-                    placeholder="Git 토큰 (Private Repository 전용)"
-                    className="w-full pl-10 pr-4 py-2 bg-muted/20 border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-[10px] transition-all"
-                    value={gitToken}
-                    onChange={(e) => setGitToken(e.target.value)}
-                    disabled={loading}
-                />
             </div>
         </div>
     );

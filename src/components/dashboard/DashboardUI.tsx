@@ -19,8 +19,13 @@ import {
     Terminal,
     Filter,
     ArrowUpDown,
-    History as HistoryIcon
+    History as HistoryIcon,
+    Monitor,
+    Users,
+    Network,
+    Folder
 } from "lucide-react";
+import Link from "next/link";
 import { MockDB } from "@/lib/mock-db";
 import { motion, AnimatePresence } from "framer-motion";
 import { RepoImporter } from "@/components/RepoImporter";
@@ -36,8 +41,12 @@ import { VersionHistoryManager } from "@/components/VersionHistoryManager";
 import { ApiDiffViewer } from "@/components/ApiDiffViewer";
 import { ApiVersion } from "@/lib/api-types";
 import { useToast } from "@/components/ui/Toast";
+import { ModelExplorer } from "@/components/ModelExplorer";
+import { DashboardV2 } from "./DashboardV2";
+import { UserSession, getSession } from "@/app/actions/auth";
+import { useEffect } from "react";
 
-export type DashboardTab = 'endpoints' | 'environments' | 'test' | 'scenarios' | 'versions';
+export type DashboardTab = 'endpoints' | 'models' | 'environments' | 'test' | 'scenarios' | 'versions';
 
 interface DashboardUIProps {
     initialData: MockDB;
@@ -46,10 +55,20 @@ interface DashboardUIProps {
 
 export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps) {
     const [activeTab, setActiveTab] = useState<DashboardTab>('endpoints');
+    const [uiVersion, setUiVersion] = useState<'v1' | 'v2'>('v2');
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
     const [diffVersion, setDiffVersion] = useState<ApiVersion | null>(null);
+    const [session, setSession] = useState<UserSession | null>(null);
     const { showToast } = useToast();
+
+    useEffect(() => {
+        const fetchSession = async () => {
+            const s = await getSession();
+            setSession(s);
+        };
+        fetchSession();
+    }, []);
 
     const handleProjectSelect = (projectId: string) => {
         document.cookie = `current_project_id=${projectId}; path=/; max-age=31536000`;
@@ -100,6 +119,17 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
         );
     };
 
+    if (uiVersion === 'v2') {
+        return (
+            <DashboardV2
+                initialData={initialData}
+                currentProjectId={currentProjectId}
+                session={session}
+                onVersionSwitch={setUiVersion}
+            />
+        );
+    }
+
     return (
         <div className="flex h-screen bg-background overflow-hidden font-sans">
             {/* Sidebar */}
@@ -130,6 +160,13 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                             badge={initialData.endpoints.length.toString()}
                         />
                         <SidebarItem
+                            icon={<Layers className="w-4 h-4" />}
+                            label="데이터 모델 탐색기"
+                            active={activeTab === 'models'}
+                            onClick={() => setActiveTab('models')}
+                            badge={initialData.models.length.toString()}
+                        />
+                        <SidebarItem
                             icon={<Database className="w-4 h-4" />}
                             label="서버 환경 설정"
                             active={activeTab === 'environments'}
@@ -153,6 +190,25 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                             active={activeTab === 'versions'}
                             onClick={() => setActiveTab('versions')}
                         />
+                        <div className="my-4 border-t border-border/50" />
+                        <Link href="/teams">
+                            <SidebarItem
+                                icon={<Users className="w-4 h-4" />}
+                                label="팀 관리"
+                            />
+                        </Link>
+                        <Link href="/projects">
+                            <SidebarItem
+                                icon={<Folder className="w-4 h-4" />}
+                                label="프로젝트 관리"
+                            />
+                        </Link>
+                        <Link href="/hierarchy">
+                            <SidebarItem
+                                icon={<Network className="w-4 h-4" />}
+                                label="전사 계층 구조"
+                            />
+                        </Link>
                         <SidebarItem icon={<FileText className="w-4 h-4" />} label="문서 및 가이드" />
                     </div>
 
@@ -165,29 +221,37 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                     </div>
                 </div>
 
-                <div className="p-6 border-t border-border bg-muted/30">
+                <div className="p-6 border-t border-border bg-muted/30 flex flex-col gap-4">
+                    <button
+                        onClick={() => setUiVersion('v2')}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white text-xs font-black rounded-xl hover:opacity-90 transition-all shadow-lg shadow-blue-500/20"
+                    >
+                        <Monitor className="w-4 h-4" /> v2 벤토 테마 체험하기
+                    </button>
                     <RepoImporter projectId={currentProjectId || undefined} />
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
-                <div className="max-w-[1600px] mx-auto p-8">
+            <main className="flex-1 flex flex-col h-full bg-background overflow-hidden">
+                <div className="flex-initial px-8 pt-8">
                     {/* Header Controls */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
                         <div>
                             <h2 className="text-2xl font-bold tracking-tight">
                                 {activeTab === 'endpoints' ? "대시보드 개요" :
-                                    activeTab === 'environments' ? "서버 환경 설정" :
-                                        activeTab === 'test' ? "API 통합 테스트" :
-                                            activeTab === 'scenarios' ? "시나리오 자동화 테스트" : "API 버전 및 변경 이력"}
+                                    activeTab === 'models' ? "데이터 모델 탐색기" :
+                                        activeTab === 'environments' ? "서버 환경 설정" :
+                                            activeTab === 'test' ? "API 통합 테스트" :
+                                                activeTab === 'scenarios' ? "시나리오 자동화 테스트" : "API 버전 및 변경 이력"}
                             </h2>
                             <p className="text-muted-foreground">
                                 {activeTab === 'endpoints' ? "Spring 2.x 마이크로서비스 생태계를 모든 환경에서 효율적으로 관리하세요." :
-                                    activeTab === 'environments' ? "전역 서버 정보 및 인증 토큰, 웹훅 연동 정보를 관리합니다." :
-                                        activeTab === 'test' ? "등록된 모든 API를 대상으로 실제 요청을 시뮬레이션하고 응답을 확인합니다." :
-                                            activeTab === 'scenarios' ? "연속된 API 호출 흐름을 정의하고 자동화 테스트를 수행합니다." :
-                                                "임포트 시점별 스냅샷 데이터를 통해 변경 사항을 추적합니다."}
+                                    activeTab === 'models' ? "추출된 DTO 및 VO 모델의 구조와 필드 정보를 상세히 탐색합니다." :
+                                        activeTab === 'environments' ? "전역 서버 정보 및 인증 토큰, 웹훅 연동 정보를 관리합니다." :
+                                            activeTab === 'test' ? "등록된 모든 API를 대상으로 실제 요청을 시뮬레이션하고 응답을 확인합니다." :
+                                                activeTab === 'scenarios' ? "연속된 API 호출 흐름을 정의하고 자동화 테스트를 수행합니다." :
+                                                    "임포트 시점별 스냅샷 데이터를 통해 변경 사항을 추적합니다."}
                             </p>
                         </div>
 
@@ -204,7 +268,9 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                             </div>
                         </div>
                     </div>
+                </div>
 
+                <div className="flex-1 overflow-hidden relative">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
@@ -212,8 +278,9 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
+                            className="h-full overflow-y-auto no-scrollbar px-8 pb-10"
                         >
-                            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 h-full">
                                 <div className="xl:col-span-3 space-y-8">
                                     {activeTab === 'endpoints' && (
                                         <>
@@ -262,6 +329,12 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                                                 <ApiList endpoints={filteredEndpoints} allModels={initialData.models} />
                                             </section>
                                         </>
+                                    )}
+
+                                    {activeTab === 'models' && (
+                                        <section className="h-[calc(100vh-250px)]">
+                                            <ModelExplorer projectId={currentProjectId || ""} models={initialData.models} />
+                                        </section>
                                     )}
 
                                     {activeTab === 'environments' && (
@@ -319,7 +392,7 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                                             <div className="space-y-6">
                                                 {initialData.models.slice(0, 3).map((model, i) => (
                                                     <div key={i} className="space-y-4">
-                                                        <ApiModelTree name={model.name} fields={model.fields} />
+                                                        <ApiModelTree name={model.name} fields={model.fields || []} />
                                                         <div className="relative group">
                                                             <pre className="p-3 bg-muted/50 rounded-xl text-[10px] font-mono overflow-x-auto border border-border/50 max-h-40">
                                                                 {generateTypeScriptType(model)}
@@ -352,7 +425,7 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                     </AnimatePresence>
                 </div>
             </main>
-        </div>
+        </div >
     );
 }
 

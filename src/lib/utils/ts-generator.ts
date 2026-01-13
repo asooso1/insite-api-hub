@@ -6,6 +6,10 @@ export function generateTypeScriptType(model: ApiModel): string {
     let code = `export interface ${model.name} {\n`;
 
     model.fields.forEach((field: ApiField) => {
+        // 필터링: 자바 파싱 과정에서 잘못 포함될 수 있는 예약어/특수 키워드 제외
+        const invalidNames = ['return', 'this', 'null', 'void', 'undefined'];
+        if (invalidNames.includes(field.name.toLowerCase())) return;
+
         const isOptional = !field.isRequired;
         const type = mapJavaTypeToTS(field.type);
 

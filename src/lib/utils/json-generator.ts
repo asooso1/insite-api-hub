@@ -7,7 +7,7 @@ export function generateSampleJson(model: ApiModel | undefined, allModels: ApiMo
     if (!model) return "{}";
 
     try {
-        const sampleObj = constructObject(model.fields, allModels);
+        const sampleObj = constructObject(model.fields || [], allModels);
         return JSON.stringify(sampleObj, null, 2);
     } catch (err) {
         console.error("JSON 생성 실패:", err);
@@ -17,6 +17,8 @@ export function generateSampleJson(model: ApiModel | undefined, allModels: ApiMo
 
 function constructObject(fields: ApiField[], allModels: ApiModel[]): Record<string, any> {
     const obj: Record<string, any> = {};
+
+    if (!fields || !Array.isArray(fields)) return obj;
 
     fields.forEach(field => {
         obj[field.name] = getFieldValue(field, allModels);
@@ -34,7 +36,7 @@ function getFieldValue(field: ApiField, allModels: ApiModel[]): any {
     // 2. 다른 모델을 참조하는 경우 (타입 이름으로 모델 찾기)
     const refModel = allModels.find(m => m.name === field.type);
     if (refModel) {
-        return constructObject(refModel.fields, allModels);
+        return constructObject(refModel.fields || [], allModels);
     }
 
     // 3. 기본 타입별 더미 데이터

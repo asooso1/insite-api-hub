@@ -24,7 +24,7 @@ export function ApiModelTree({ name, fields }: ApiModelTreeProps) {
                 <Box className="w-4 h-4 text-primary" />
                 <span className="font-bold text-sm">{name}</span>
             </div>
-            <div className="p-2">
+            <div className="p-2 max-h-[600px] overflow-y-auto">
                 {fields.map((field, idx) => (
                     <FieldRow key={idx} field={field} depth={0} />
                 ))}
@@ -47,7 +47,7 @@ function FieldRow({ field, depth }: { field: Field, depth: number }) {
                 style={{ paddingLeft: `${(depth * 20) + 12}px` }}
                 onClick={() => hasChildren && setIsOpen(!isOpen)}
             >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-1 min-w-0 h-8">
                     {hasChildren ? (
                         isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     ) : (
