@@ -1,20 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, ChevronDown, Code, Clock, Database, ArrowRightLeft } from "lucide-react";
+import { ChevronRight, ChevronDown, Code, Clock, Database, ArrowRightLeft, User, MessageCircle } from "lucide-react";
 import { ApiEndpoint, ApiModel } from "@/lib/mock-db";
 import { ApiModelTree } from "./ApiModelTree";
+import { OwnerBadge } from "./OwnerBadge";
+import { CommentSection } from "./CommentSection";
 import { motion, AnimatePresence } from "framer-motion";
-
-interface ApiListProps {
-    endpoints: ApiEndpoint[];
-    allModels: ApiModel[];
-}
-
 import { EmptyState } from "./ui/EmptyState";
 
-export function ApiList({ endpoints, allModels }: ApiListProps) {
+interface ExtendedApiEndpoint extends ApiEndpoint {
+    ownerName?: string | null;
+    ownerContact?: string | null;
+}
+
+interface ApiListProps {
+    endpoints: ExtendedApiEndpoint[];
+    allModels: ApiModel[];
+    projectId?: string;
+    userId?: string | null;
+    userName?: string | null;
+}
+
+type TabType = 'data' | 'owner' | 'comments';
+
+export function ApiList({ endpoints, allModels, projectId, userId, userName }: ApiListProps) {
     const [expandedApiId, setExpandedApiId] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<Record<string, TabType>>({});
 
     if (endpoints.length === 0) {
         return (
@@ -30,6 +42,12 @@ export function ApiList({ endpoints, allModels }: ApiListProps) {
         setExpandedApiId(expandedApiId === id ? null : id);
     };
 
+    const getActiveTab = (apiId: string): TabType => activeTab[apiId] || 'data';
+
+    const setTabForApi = (apiId: string, tab: TabType) => {
+        setActiveTab(prev => ({ ...prev, [apiId]: tab }));
+    };
+
     return (
         <div className="space-y-4">
             {endpoints.map((api, idx) => {
@@ -37,6 +55,7 @@ export function ApiList({ endpoints, allModels }: ApiListProps) {
                 const isExpanded = expandedApiId === apiId;
                 const requestModel = allModels.find(m => m.name === api.requestBody);
                 const responseModel = allModels.find(m => m.name === api.responseType);
+                const currentTab = getActiveTab(apiId);
 
                 return (
                     <div
@@ -78,6 +97,13 @@ export function ApiList({ endpoints, allModels }: ApiListProps) {
                             </div>
 
                             <div className="flex items-center gap-6 shrink-0">
+                                {/* Owner Badge (Compact) */}
+                                {api.ownerName && (
+                                    <div className="hidden md:flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                        <User className="w-3 h-3" />
+                                        <span>{api.ownerName}</span>
+                                    </div>
+                                )}
                                 <div className="hidden md:flex flex-col items-end opacity-60 group-hover:opacity-100 transition-all">
                                     <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
                                         <Code className="w-3 h-3" />
@@ -107,52 +133,124 @@ export function ApiList({ endpoints, allModels }: ApiListProps) {
                                     exit={{ height: 0, opacity: 0 }}
                                     className="border-t border-border/50 bg-muted/20"
                                 >
-                                    <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                        {/* Request Info */}
-                                        <div className="space-y-4">
-                                            <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                                                <ArrowRightLeft className="w-4 h-4 text-primary" />
-                                                <h4 className="text-sm font-bold">요청 데이터 (Request)</h4>
-                                            </div>
-                                            {requestModel ? (
-                                                <div className="bg-card/30 rounded-xl p-4 border border-border/50">
-                                                    <p className="text-xs font-bold text-muted-foreground mb-3 px-1 uppercase tracking-tight">
-                                                        Model: {requestModel.name}
-                                                    </p>
-                                                    <ApiModelTree name={requestModel.name} fields={requestModel.fields} />
-                                                </div>
-                                            ) : api.requestBody ? (
-                                                <div className="p-4 bg-muted/30 rounded-xl border border-dashed border-border text-center">
-                                                    <p className="text-xs text-muted-foreground">정의된 모델 정보를 찾을 수 없습니다: {api.requestBody}</p>
-                                                </div>
-                                            ) : (
-                                                <div className="p-4 bg-muted/30 rounded-xl border border-dashed border-border text-center">
-                                                    <p className="text-xs text-muted-foreground">요청 본문이 없는 엔드포인트입니다.</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                    {/* Tab Navigation */}
+                                    <div className="px-6 pt-4 flex gap-2">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setTabForApi(apiId, 'data'); }}
+                                            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+                                                currentTab === 'data'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            <Database className="w-3.5 h-3.5" />
+                                            데이터 구조
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setTabForApi(apiId, 'owner'); }}
+                                            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+                                                currentTab === 'owner'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            <User className="w-3.5 h-3.5" />
+                                            담당자
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setTabForApi(apiId, 'comments'); }}
+                                            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+                                                currentTab === 'comments'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            <MessageCircle className="w-3.5 h-3.5" />
+                                            코멘트
+                                        </button>
+                                    </div>
 
-                                        {/* Response Info */}
-                                        <div className="space-y-4">
-                                            <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                                                <Database className="w-4 h-4 text-chart-2" />
-                                                <h4 className="text-sm font-bold">응답 데이터 (Response)</h4>
+                                    {/* Tab Content */}
+                                    <div className="p-6">
+                                        {currentTab === 'data' && (
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                                {/* Request Info */}
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                                                        <ArrowRightLeft className="w-4 h-4 text-primary" />
+                                                        <h4 className="text-sm font-bold">요청 데이터 (Request)</h4>
+                                                    </div>
+                                                    {requestModel ? (
+                                                        <div className="bg-card/30 rounded-xl p-4 border border-border/50">
+                                                            <p className="text-xs font-bold text-muted-foreground mb-3 px-1 uppercase tracking-tight">
+                                                                Model: {requestModel.name}
+                                                            </p>
+                                                            <ApiModelTree name={requestModel.name} fields={requestModel.fields ?? []} />
+                                                        </div>
+                                                    ) : api.requestBody ? (
+                                                        <div className="p-4 bg-muted/30 rounded-xl border border-dashed border-border text-center">
+                                                            <p className="text-xs text-muted-foreground">정의된 모델 정보를 찾을 수 없습니다: {api.requestBody}</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-4 bg-muted/30 rounded-xl border border-dashed border-border text-center">
+                                                            <p className="text-xs text-muted-foreground">요청 본문이 없는 엔드포인트입니다.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Response Info */}
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                                                        <Database className="w-4 h-4 text-chart-2" />
+                                                        <h4 className="text-sm font-bold">응답 데이터 (Response)</h4>
+                                                    </div>
+                                                    {responseModel ? (
+                                                        <div className="bg-card/30 rounded-xl p-4 border border-border/50">
+                                                            <p className="text-xs font-bold text-muted-foreground mb-3 px-1 uppercase tracking-tight">
+                                                                Type: {responseModel.name}
+                                                            </p>
+                                                            <ApiModelTree name={responseModel.name} fields={responseModel.fields ?? []} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-4 bg-muted/30 rounded-xl border border-dashed border-border text-center">
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {api.responseType ? `응답 타입: ${api.responseType}` : '응답 타입 정보가 없습니다.'}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                            {responseModel ? (
-                                                <div className="bg-card/30 rounded-xl p-4 border border-border/50">
-                                                    <p className="text-xs font-bold text-muted-foreground mb-3 px-1 uppercase tracking-tight">
-                                                        Type: {responseModel.name}
-                                                    </p>
-                                                    <ApiModelTree name={responseModel.name} fields={responseModel.fields} />
+                                        )}
+
+                                        {currentTab === 'owner' && (
+                                            <div className="max-w-md">
+                                                <div className="flex items-center gap-2 pb-2 border-b border-border/50 mb-4">
+                                                    <User className="w-4 h-4 text-blue-500" />
+                                                    <h4 className="text-sm font-bold">담당자 정보</h4>
                                                 </div>
-                                            ) : (
-                                                <div className="p-4 bg-muted/30 rounded-xl border border-dashed border-border text-center">
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {api.responseType ? `응답 타입: ${api.responseType}` : '응답 타입 정보가 없습니다.'}
-                                                    </p>
+                                                <OwnerBadge
+                                                    endpointId={apiId}
+                                                    ownerName={api.ownerName}
+                                                    ownerContact={api.ownerContact}
+                                                    editable={true}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {currentTab === 'comments' && projectId && (
+                                            <div>
+                                                <div className="flex items-center gap-2 pb-2 border-b border-border/50 mb-4">
+                                                    <MessageCircle className="w-4 h-4 text-green-500" />
+                                                    <h4 className="text-sm font-bold">코멘트 & 질문</h4>
                                                 </div>
-                                            )}
-                                        </div>
+                                                <CommentSection
+                                                    projectId={projectId}
+                                                    endpointId={apiId}
+                                                    userId={userId}
+                                                    userName={userName}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="px-6 pb-6 pt-2 flex justify-end">
@@ -160,7 +258,7 @@ export function ApiList({ endpoints, allModels }: ApiListProps) {
                                             <span className="flex items-center gap-1">
                                                 <Code className="w-3 h-3" />
                                                 {api.className}.{api.methodName}
-                                            </span >
+                                            </span>
                                         </div>
                                     </div>
                                 </motion.div>

@@ -86,7 +86,7 @@ export async function importRepository(projectId: string, gitUrl: string, branch
                 if (resolvedCache.has(baseType)) return { ...field, refFields: resolvedCache.get(baseType) };
 
                 processingStack.add(baseType);
-                const resolvedFields = resolveFields(models[baseType].fields, baseType, currentDepth + 1);
+                const resolvedFields = resolveFields(models[baseType].fields ?? [], baseType, currentDepth + 1);
                 resolvedCache.set(baseType, resolvedFields);
                 processingStack.delete(baseType);
                 return { ...field, refFields: resolvedFields };
@@ -95,8 +95,8 @@ export async function importRepository(projectId: string, gitUrl: string, branch
 
         Object.keys(models).forEach(name => {
             if (!resolvedCache.has(name)) {
-                models[name].fields = resolveFields(models[name].fields, name);
-                resolvedCache.set(name, models[name].fields);
+                models[name].fields = resolveFields(models[name].fields ?? [], name);
+                resolvedCache.set(name, models[name].fields ?? []);
             }
         });
 
