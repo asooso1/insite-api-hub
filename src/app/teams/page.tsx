@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Plus, Trash2, Edit2, Link as LinkIcon, ExternalLink, ChevronRight, LayoutGrid, List } from "lucide-react";
+import { Users, Plus, Trash2, Link as LinkIcon, LayoutGrid, List } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Team, getTeams, createTeam, deleteTeam, linkProjectToTeam, unlinkProjectFromTeam, getProjectsByTeam } from "@/app/actions/team";
 import { Project } from "@/lib/api-types";
@@ -15,6 +15,7 @@ export default function TeamsPage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
     const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+    const [linkedProjectIds, setLinkedProjectIds] = useState<string[]>([]);
     const [newName, setNewName] = useState("");
     const [newDesc, setNewDesc] = useState("");
     const [loading, setLoading] = useState(true);
@@ -130,8 +131,10 @@ export default function TeamsPage() {
 
                                     <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'ml-auto' : 'mt-auto pt-6 border-t border-border/50'}`}>
                                         <button
-                                            onClick={() => {
+                                            onClick={async () => {
                                                 setSelectedTeam(team);
+                                                const linkedSubData = await getProjectsByTeam(team.id);
+                                                setLinkedProjectIds(linkedSubData.map(p => p.id));
                                                 setIsLinkModalOpen(true);
                                             }}
                                             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary hover:bg-secondary/80 rounded-xl text-sm font-semibold transition-all"
@@ -240,24 +243,33 @@ export default function TeamsPage() {
                                 <p className="text-muted-foreground mb-8">팀에 할당된 프로젝트를 관리하세요.</p>
 
                                 <div className="h-[400px] overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-primary/20 hover:scrollbar-thumb-primary/40">
-                                    {projects.map(project => (
-                                        <div key={project.id} className="flex items-center justify-between p-4 bg-secondary/30 rounded-2xl border border-transparent hover:border-primary/20 transition-all group">
-                                            <div>
-                                                <h4 className="font-bold">{project.name}</h4>
-                                                <p className="text-xs text-muted-foreground">{project.description}</p>
+                                    {projects.map(project => {
+                                        const isLinked = linkedProjectIds.includes(project.id);
+                                        return (
+                                            <div key={project.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all group ${isLinked ? 'bg-primary/5 border-primary/20' : 'bg-secondary/30 border-transparent hover:border-primary/20'}`}>
+                                                <div>
+                                                    <h4 className={`font-bold ${isLinked ? 'text-primary' : ''}`}>{project.name}</h4>
+                                                    <p className="text-xs text-muted-foreground">{project.description}</p>
+                                                </div>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (isLinked) {
+                                                            await unlinkProjectFromTeam(selectedTeam.id, project.id);
+                                                            setLinkedProjectIds(prev => prev.filter(id => id !== project.id));
+                                                            toast.success("프로젝트 할당이 취소되었습니다.");
+                                                        } else {
+                                                            await linkProjectToTeam(selectedTeam.id, project.id);
+                                                            setLinkedProjectIds(prev => [...prev, project.id]);
+                                                            toast.success("프로젝트가 할당되었습니다.");
+                                                        }
+                                                    }}
+                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isLinked ? 'bg-destructive/10 text-destructive hover:bg-destructive hover:text-white' : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground'}`}
+                                                >
+                                                    {isLinked ? 'Unassign' : 'Assign'}
+                                                </button>
                                             </div>
-                                            <button
-                                                onClick={async () => {
-                                                    // This is a simplified toggle, in reality check if linked
-                                                    await linkProjectToTeam(selectedTeam.id, project.id);
-                                                    toast.success("프로젝트가 할당되었습니다.");
-                                                }}
-                                                className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-xs font-bold hover:bg-primary hover:text-primary-foreground transition-all"
-                                            >
-                                                Assign
-                                            </button>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
 
                                 <div className="mt-8">

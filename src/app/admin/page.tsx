@@ -142,10 +142,10 @@ export default function AdminBackoffice() {
                 <div className="flex items-center gap-4">
                     <div className="hidden md:flex flex-col text-right mr-2">
                         <p className="text-xs font-black text-slate-800 leading-none">{session?.name}</p>
-                        <p className="text-[10px] text-emerald-600 font-black tracking-tighter uppercase flex items-center justify-end gap-1">
-                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <span className="text-[10px] text-emerald-600 font-black tracking-tighter uppercase flex items-center justify-end gap-1">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                             보안 세션 활성화
-                        </p>
+                        </span>
                     </div>
                     <button
                         onClick={() => {

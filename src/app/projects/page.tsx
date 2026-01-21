@@ -1,25 +1,31 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Folder, Plus, Trash2, Edit2, Github, ExternalLink, Database, Search, Filter, ArrowUpDown } from "lucide-react";
+import { Folder, Plus, Trash2, Github, ExternalLink, Search, Users, Link as LinkIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Project } from "@/lib/api-types";
 import { getProjects, createProject, deleteProject } from "@/app/actions/project";
 import { Repository, getRepositories, createRepository, deleteRepository } from "@/app/actions/repository";
+import { Team, getTeams, getTeamsByProject, linkProjectToTeam, unlinkProjectFromTeam } from "@/app/actions/team";
 import { toast } from "react-hot-toast";
 
 export default function ProjectsPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [repositories, setRepositories] = useState<Record<string, Repository[]>>({});
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [projectTeams, setProjectTeams] = useState<Record<string, Team[]>>({});
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isRepoModalOpen, setIsRepoModalOpen] = useState(false);
+    const [isLinkTeamModalOpen, setIsLinkTeamModalOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [linkedTeamIds, setLinkedTeamIds] = useState<string[]>([]);
     const [newName, setNewName] = useState("");
     const [newDesc, setNewDesc] = useState("");
     const [newWebhook, setNewWebhook] = useState("");
 
     const [newRepoName, setNewRepoName] = useState("");
     const [newRepoUrl, setNewRepoUrl] = useState("");
+    const [newRepoTeamId, setNewRepoTeamId] = useState<string>("");
 
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -31,15 +37,28 @@ export default function ProjectsPage() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const data = await getProjects();
-            setProjects(data);
+            const [pData, tData] = await Promise.all([
+                getProjects(),
+                getTeams()
+            ]);
+            setProjects(pData);
+            setTeams(tData);
 
-            // Fetch repositories for each project (can be optimized)
+            // Fetch repositories and teams for each project
             const reposMap: Record<string, Repository[]> = {};
-            for (const p of data) {
-                reposMap[p.id] = await getRepositories(p.id);
-            }
+            const teamsMap: Record<string, Team[]> = {};
+
+            await Promise.all(pData.map(async (p) => {
+                const [r, t] = await Promise.all([
+                    getRepositories(p.id),
+                    getTeamsByProject(p.id)
+                ]);
+                reposMap[p.id] = r;
+                teamsMap[p.id] = t as Team[];
+            }));
+
             setRepositories(reposMap);
+            setProjectTeams(teamsMap);
         } catch (error) {
             toast.error("데이터 로드 실패");
         }
@@ -64,11 +83,12 @@ export default function ProjectsPage() {
     const handleCreateRepo = async () => {
         if (!selectedProject || !newRepoName || !newRepoUrl) return;
         try {
-            await createRepository(newRepoName, newRepoUrl, selectedProject.id);
+            await createRepository(newRepoName, newRepoUrl, selectedProject.id, newRepoTeamId || undefined);
             toast.success("저장소 추가 성공");
             setIsRepoModalOpen(false);
             setNewRepoName("");
             setNewRepoUrl("");
+            setNewRepoTeamId("");
             loadData();
         } catch (error) {
             toast.error("저장소 추가 실패");
@@ -165,41 +185,74 @@ export default function ProjectsPage() {
                                     <h3 className="text-3xl font-black mb-4 group-hover:text-primary transition-colors">{project.name}</h3>
                                     <p className="text-muted-foreground text-lg mb-10 line-clamp-2 h-14">{project.description || "상세 설명이 등록되지 않았습니다."}</p>
 
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                                            <span>Repositories</span>
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedProject(project);
-                                                    setIsRepoModalOpen(true);
-                                                }}
-                                                className="text-primary hover:underline"
-                                            >
-                                                + Add
-                                            </button>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-3">
-                                            {repositories[project.id]?.length > 0 ? (
-                                                repositories[project.id].map(repo => (
-                                                    <a
-                                                        key={repo.id}
-                                                        href={repo.git_url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="flex items-center justify-between p-4 bg-secondary/30 rounded-2xl hover:bg-secondary/60 transition-all border border-transparent hover:border-primary/20"
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <Github className="w-5 h-5 opacity-60" />
-                                                            <span className="font-bold">{repo.name}</span>
+                                    <div className="grid grid-cols-2 gap-8">
+                                        {/* Teams Section */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                                                <span>Teams</span>
+                                                <button
+                                                    onClick={async () => {
+                                                        setSelectedProject(project);
+                                                        const linked = await getTeamsByProject(project.id);
+                                                        setLinkedTeamIds(linked.map(t => t.id));
+                                                        setIsLinkTeamModalOpen(true);
+                                                    }}
+                                                    className="text-primary hover:underline"
+                                                >
+                                                    + Link
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {projectTeams[project.id]?.length > 0 ? (
+                                                    projectTeams[project.id].map(team => (
+                                                        <div key={team.id} className="px-3 py-1.5 bg-primary/5 text-primary text-[10px] font-black rounded-full border border-primary/20 flex items-center gap-1.5 group/team">
+                                                            <Users className="w-3 h-3" />
+                                                            {team.name}
                                                         </div>
-                                                        <ExternalLink className="w-4 h-4 opacity-40" />
-                                                    </a>
-                                                ))
-                                            ) : (
-                                                <div className="py-6 text-center bg-secondary/20 rounded-2xl border-2 border-dashed border-border text-muted-foreground text-sm">
-                                                    No repositories linked
-                                                </div>
-                                            )}
+                                                    ))
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground italic">No teams linked</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Repositories Section */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                                                <span>Repositories</span>
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedProject(project);
+                                                        setIsRepoModalOpen(true);
+                                                    }}
+                                                    className="text-primary hover:underline"
+                                                >
+                                                    + Add
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {repositories[project.id]?.length > 0 ? (
+                                                    repositories[project.id].map(repo => (
+                                                        <a
+                                                            key={repo.id}
+                                                            href={repo.git_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center justify-between p-3 bg-secondary/30 rounded-2xl hover:bg-secondary/60 transition-all border border-transparent hover:border-primary/20"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <Github className="w-4 h-4 opacity-60" />
+                                                                <span className="font-bold text-sm">{repo.name}</span>
+                                                            </div>
+                                                            <ExternalLink className="w-3 h-3 opacity-40" />
+                                                        </a>
+                                                    ))
+                                                ) : (
+                                                    <div className="py-4 text-center bg-secondary/20 rounded-2xl border border-dashed border-border text-muted-foreground text-[10px]">
+                                                        No repos linked
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -234,8 +287,66 @@ export default function ProjectsPage() {
                             <div className="space-y-6">
                                 <input value={newRepoName} onChange={e => setNewRepoName(e.target.value)} placeholder="Repository Name" className="w-full px-6 py-4 bg-secondary/50 rounded-2xl border border-border focus:border-primary outline-none" />
                                 <input value={newRepoUrl} onChange={e => setNewRepoUrl(e.target.value)} placeholder="Git URL (HTTPS)" className="w-full px-6 py-4 bg-secondary/50 rounded-2xl border border-border focus:border-primary outline-none" />
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Optional: Associate with Team</label>
+                                    <select
+                                        value={newRepoTeamId}
+                                        onChange={e => setNewRepoTeamId(e.target.value)}
+                                        className="w-full px-6 py-4 bg-secondary/50 rounded-2xl border border-border focus:border-primary outline-none"
+                                    >
+                                        <option value="">No Team (Project wide)</option>
+                                        {teams.map(t => (
+                                            <option key={t.id} value={t.id}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
                                 <button onClick={handleCreateRepo} className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black text-lg hover:opacity-90">Add Repository</button>
                             </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {isLinkTeamModalOpen && selectedProject && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-background/80 backdrop-blur-xl" onClick={() => setIsLinkTeamModalOpen(false)} />
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-lg bg-card border border-border rounded-[2.5rem] p-10">
+                            <h2 className="text-3xl font-black mb-2">Link Teams</h2>
+                            <p className="text-muted-foreground mb-8">Manage teams for {selectedProject.name}</p>
+
+                            <div className="h-[400px] overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+                                {teams.map(team => {
+                                    const isLinked = linkedTeamIds.includes(team.id);
+                                    return (
+                                        <div key={team.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${isLinked ? 'bg-primary/5 border-primary/20' : 'bg-secondary/30 border-transparent'}`}>
+                                            <div>
+                                                <h4 className={`font-bold ${isLinked ? 'text-primary' : ''}`}>{team.name}</h4>
+                                                <p className="text-xs text-muted-foreground">{team.description}</p>
+                                            </div>
+                                            <button
+                                                onClick={async () => {
+                                                    if (isLinked) {
+                                                        await unlinkProjectFromTeam(team.id, selectedProject.id);
+                                                        setLinkedTeamIds(prev => prev.filter(id => id !== team.id));
+                                                        toast.success("팀 연결이 해제되었습니다.");
+                                                    } else {
+                                                        await linkProjectToTeam(team.id, selectedProject.id);
+                                                        setLinkedTeamIds(prev => [...prev, team.id]);
+                                                        toast.success("팀이 연결되었습니다.");
+                                                    }
+                                                    loadData();
+                                                }}
+                                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isLinked ? 'bg-destructive/10 text-destructive hover:bg-destructive hover:text-white' : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'}`}
+                                            >
+                                                {isLinked ? 'Unlink' : 'Link'}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <button onClick={() => setIsLinkTeamModalOpen(false)} className="w-full mt-8 py-4 bg-secondary rounded-2xl font-black">Close</button>
                         </motion.div>
                     </div>
                 )}

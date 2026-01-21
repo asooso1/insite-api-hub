@@ -73,3 +73,20 @@ export async function getProjectsByTeam(teamId: string) {
     );
     return res.rows;
 }
+
+export async function getTeamsByProject(projectId: string) {
+    const res = await db.query(
+        `SELECT t.* FROM teams t
+         JOIN team_projects tp ON t.id = tp.team_id
+         WHERE tp.project_id = $1`,
+        [projectId]
+    );
+    return res.rows;
+}
+
+export async function getTeamProjectMappings() {
+    const res = await db.query(
+        "SELECT team_id as \"teamId\", project_id as \"projectId\" FROM team_projects"
+    );
+    return res.rows as { teamId: string, projectId: string }[];
+}

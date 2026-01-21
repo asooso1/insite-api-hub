@@ -4,7 +4,7 @@ import { MockDB, ApiEndpoint, ApiModel, EnvConfig, ApiTestCase, Project } from "
 export async function getAppData(projectId?: string): Promise<MockDB> {
     try {
         // 1. Fetch Projects
-        const projectsRes = await db.query('SELECT id, name, description, git_url as "gitUrl", created_at as "createdAt" FROM projects ORDER BY created_at DESC');
+        const projectsRes = await db.query('SELECT id, name, description, created_at as "createdAt" FROM projects ORDER BY created_at DESC');
         const projects = projectsRes.rows as unknown as Project[];
 
         // If no projectId specifically provided, use the first one available
@@ -27,18 +27,20 @@ export async function getAppData(projectId?: string): Promise<MockDB> {
         // 2, 3, 4. Fetch data in parallel
         const [endpointsRes, modelsRes, envsRes] = await Promise.all([
             db.query(`
-                SELECT 
-                    id::text, 
-                    path, 
-                    method, 
-                    class_name as "className", 
-                    method_name as "methodName", 
-                    summary, 
-                    request_body_model as "requestBody", 
-                    response_type as "responseType", 
-                    synced_at as "syncedAt", 
-                    version 
-                FROM endpoints 
+                SELECT
+                    id::text,
+                    path,
+                    method,
+                    class_name as "className",
+                    method_name as "methodName",
+                    summary,
+                    request_body_model as "requestBody",
+                    response_type as "responseType",
+                    synced_at as "syncedAt",
+                    version,
+                    owner_name as "ownerName",
+                    owner_contact as "ownerContact"
+                FROM endpoints
                 WHERE project_id = $1
                 ORDER BY path ASC, synced_at DESC
             `, [targetProjectId]),
