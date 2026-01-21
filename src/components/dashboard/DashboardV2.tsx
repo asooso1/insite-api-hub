@@ -18,7 +18,10 @@ import {
     ChevronDown,
     Database,
     Download,
-    ArrowRight
+    ArrowRight,
+    Users,
+    Folder,
+    Network
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MockDB } from "@/lib/mock-db";
@@ -160,9 +163,34 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                             )}
                         </button>
                     ))}
+
+                    {/* 구분선 */}
+                    <div className="w-10 h-px bg-slate-100 my-2" />
+
+                    {/* 관리 메뉴 */}
+                    {[
+                        { id: 'teams', label: '팀 관리', icon: <Users className="w-4 h-4" />, href: '/teams' },
+                        { id: 'projects', label: '프로젝트 관리', icon: <Folder className="w-4 h-4" />, href: '/projects' },
+                        { id: 'hierarchy', label: '전사 계층 구조', icon: <Network className="w-4 h-4" />, href: '/hierarchy' },
+                    ].map((item) => (
+                        <a
+                            key={item.id}
+                            href={item.href}
+                            className="group relative w-14 h-14 flex items-center justify-center rounded-[1.25rem] transition-all duration-300 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                        >
+                            <div className="relative z-10 transition-transform group-hover:scale-110">
+                                {item.icon}
+                            </div>
+                            <div className="absolute left-20 px-3 py-2 bg-slate-900 text-white text-[10px] font-black rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all translate-x-[-10px] group-hover:translate-x-0 pointer-events-none whitespace-nowrap z-[100] shadow-2xl flex items-center">
+                                {item.label}
+                                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45" />
+                            </div>
+                        </a>
+                    ))}
+
                     <div className="mt-auto p-4 flex flex-col gap-4">
                         <div className="w-10 h-10 rounded-full border-2 border-slate-100 flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity cursor-pointer overflow-hidden">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Jinseok" alt="avatar" />
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session?.name || 'User'}`} alt="avatar" />
                         </div>
                     </div>
                 </aside>
@@ -224,7 +252,13 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                                                                 <button className="px-3 py-1.5 text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors">그래프 시각화</button>
                                                             </div>
                                                         </div>
-                                                        <ApiList endpoints={initialData.endpoints} allModels={initialData.models} />
+                                                        <ApiList
+                                                                                endpoints={initialData.endpoints}
+                                                                                allModels={initialData.models}
+                                                                                projectId={currentProjectId || undefined}
+                                                                                userId={session?.id}
+                                                                                userName={session?.name}
+                                                                            />
                                                     </div>
                                                 )}
 
