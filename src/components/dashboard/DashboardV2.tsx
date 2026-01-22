@@ -37,6 +37,7 @@ import { VersionHistoryManager } from "@/components/VersionHistoryManager";
 import { ApiDiffViewer } from "@/components/ApiDiffViewer";
 import { RepoImporter } from "@/components/RepoImporter";
 import { UserSession, signOut } from "@/app/actions/auth";
+import { useUIStore } from "@/stores";
 
 interface DashboardV2Props {
     initialData: MockDB;
@@ -47,9 +48,15 @@ interface DashboardV2Props {
 
 export function DashboardV2({ initialData, currentProjectId, session, onVersionSwitch }: DashboardV2Props) {
     const searchParams = useSearchParams();
-    const [activeTab, setActiveTab] = useState<DashboardTab>('endpoints');
+
+    // Zustand stores
+    const activeTab = useUIStore((state) => state.activeTab);
+    const setActiveTab = useUIStore((state) => state.setActiveTab);
+    const searchQuery = useUIStore((state) => state.searchQuery);
+    const setSearchQuery = useUIStore((state) => state.setSearchQuery);
+
+    // Local state (view-specific)
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
     const [diffVersion, setDiffVersion] = useState<ApiVersion | null>(null);
     const [uiVersion, setUiVersion] = useState<'v1' | 'v2'>('v2');
 
@@ -59,7 +66,7 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
         if (tab && ['endpoints', 'models', 'test', 'scenarios', 'versions', 'environments'].includes(tab)) {
             setActiveTab(tab as DashboardTab);
         }
-    }, [searchParams]);
+    }, [searchParams, setActiveTab]);
 
     const tabs = [
         { id: 'endpoints', label: '엔드포인트', icon: <List className="w-4 h-4" />, color: 'blue' },

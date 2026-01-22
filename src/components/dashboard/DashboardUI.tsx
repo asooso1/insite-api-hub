@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Activity,
     Box,
@@ -43,8 +43,7 @@ import { ApiVersion } from "@/lib/api-types";
 import { useToast } from "@/components/ui/Toast";
 import { ModelExplorer } from "@/components/ModelExplorer";
 import { DashboardV2 } from "./DashboardV2";
-import { UserSession, getSession } from "@/app/actions/auth";
-import { useEffect } from "react";
+import { useProjectStore, useAuthStore, useUIStore } from "@/stores";
 
 export type DashboardTab = 'endpoints' | 'models' | 'environments' | 'test' | 'scenarios' | 'versions';
 
@@ -54,24 +53,29 @@ interface DashboardUIProps {
 }
 
 export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps) {
-    const [activeTab, setActiveTab] = useState<DashboardTab>('endpoints');
+    // Zustand stores
+    const session = useAuthStore((state) => state.session);
+    const fetchSession = useAuthStore((state) => state.fetchSession);
+    const activeTab = useUIStore((state) => state.activeTab);
+    const setActiveTab = useUIStore((state) => state.setActiveTab);
+    const searchQuery = useUIStore((state) => state.searchQuery);
+    const setSearchQuery = useUIStore((state) => state.setSearchQuery);
+    const selectedMethods = useUIStore((state) => state.selectedMethods);
+    const toggleMethod = useUIStore((state) => state.toggleMethod);
+    const clearMethodFilters = useUIStore((state) => state.clearMethodFilters);
+    const setCurrentProject = useProjectStore((state) => state.setCurrentProject);
+
+    // Local state
     const [uiVersion, setUiVersion] = useState<'v1' | 'v2'>('v2');
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
     const [diffVersion, setDiffVersion] = useState<ApiVersion | null>(null);
-    const [session, setSession] = useState<UserSession | null>(null);
     const { showToast } = useToast();
 
     useEffect(() => {
-        const fetchSession = async () => {
-            const s = await getSession();
-            setSession(s);
-        };
         fetchSession();
-    }, []);
+    }, [fetchSession]);
 
     const handleProjectSelect = (projectId: string) => {
-        document.cookie = `current_project_id=${projectId}; path=/; max-age=31536000`;
+        setCurrentProject(projectId);
         showToast("프로젝트가 전환되었습니다.", "info");
         setTimeout(() => {
             window.location.reload();
@@ -112,12 +116,6 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
 
         return relevantModels.length > 0;
     });
-
-    const toggleMethod = (method: string) => {
-        setSelectedMethods(prev =>
-            prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]
-        );
-    };
 
     if (uiVersion === 'v2') {
         return (
@@ -299,7 +297,7 @@ export function DashboardUI({ initialData, currentProjectId }: DashboardUIProps)
                                                     </button>
                                                 ))}
                                                 <button
-                                                    onClick={() => setSelectedMethods([])}
+                                                    onClick={clearMethodFilters}
                                                     className="ml-2 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors"
                                                 >
                                                     초기화

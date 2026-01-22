@@ -1,9 +1,9 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useEffect } from "react";
 import { V2Header } from "./V2Header";
 import { V2Sidebar, V2NavItem } from "./V2Sidebar";
-import { UserSession, getSession } from "@/app/actions/auth";
+import { useAuthStore, useUIStore } from "@/stores";
 import { ChevronDown } from "lucide-react";
 
 interface V2LayoutProps {
@@ -35,18 +35,14 @@ export function V2Layout({
     showManagementSection = true,
     headerActions
 }: V2LayoutProps) {
-    const [session, setSession] = useState<UserSession | null>(null);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-    const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+    const session = useAuthStore((state) => state.session);
+    const fetchSession = useAuthStore((state) => state.fetchSession);
+    const isMobileMenuOpen = useUIStore((state) => state.mobileSidebarOpen);
+    const toggleMobileMenu = useUIStore((state) => state.toggleMobileSidebar);
 
     useEffect(() => {
-        const fetchSession = async () => {
-            const s = await getSession();
-            setSession(s);
-        };
         fetchSession();
-    }, []);
+    }, [fetchSession]);
 
     return (
         <div className="min-h-screen bg-[#F5F7FA] text-slate-900 font-sans selection:bg-blue-100">
