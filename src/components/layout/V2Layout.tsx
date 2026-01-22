@@ -36,6 +36,9 @@ export function V2Layout({
     headerActions
 }: V2LayoutProps) {
     const [session, setSession] = useState<UserSession | null>(null);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -54,6 +57,7 @@ export function V2Layout({
                 onSearchChange={onSearchChange}
                 searchPlaceholder={searchPlaceholder}
                 showSearch={showSearch}
+                onMobileMenuToggle={toggleMobileMenu}
             />
 
             {/* 메인 레이아웃 */}
@@ -64,6 +68,8 @@ export function V2Layout({
                     onTabChange={onTabChange}
                     showManagementSection={showManagementSection}
                     avatar={session?.name ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.name}` : undefined}
+                    isMobileMenuOpen={isMobileMenuOpen}
+                    onMobileMenuToggle={toggleMobileMenu}
                 />
 
                 {/* 메인 컨텐츠 영역 */}
@@ -269,5 +275,33 @@ export function V2Input({
                 />
             )}
         </div>
+    );
+}
+
+// 공통 스켈레톤 컴포넌트
+export function V2Skeleton({
+    className = "",
+    variant = 'card',
+    count = 1
+}: {
+    className?: string;
+    variant?: 'card' | 'row' | 'text' | 'avatar';
+    count?: number;
+}) {
+    const baseClass = "bg-white border border-slate-200 animate-pulse rounded-3xl";
+
+    const variants = {
+        card: "h-48",
+        row: "h-16",
+        text: "h-4 rounded-lg",
+        avatar: "w-10 h-10 rounded-full"
+    };
+
+    return (
+        <>
+            {Array.from({ length: count }).map((_, i) => (
+                <div key={i} className={`${baseClass} ${variants[variant]} ${className}`} />
+            ))}
+        </>
     );
 }

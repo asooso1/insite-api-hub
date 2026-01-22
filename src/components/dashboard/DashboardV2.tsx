@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
     LayoutGrid,
     List,
@@ -45,11 +46,20 @@ interface DashboardV2Props {
 }
 
 export function DashboardV2({ initialData, currentProjectId, session, onVersionSwitch }: DashboardV2Props) {
+    const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<DashboardTab>('endpoints');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [diffVersion, setDiffVersion] = useState<ApiVersion | null>(null);
     const [uiVersion, setUiVersion] = useState<'v1' | 'v2'>('v2');
+
+    // URL 쿼리 파라미터에서 탭 읽기
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && ['endpoints', 'models', 'test', 'scenarios', 'versions', 'environments'].includes(tab)) {
+            setActiveTab(tab as DashboardTab);
+        }
+    }, [searchParams]);
 
     const tabs = [
         { id: 'endpoints', label: '엔드포인트', icon: <List className="w-4 h-4" />, color: 'blue' },
