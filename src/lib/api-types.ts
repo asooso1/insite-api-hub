@@ -124,3 +124,7 @@ export interface ApiVersion {
     modelsSnapshot: ApiModel[];
     createdAt: string;
 }
+
+// ApiChange types are defined in change-detection.ts
+// Re-export for convenience
+export type { ApiChange, FieldChange, ModelChange, ChangeStats } from './change-detection';
