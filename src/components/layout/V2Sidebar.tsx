@@ -33,12 +33,12 @@ interface NavItemConfig {
 }
 
 const navItems: NavItemConfig[] = [
-    { id: 'endpoints', label: '엔드포인트', icon: <List className="w-4 h-4" /> },
-    { id: 'models', label: '데이터 모델', icon: <Layers className="w-4 h-4" /> },
-    { id: 'test', label: 'API 테스트', icon: <Zap className="w-4 h-4" /> },
-    { id: 'scenarios', label: '자동화 시나리오', icon: <ArrowUpDown className="w-4 h-4" /> },
-    { id: 'versions', label: '변경 이력', icon: <History className="w-4 h-4" /> },
-    { id: 'environments', label: '서버 설정', icon: <Settings className="w-4 h-4" /> },
+    { id: 'endpoints', label: '엔드포인트', icon: <List className="w-4 h-4" />, href: '/?tab=endpoints' },
+    { id: 'models', label: '데이터 모델', icon: <Layers className="w-4 h-4" />, href: '/?tab=models' },
+    { id: 'test', label: 'API 테스트', icon: <Zap className="w-4 h-4" />, href: '/?tab=test' },
+    { id: 'scenarios', label: '자동화 시나리오', icon: <ArrowUpDown className="w-4 h-4" />, href: '/?tab=scenarios' },
+    { id: 'versions', label: '변경 이력', icon: <History className="w-4 h-4" />, href: '/?tab=versions' },
+    { id: 'environments', label: '서버 설정', icon: <Settings className="w-4 h-4" />, href: '/?tab=environments' },
 ];
 
 const managementItems: NavItemConfig[] = [
@@ -52,13 +52,17 @@ interface V2SidebarProps {
     onTabChange?: (tab: V2NavItem) => void;
     showManagementSection?: boolean;
     avatar?: string;
+    isMobileMenuOpen?: boolean;
+    onMobileMenuToggle?: () => void;
 }
 
 export function V2Sidebar({
     activeTab,
     onTabChange,
     showManagementSection = true,
-    avatar
+    avatar,
+    isMobileMenuOpen = false,
+    onMobileMenuToggle
 }: V2SidebarProps) {
     const handleNavClick = (item: NavItemConfig) => {
         if (item.href) {
@@ -66,10 +70,14 @@ export function V2Sidebar({
         } else if (onTabChange) {
             onTabChange(item.id);
         }
+        // Close mobile menu after navigation
+        if (isMobileMenuOpen && onMobileMenuToggle) {
+            onMobileMenuToggle();
+        }
     };
 
-    return (
-        <aside className="w-24 bg-white border-r border-slate-100 flex flex-col items-center py-8 gap-4 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+    const sidebarContent = (
+        <>
             {/* 메인 네비게이션 */}
             {navItems.map((item) => (
                 <NavButton
@@ -107,7 +115,29 @@ export function V2Sidebar({
                     )}
                 </div>
             </div>
-        </aside>
+        </>
+    );
+
+    return (
+        <>
+            {/* Desktop Sidebar */}
+            <aside className="hidden md:flex w-24 bg-white border-r border-slate-100 flex-col items-center py-8 gap-4 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+                {sidebarContent}
+            </aside>
+
+            {/* Mobile Sidebar Overlay */}
+            {isMobileMenuOpen && (
+                <>
+                    <div
+                        className="md:hidden fixed inset-0 bg-slate-900/50 z-40"
+                        onClick={onMobileMenuToggle}
+                    />
+                    <aside className="md:hidden fixed left-0 top-0 h-full w-24 bg-white border-r border-slate-100 flex flex-col items-center py-8 gap-4 z-50 shadow-xl animate-in slide-in-from-left duration-300">
+                        {sidebarContent}
+                    </aside>
+                </>
+            )}
+        </>
     );
 }
 

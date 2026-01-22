@@ -60,7 +60,7 @@ export function ProjectsV2() {
             setRepositories(reposMap);
             setProjectTeams(teamsMap);
         } catch {
-            showToast("데이터 로드 실패", "error");
+            showToast("데이터를 불러오는데 실패했습니다.", "error");
         }
         setLoading(false);
     };
