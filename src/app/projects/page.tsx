@@ -1,7 +1,5 @@
-"use client";
-
-import { ProjectsV2 } from "@/components/projects/ProjectsV2";
+import { redirect } from "next/navigation";
 
 export default function ProjectsPage() {
-    return <ProjectsV2 />;
+    redirect("/?tab=projects");
 }

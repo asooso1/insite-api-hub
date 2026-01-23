@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
     LayoutGrid,
     List,
@@ -37,7 +37,13 @@ import { VersionHistoryManager } from "@/components/VersionHistoryManager";
 import { ApiDiffViewer } from "@/components/ApiDiffViewer";
 import { RepoImporter } from "@/components/RepoImporter";
 import { UserSession, signOut } from "@/app/actions/auth";
-import { useUIStore } from "@/stores";
+import { useUIStore, useTestStore } from "@/stores";
+import WebhookSettings from "@/components/settings/WebhookSettings";
+import { TestDashboard } from "@/components/TestDashboard";
+import { ThreeDShowcase } from "@/components/demos/3DShowcase";
+import { TeamsV2 } from "@/components/teams/TeamsV2";
+import { ProjectsV2 } from "@/components/projects/ProjectsV2";
+import { HierarchyContent } from "@/components/hierarchy/HierarchyContent";
 
 interface DashboardV2Props {
     initialData: MockDB;
@@ -48,6 +54,7 @@ interface DashboardV2Props {
 
 export function DashboardV2({ initialData, currentProjectId, session, onVersionSwitch }: DashboardV2Props) {
     const searchParams = useSearchParams();
+    const router = useRouter();
 
     // Zustand stores
     const activeTab = useUIStore((state) => state.activeTab);
@@ -55,26 +62,57 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
     const searchQuery = useUIStore((state) => state.searchQuery);
     const setSearchQuery = useUIStore((state) => state.setSearchQuery);
 
+    // Test store
+    const testHistory = useTestStore((state) => state.testHistory);
+    const batchResults = useTestStore((state) => state.batchResults);
+
     // Local state (view-specific)
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [diffVersion, setDiffVersion] = useState<ApiVersion | null>(null);
     const [uiVersion, setUiVersion] = useState<'v1' | 'v2'>('v2');
 
+    // 탭 변경 시 URL도 함께 업데이트
+    const handleTabChange = useCallback((tab: DashboardTab) => {
+        setActiveTab(tab);
+        router.push(`/?tab=${tab}`, { scroll: false });
+    }, [setActiveTab, router]);
+
+    const validTabs = ['endpoints', 'models', 'test', 'scenarios', 'versions', 'environments', 'settings', 'testResults', 'demo', 'teams', 'projects', 'hierarchy'];
+
     // URL 쿼리 파라미터에서 탭 읽기
     useEffect(() => {
         const tab = searchParams.get('tab');
-        if (tab && ['endpoints', 'models', 'test', 'scenarios', 'versions', 'environments'].includes(tab)) {
+        if (tab && validTabs.includes(tab)) {
             setActiveTab(tab as DashboardTab);
         }
     }, [searchParams, setActiveTab]);
+
+    // 브라우저 뒤로가기/앞으로가기 지원
+    useEffect(() => {
+        const handlePopState = () => {
+            const tab = new URLSearchParams(window.location.search).get('tab');
+            if (tab && validTabs.includes(tab)) {
+                setActiveTab(tab as DashboardTab);
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [setActiveTab]);
 
     const tabs = [
         { id: 'endpoints', label: '엔드포인트', icon: <List className="w-4 h-4" />, color: 'blue' },
         { id: 'models', label: '데이터 모델', icon: <Layers className="w-4 h-4" />, color: 'purple' },
         { id: 'test', label: 'API 테스트', icon: <Zap className="w-4 h-4" />, color: 'amber' },
+        { id: 'testResults', label: '테스트 결과', icon: <Monitor className="w-4 h-4" />, color: 'emerald' },
         { id: 'scenarios', label: '자동화 시나리오', icon: <ArrowUpDown className="w-4 h-4" />, color: 'green' },
         { id: 'versions', label: '변경 이력', icon: <History className="w-4 h-4" />, color: 'rose' },
         { id: 'environments', label: '서버 설정', icon: <Settings className="w-4 h-4" />, color: 'slate' },
+        { id: 'teams', label: '팀 관리', icon: <Users className="w-4 h-4" />, color: 'cyan' },
+        { id: 'projects', label: '프로젝트 관리', icon: <Folder className="w-4 h-4" />, color: 'orange' },
+        { id: 'hierarchy', label: '전사 계층 구조', icon: <Network className="w-4 h-4" />, color: 'teal' },
+        { id: 'settings', label: 'Webhook 설정', icon: <Database className="w-4 h-4" />, color: 'indigo' },
+        { id: 'demo', label: '3D 데모', icon: <LayoutGrid className="w-4 h-4" />, color: 'pink' },
     ];
 
     return (
@@ -153,7 +191,7 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as DashboardTab)}
+                            onClick={() => handleTabChange(tab.id as DashboardTab)}
                             className={`
                                 group relative w-14 h-14 flex items-center justify-center rounded-[1.25rem] transition-all duration-300
                                 ${activeTab === tab.id
@@ -181,29 +219,6 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                         </button>
                     ))}
 
-                    {/* 구분선 */}
-                    <div className="w-10 h-px bg-slate-100 my-2" />
-
-                    {/* 관리 메뉴 */}
-                    {[
-                        { id: 'teams', label: '팀 관리', icon: <Users className="w-4 h-4" />, href: '/teams' },
-                        { id: 'projects', label: '프로젝트 관리', icon: <Folder className="w-4 h-4" />, href: '/projects' },
-                        { id: 'hierarchy', label: '전사 계층 구조', icon: <Network className="w-4 h-4" />, href: '/hierarchy' },
-                    ].map((item) => (
-                        <a
-                            key={item.id}
-                            href={item.href}
-                            className="group relative w-14 h-14 flex items-center justify-center rounded-[1.25rem] transition-all duration-300 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-                        >
-                            <div className="relative z-10 transition-transform group-hover:scale-110">
-                                {item.icon}
-                            </div>
-                            <div className="absolute left-20 px-3 py-2 bg-slate-900 text-white text-[10px] font-black rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all translate-x-[-10px] group-hover:translate-x-0 pointer-events-none whitespace-nowrap z-[100] shadow-2xl flex items-center">
-                                {item.label}
-                                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45" />
-                            </div>
-                        </a>
-                    ))}
 
                     <div className="mt-auto p-4 flex flex-col gap-4">
                         <div className="w-10 h-10 rounded-full border-2 border-slate-100 flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity cursor-pointer overflow-hidden">
@@ -322,6 +337,36 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                                                 )}
 
                                                 {activeTab === 'environments' && <EnvironmentManager initialConfigs={initialData.environments} />}
+
+                                                {activeTab === 'settings' && (
+                                                    <div className="max-w-4xl">
+                                                        <WebhookSettings />
+                                                    </div>
+                                                )}
+
+                                                {activeTab === 'testResults' && (
+                                                    <TestDashboard
+                                                        projectId={currentProjectId || ""}
+                                                        testHistory={testHistory}
+                                                        batchResults={batchResults}
+                                                    />
+                                                )}
+
+                                                {activeTab === 'demo' && (
+                                                    <ThreeDShowcase />
+                                                )}
+
+                                                {activeTab === 'teams' && (
+                                                    <TeamsV2 embedded />
+                                                )}
+
+                                                {activeTab === 'projects' && (
+                                                    <ProjectsV2 embedded />
+                                                )}
+
+                                                {activeTab === 'hierarchy' && (
+                                                    <HierarchyContent />
+                                                )}
                                             </motion.div>
                                         </AnimatePresence>
                                     </div>

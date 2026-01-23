@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type DashboardTab = 'endpoints' | 'models' | 'test' | 'scenarios' | 'versions' | 'environments';
+type DashboardTab = 'endpoints' | 'models' | 'test' | 'scenarios' | 'versions' | 'environments' | 'settings' | 'testResults' | 'demo' | 'teams' | 'projects' | 'hierarchy';
 type ViewMode = 'grid' | 'list';
 type Theme = 'light' | 'dark' | 'system';
 
@@ -9,6 +9,7 @@ interface UIState {
   // Sidebar
   sidebarOpen: boolean;
   mobileSidebarOpen: boolean;
+  sidebarExpanded: boolean;
 
   // Navigation
   activeTab: DashboardTab;
@@ -25,9 +26,14 @@ interface UIState {
   activeModal: string | null;
   modalData: any;
 
+  // Command Palette & Shortcuts
+  commandPaletteOpen: boolean;
+  shortcutsHelpOpen: boolean;
+
   // Actions
   toggleSidebar: () => void;
   toggleMobileSidebar: () => void;
+  toggleSidebarExpanded: () => void;
   setActiveTab: (tab: DashboardTab) => void;
   setSearchQuery: (query: string) => void;
   toggleMethod: (method: string) => void;
@@ -36,6 +42,12 @@ interface UIState {
   setTheme: (theme: Theme) => void;
   openModal: (modalId: string, data?: any) => void;
   closeModal: () => void;
+  toggleCommandPalette: () => void;
+  openCommandPalette: () => void;
+  closeCommandPalette: () => void;
+  toggleShortcutsHelp: () => void;
+  openShortcutsHelp: () => void;
+  closeShortcutsHelp: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -44,6 +56,7 @@ export const useUIStore = create<UIState>()(
       // Initial state
       sidebarOpen: true,
       mobileSidebarOpen: false,
+      sidebarExpanded: false,
       activeTab: 'endpoints',
       searchQuery: '',
       selectedMethods: [],
@@ -51,6 +64,8 @@ export const useUIStore = create<UIState>()(
       theme: 'light',
       activeModal: null,
       modalData: null,
+      commandPaletteOpen: false,
+      shortcutsHelpOpen: false,
 
       // Actions
       toggleSidebar: () =>
@@ -58,6 +73,9 @@ export const useUIStore = create<UIState>()(
 
       toggleMobileSidebar: () =>
         set((state) => ({ mobileSidebarOpen: !state.mobileSidebarOpen })),
+
+      toggleSidebarExpanded: () =>
+        set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
 
       setActiveTab: (tab) => set({ activeTab: tab }),
 
@@ -80,11 +98,26 @@ export const useUIStore = create<UIState>()(
         set({ activeModal: modalId, modalData: data }),
 
       closeModal: () => set({ activeModal: null, modalData: null }),
+
+      toggleCommandPalette: () =>
+        set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
+
+      openCommandPalette: () => set({ commandPaletteOpen: true }),
+
+      closeCommandPalette: () => set({ commandPaletteOpen: false }),
+
+      toggleShortcutsHelp: () =>
+        set((state) => ({ shortcutsHelpOpen: !state.shortcutsHelpOpen })),
+
+      openShortcutsHelp: () => set({ shortcutsHelpOpen: true }),
+
+      closeShortcutsHelp: () => set({ shortcutsHelpOpen: false }),
     }),
     {
       name: 'ui-storage',
       partialize: (state) => ({
         sidebarOpen: state.sidebarOpen,
+        sidebarExpanded: state.sidebarExpanded,
         viewMode: state.viewMode,
         theme: state.theme,
       }),

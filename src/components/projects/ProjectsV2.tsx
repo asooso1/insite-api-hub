@@ -11,7 +11,11 @@ import { V2Layout, V2Card, V2Button, V2Modal, V2Input } from "@/components/layou
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 
-export function ProjectsV2() {
+interface ProjectsV2Props {
+    embedded?: boolean; // true면 V2Layout 없이 컨텐츠만 렌더링
+}
+
+export function ProjectsV2({ embedded = false }: ProjectsV2Props) {
     const [projects, setProjects] = useState<Project[]>([]);
     const [repositories, setRepositories] = useState<Record<string, Repository[]>>({});
     const [teams, setTeams] = useState<Team[]>([]);
@@ -111,22 +115,17 @@ export function ProjectsV2() {
         p.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    return (
-        <V2Layout
-            activeTab="projects"
-            title="프로젝트 관리"
-            subtitle="API 연동을 위한 전사 프로젝트 자산을 한눈에 관리하세요."
-            breadcrumb={["관리", "프로젝트 관리"]}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="프로젝트 검색..."
-            headerActions={
-                <V2Button onClick={() => setIsCreateModalOpen(true)}>
-                    <Plus className="w-4 h-4" />
-                    프로젝트 추가
-                </V2Button>
-            }
-        >
+    const content = (
+        <>
+            {/* 임베디드 모드일 때 헤더 액션 */}
+            {embedded && (
+                <div className="flex justify-end mb-6">
+                    <V2Button onClick={() => setIsCreateModalOpen(true)}>
+                        <Plus className="w-4 h-4" />
+                        프로젝트 추가
+                    </V2Button>
+                </div>
+            )}
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {[1, 2, 3, 4].map(i => (
@@ -431,6 +430,30 @@ export function ProjectsV2() {
                     </V2Button>
                 </div>
             </V2Modal>
+        </>
+    );
+
+    if (embedded) {
+        return content;
+    }
+
+    return (
+        <V2Layout
+            activeTab="projects"
+            title="프로젝트 관리"
+            subtitle="API 연동을 위한 전사 프로젝트 자산을 한눈에 관리하세요."
+            breadcrumb={["관리", "프로젝트 관리"]}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="프로젝트 검색..."
+            headerActions={
+                <V2Button onClick={() => setIsCreateModalOpen(true)}>
+                    <Plus className="w-4 h-4" />
+                    프로젝트 추가
+                </V2Button>
+            }
+        >
+            {content}
         </V2Layout>
     );
 }

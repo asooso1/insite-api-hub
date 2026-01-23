@@ -10,7 +10,11 @@ import { V2Layout, V2Card, V2Button, V2Modal, V2Input } from "@/components/layou
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 
-export function TeamsV2() {
+interface TeamsV2Props {
+    embedded?: boolean; // true면 V2Layout 없이 컨텐츠만 렌더링
+}
+
+export function TeamsV2({ embedded = false }: TeamsV2Props) {
     const [teams, setTeams] = useState<Team[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -73,38 +77,37 @@ export function TeamsV2() {
         t.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    return (
-        <V2Layout
-            activeTab="teams"
-            title="팀 관리"
-            subtitle="팀을 구성하고 프로젝트를 할당하세요."
-            breadcrumb={["관리", "팀 관리"]}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="팀 검색..."
-            headerActions={
-                <>
-                    <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex">
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            <LayoutGrid className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            <List className="w-4 h-4" />
-                        </button>
-                    </div>
-                    <V2Button onClick={() => setIsCreateModalOpen(true)}>
-                        <Plus className="w-4 h-4" />
-                        새 팀 만들기
-                    </V2Button>
-                </>
-            }
-        >
+    const headerActions = (
+        <>
+            <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex">
+                <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    <List className="w-4 h-4" />
+                </button>
+            </div>
+            <V2Button onClick={() => setIsCreateModalOpen(true)}>
+                <Plus className="w-4 h-4" />
+                새 팀 만들기
+            </V2Button>
+        </>
+    );
+
+    const content = (
+        <>
+            {/* 임베디드 모드일 때 헤더 액션 */}
+            {embedded && (
+                <div className="flex justify-end gap-2 mb-6">
+                    {headerActions}
+                </div>
+            )}
             {loading ? (
                 <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
                     {[1, 2, 3].map(i => (
@@ -274,6 +277,25 @@ export function TeamsV2() {
                     </V2Button>
                 </div>
             </V2Modal>
+        </>
+    );
+
+    if (embedded) {
+        return content;
+    }
+
+    return (
+        <V2Layout
+            activeTab="teams"
+            title="팀 관리"
+            subtitle="팀을 구성하고 프로젝트를 할당하세요."
+            breadcrumb={["관리", "팀 관리"]}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="팀 검색..."
+            headerActions={headerActions}
+        >
+            {content}
         </V2Layout>
     );
 }
