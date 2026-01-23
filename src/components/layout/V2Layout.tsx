@@ -17,7 +17,6 @@ interface V2LayoutProps {
     onSearchChange?: (query: string) => void;
     searchPlaceholder?: string;
     showSearch?: boolean;
-    showManagementSection?: boolean;
     headerActions?: ReactNode;
 }
 
@@ -32,7 +31,6 @@ export function V2Layout({
     onSearchChange,
     searchPlaceholder,
     showSearch = true,
-    showManagementSection = true,
     headerActions
 }: V2LayoutProps) {
     const session = useAuthStore((state) => state.session);
@@ -62,7 +60,6 @@ export function V2Layout({
                 <V2Sidebar
                     activeTab={activeTab}
                     onTabChange={onTabChange}
-                    showManagementSection={showManagementSection}
                     avatar={session?.name ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.name}` : undefined}
                     isMobileMenuOpen={isMobileMenuOpen}
                     onMobileMenuToggle={toggleMobileMenu}

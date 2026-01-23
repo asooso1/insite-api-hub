@@ -88,6 +88,7 @@ export interface BatchTestResult {
     status: number;
     responseTime: number;
     error?: string;
+    assertionResult?: import('./assertion-validator').AssertionResult;
 }
 
 export interface BatchTestSummary {
@@ -128,3 +129,15 @@ export interface ApiVersion {
 // ApiChange types are defined in change-detection.ts
 // Re-export for convenience
 export type { ApiChange, FieldChange, ModelChange, ChangeStats } from './change-detection';
+
+// DTO Diff types are defined in dto-diff.ts
+// Re-export for convenience
+export type { FieldDiff, DtoDiff, BreakingChangeSummary } from './dto-diff';
+
+// Assertion types - re-export from assertion-validator
+export type {
+    AssertionDetail,
+    AssertionResult,
+    FieldAssertion,
+    AssertionConfig
+} from './assertion-validator';

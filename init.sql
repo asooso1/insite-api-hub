@@ -1,13 +1,37 @@
--- 프로젝트 테이블
+-- ==========================================
+-- API Hub Database Schema (init.sql)
+-- ==========================================
+
+-- 1. 프로젝트 테이블
 CREATE TABLE IF NOT EXISTS projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
-    git_url TEXT,
+    dooray_webhook_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- API 엔드포인트 테이블
+-- 2. 사용자 테이블
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    role TEXT DEFAULT 'USER', -- ADMIN, USER
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. 프로젝트 멤버 테이블
+CREATE TABLE IF NOT EXISTS project_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT DEFAULT 'MEMBER', -- OWNER, MEMBER
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(project_id, user_id)
+);
+
+-- 4. API 엔드포인트 테이블
 CREATE TABLE IF NOT EXISTS endpoints (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
@@ -19,10 +43,15 @@ CREATE TABLE IF NOT EXISTS endpoints (
     request_body_model TEXT,
     response_type TEXT,
     version TEXT,
+    owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    owner_name TEXT,
+    owner_contact TEXT,
     synced_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_endpoints_project_id ON endpoints(project_id);
+CREATE INDEX IF NOT EXISTS idx_endpoints_owner_id ON endpoints(owner_id);
 
--- 데이터 모델(DTO/VO) 테이블
+-- 5. 데이터 모델(DTO/VO) 테이블
 CREATE TABLE IF NOT EXISTS api_models (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
@@ -30,8 +59,10 @@ CREATE TABLE IF NOT EXISTS api_models (
     fields JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_api_models_project_id ON api_models(project_id);
+CREATE INDEX IF NOT EXISTS idx_api_models_fields_gin ON api_models USING gin (fields);
 
--- 서버 환경 설정 테이블
+-- 6. 서버 환경 설정 테이블
 CREATE TABLE IF NOT EXISTS environments (
     id SERIAL PRIMARY KEY,
     env_type TEXT NOT NULL UNIQUE, -- DEV, STG, PRD
@@ -48,9 +79,10 @@ INSERT INTO environments (env_type, base_url) VALUES
 ('PRD', 'https://api.example.com')
 ON CONFLICT (env_type) DO NOTHING;
 
--- 테스트 케이스 테이블
+-- 7. 테스트 케이스 테이블
 CREATE TABLE IF NOT EXISTS test_cases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     api_id VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     payload TEXT,
@@ -58,11 +90,13 @@ CREATE TABLE IF NOT EXISTS test_cases (
     expected_status INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_test_cases_project_id ON test_cases(project_id);
 CREATE INDEX IF NOT EXISTS idx_test_cases_api_id ON test_cases(api_id);
 
--- 테스트 히스토리 테이블
+-- 8. 테스트 히스토리 테이블
 CREATE TABLE IF NOT EXISTS test_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     api_id VARCHAR(255) NOT NULL,
     test_case_id UUID,
     env VARCHAR(50) NOT NULL,
@@ -72,5 +106,66 @@ CREATE TABLE IF NOT EXISTS test_history (
     response_body TEXT,
     executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_test_history_project_id ON test_history(project_id);
 CREATE INDEX IF NOT EXISTS idx_test_history_api_id ON test_history(api_id);
 CREATE INDEX IF NOT EXISTS idx_test_history_executed_at ON test_history(executed_at DESC);
+
+-- 9. 테스트 시나리오 테이블
+CREATE TABLE IF NOT EXISTS scenarios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    steps JSONB NOT NULL DEFAULT '[]',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_scenarios_project_id ON scenarios(project_id);
+
+-- 10. API 버전 스냅샷 테이블
+CREATE TABLE IF NOT EXISTS api_versions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    version_tag TEXT NOT NULL,
+    description TEXT,
+    endpoints_snapshot JSONB NOT NULL,
+    models_snapshot JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_api_versions_project_id ON api_versions(project_id);
+
+-- 11. API 댓글/질문 테이블
+CREATE TABLE IF NOT EXISTS api_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    endpoint_id UUID REFERENCES endpoints(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    parent_id UUID REFERENCES api_comments(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    comment_type TEXT DEFAULT 'COMMENT', -- COMMENT, QUESTION, ANSWER
+    is_resolved BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_api_comments_project_id ON api_comments(project_id);
+CREATE INDEX IF NOT EXISTS idx_api_comments_endpoint_id ON api_comments(endpoint_id);
+CREATE INDEX IF NOT EXISTS idx_api_comments_user_id ON api_comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_api_comments_parent_id ON api_comments(parent_id);
+
+-- 12. 웹훅 로그 테이블
+CREATE TABLE IF NOT EXISTS webhook_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    payload JSONB NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    processed BOOLEAN DEFAULT FALSE,
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_project_id ON webhook_logs(project_id);
+
+-- 기본 프로젝트 생성
+INSERT INTO projects (name, description) 
+VALUES ('Default Project', '자동 생성된 기본 프로젝트입니다.')
+ON CONFLICT DO NOTHING;

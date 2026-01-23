@@ -1,7 +1,5 @@
-"use client";
-
-import { TeamsV2 } from "@/components/teams/TeamsV2";
+import { redirect } from "next/navigation";
 
 export default function TeamsPage() {
-    return <TeamsV2 />;
+    redirect("/?tab=teams");
 }

@@ -415,3 +415,214 @@ export const zIndex = {
   popover: 100,
   tooltip: 110,
 };
+
+// ============================================
+// 3D ANIMATION VARIANTS (NEW)
+// ============================================
+
+// 3D Tilt card animation
+export const tilt3dVariants: Variants = {
+  initial: {
+    rotateX: 0,
+    rotateY: 0,
+    scale: 1,
+  },
+  hover: {
+    scale: 1.02,
+    transition: {
+      duration: 0.3,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
+
+// Subtle floating animation
+export const floatSubtleVariants: Variants = {
+  animate: {
+    y: [0, -8, 0],
+    transition: {
+      duration: 4,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+};
+
+// Aggressive floating animation
+export const floatIntenseVariants: Variants = {
+  animate: {
+    y: [0, -20, 0],
+    x: [0, 5, 0, -5, 0],
+    transition: {
+      duration: 6,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+};
+
+// Parallax scroll-based animation
+export const parallaxVariants = {
+  // Background layer (slow)
+  background: {
+    y: (scrollY: number) => scrollY * 0.3,
+  },
+  // Midground layer (medium)
+  midground: {
+    y: (scrollY: number) => scrollY * 0.6,
+  },
+  // Foreground layer (fast)
+  foreground: {
+    y: (scrollY: number) => scrollY * 1.2,
+  },
+};
+
+// Depth layer variants for stacked elements
+export const depthLayerVariants: Variants = {
+  layer1: {
+    z: 0,
+    scale: 1,
+  },
+  layer2: {
+    z: 20,
+    scale: 1.05,
+  },
+  layer3: {
+    z: 40,
+    scale: 1.1,
+  },
+};
+
+// Rotate on scroll
+export const rotateOnScrollVariants: Variants = {
+  initial: {
+    rotate: 0,
+  },
+  animate: (scrollProgress: number) => ({
+    rotate: scrollProgress * 360,
+    transition: {
+      duration: 0.3,
+      ease: 'linear',
+    },
+  }),
+};
+
+// 3D flip card
+export const flipCardVariants: Variants = {
+  front: {
+    rotateY: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+  back: {
+    rotateY: 180,
+    transition: {
+      duration: 0.6,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
+
+// ============================================
+// 3D UTILITIES
+// ============================================
+
+/**
+ * Generate multi-layer depth shadow for 3D effect
+ * @param color - Shadow color (default: rgba(0,0,0,0.1))
+ * @param layers - Number of shadow layers (default: 5)
+ */
+export function depthShadow(color = 'rgba(0, 0, 0, 0.1)', layers = 5): string {
+  const shadows: string[] = [];
+  for (let i = 1; i <= layers; i++) {
+    const offset = i * 2;
+    const blur = i * 4;
+    const opacity = 0.1 / i;
+    shadows.push(`0 ${offset}px ${blur}px ${color.replace(/[\d.]+\)$/, `${opacity})`)}`);
+  }
+  return shadows.join(', ');
+}
+
+/**
+ * Generate layered shadows for elevated cards
+ */
+export const layeredShadows = {
+  sm: '0 2px 4px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.03)',
+  md: '0 4px 8px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.05), 0 12px 24px rgba(0, 0, 0, 0.03)',
+  lg: '0 8px 16px rgba(0, 0, 0, 0.1), 0 16px 32px rgba(0, 0, 0, 0.08), 0 24px 48px rgba(0, 0, 0, 0.05)',
+  xl: '0 16px 32px rgba(0, 0, 0, 0.12), 0 32px 64px rgba(0, 0, 0, 0.1), 0 48px 96px rgba(0, 0, 0, 0.08)',
+};
+
+/**
+ * Generate CSS perspective string
+ */
+export function perspective(value: number): string {
+  return `perspective(${value}px)`;
+}
+
+/**
+ * Generate 3D transform string
+ */
+export function transform3D(
+  rotateX = 0,
+  rotateY = 0,
+  rotateZ = 0,
+  translateZ = 0,
+  scale = 1
+): string {
+  return `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) translateZ(${translateZ}px) scale(${scale})`;
+}
+
+// ============================================
+// GRADIENT UTILITIES
+// ============================================
+
+/**
+ * Generate mesh gradient for backgrounds
+ */
+export const meshGradients = {
+  aurora: 'radial-gradient(at 40% 20%, hsla(230, 100%, 74%, 0.3) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(280, 100%, 74%, 0.3) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(340, 100%, 76%, 0.3) 0px, transparent 50%)',
+
+  ocean: 'radial-gradient(at 0% 0%, hsla(200, 100%, 70%, 0.3) 0px, transparent 50%), radial-gradient(at 50% 0%, hsla(220, 100%, 70%, 0.3) 0px, transparent 50%), radial-gradient(at 100% 0%, hsla(240, 100%, 70%, 0.3) 0px, transparent 50%)',
+
+  sunset: 'radial-gradient(at 0% 0%, hsla(20, 100%, 70%, 0.3) 0px, transparent 50%), radial-gradient(at 50% 50%, hsla(340, 100%, 70%, 0.3) 0px, transparent 50%), radial-gradient(at 100% 100%, hsla(280, 100%, 70%, 0.3) 0px, transparent 50%)',
+
+  forest: 'radial-gradient(at 20% 30%, hsla(140, 70%, 60%, 0.3) 0px, transparent 50%), radial-gradient(at 80% 20%, hsla(160, 80%, 50%, 0.3) 0px, transparent 50%), radial-gradient(at 50% 80%, hsla(100, 60%, 60%, 0.3) 0px, transparent 50%)',
+};
+
+/**
+ * Generate animated gradient
+ */
+export const animatedGradients = {
+  shift: 'linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%)',
+  shimmer: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)',
+};
+
+/**
+ * Generate glass gradient overlay
+ */
+export function glassGradient(opacity = 0.1): string {
+  return `linear-gradient(135deg, rgba(255, 255, 255, ${opacity}) 0%, rgba(255, 255, 255, 0) 100%)`;
+}
+
+/**
+ * Color utilities for gradients
+ */
+export const gradientColors = {
+  primary: 'from-indigo-500 to-purple-600',
+  primarySubtle: 'from-indigo-50 to-purple-50',
+  success: 'from-emerald-500 to-teal-600',
+  warning: 'from-amber-500 to-orange-600',
+  error: 'from-red-500 to-pink-600',
+  info: 'from-blue-500 to-cyan-600',
+  dark: 'from-slate-800 to-slate-900',
+  light: 'from-slate-50 to-white',
+
+  // Vibrant gradients
+  cosmic: 'from-violet-600 via-purple-600 to-indigo-600',
+  fire: 'from-orange-500 via-red-500 to-pink-500',
+  electric: 'from-cyan-500 via-blue-500 to-indigo-500',
+  nature: 'from-green-500 via-emerald-500 to-teal-500',
+};

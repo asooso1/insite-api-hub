@@ -45,7 +45,7 @@ import { ModelExplorer } from "@/components/ModelExplorer";
 import { DashboardV2 } from "./DashboardV2";
 import { useProjectStore, useAuthStore, useUIStore } from "@/stores";
 
-export type DashboardTab = 'endpoints' | 'models' | 'environments' | 'test' | 'scenarios' | 'versions';
+export type DashboardTab = 'endpoints' | 'models' | 'environments' | 'test' | 'scenarios' | 'versions' | 'settings' | 'testResults' | 'demo' | 'teams' | 'projects' | 'hierarchy';
 
 interface DashboardUIProps {
     initialData: MockDB;

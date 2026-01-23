@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ApiEndpoint, ApiVersion } from "@/lib/api-types";
-import { Plus, Minus, AlertCircle, ArrowLeft, ArrowRight, Columns, List } from "lucide-react";
+import { Plus, Minus, AlertCircle, ArrowLeft, ArrowRight, Columns, List, FileCode, AlertTriangle } from "lucide-react";
 import { useChangeStore } from "@/stores";
 import {
   listContainerVariants,
@@ -17,6 +17,9 @@ import {
   getSignificantChanges,
   ApiChange
 } from "@/lib/change-detection";
+import { compareAllDtos, DtoDiff, getBreakingChangeSummary } from "@/lib/dto-diff";
+import { MultiDtoFieldDiffTree } from "./DtoFieldDiffTree";
+import { estimateImpactLevel } from "@/lib/breaking-changes";
 
 interface ApiDiffViewerProps {
     currentEndpoints: ApiEndpoint[];
@@ -25,6 +28,7 @@ interface ApiDiffViewerProps {
 }
 
 type FilterType = 'all' | 'added' | 'removed' | 'modified';
+type TabType = 'endpoints' | 'dtos';
 
 export function ApiDiffViewer({ currentEndpoints, oldVersion, onBack }: ApiDiffViewerProps) {
     const {
@@ -36,10 +40,29 @@ export function ApiDiffViewer({ currentEndpoints, oldVersion, onBack }: ApiDiffV
         changeStats: getChangeStats
     } = useChangeStore();
 
+    const [activeTab, setActiveTab] = useState<TabType>('endpoints');
+    const [dtoSeverityFilter, setDtoSeverityFilter] = useState<'all' | 'breaking' | 'minor' | 'patch'>('all');
+
     // change-detection 유틸리티 사용
     const changes = useMemo(
         () => compareVersions(currentEndpoints, oldVersion.endpointsSnapshot),
         [currentEndpoints, oldVersion]
+    );
+
+    // DTO 비교
+    const dtoDiffs = useMemo(
+        () => compareAllDtos(oldVersion.modelsSnapshot || [], []),
+        [oldVersion]
+    );
+
+    const dtoBreakingSummary = useMemo(
+        () => getBreakingChangeSummary(dtoDiffs),
+        [dtoDiffs]
+    );
+
+    const impactLevel = useMemo(
+        () => estimateImpactLevel(dtoDiffs),
+        [dtoDiffs]
     );
 
     // 스토어에 변경사항 동기화
@@ -70,6 +93,21 @@ export function ApiDiffViewer({ currentEndpoints, oldVersion, onBack }: ApiDiffV
 
         return significantChanges.filter(c => c.type === filterMap[filter]);
     }, [changes, filter]);
+
+    // DTO 필터링
+    const filteredDtoDiffs = useMemo(() => {
+        if (dtoSeverityFilter === 'all') return dtoDiffs;
+
+        return dtoDiffs.map(diff => ({
+            ...diff,
+            fields: diff.fields.filter(f => {
+                if (dtoSeverityFilter === 'breaking') return f.severity === 'BREAKING';
+                if (dtoSeverityFilter === 'minor') return f.severity === 'MINOR';
+                if (dtoSeverityFilter === 'patch') return f.severity === 'PATCH';
+                return true;
+            }),
+        })).filter(diff => diff.fields.length > 0);
+    }, [dtoDiffs, dtoSeverityFilter]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -123,82 +161,200 @@ export function ApiDiffViewer({ currentEndpoints, oldVersion, onBack }: ApiDiffV
                 </div>
             </div>
 
-            {/* 컨트롤 바 - 토글 & 필터 */}
-            <div className={`${glassClasses.card} p-4 rounded-2xl`}>
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    {/* 뷰 모드 토글 */}
-                    <div className="flex gap-2">
-                        <ToggleButton
-                            active={comparisonMode === 'split'}
-                            onClick={() => setComparisonMode('split')}
-                            icon={<Columns className="w-4 h-4" />}
-                            label="Split"
-                        />
-                        <ToggleButton
-                            active={comparisonMode === 'unified'}
-                            onClick={() => setComparisonMode('unified')}
-                            icon={<List className="w-4 h-4" />}
-                            label="Unified"
-                        />
+            {/* Breaking Changes Alert */}
+            {dtoBreakingSummary.totalBreaking > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3"
+                >
+                    <AlertTriangle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                        <h3 className="font-bold text-rose-700 dark:text-rose-400">
+                            Breaking Changes Detected
+                        </h3>
+                        <p className="text-sm text-rose-600 dark:text-rose-300 mt-1">
+                            {dtoBreakingSummary.totalBreaking} breaking change{dtoBreakingSummary.totalBreaking !== 1 ? 's' : ''} detected across{' '}
+                            {dtoBreakingSummary.affectedDtos.length} DTO{dtoBreakingSummary.affectedDtos.length !== 1 ? 's' : ''}.
+                            Impact Level: <span className="font-bold">{impactLevel}</span>
+                        </p>
                     </div>
+                </motion.div>
+            )}
 
-                    {/* 필터 버튼 */}
-                    <div className="flex flex-wrap gap-2">
-                        <FilterButton
-                            active={filter === 'all'}
-                            onClick={() => setFilter('all')}
-                            label="All"
-                            count={stats.all}
-                        />
-                        <FilterButton
-                            active={filter === 'added'}
-                            onClick={() => setFilter('added')}
-                            label="Added"
-                            count={stats.added}
-                            color="emerald"
-                        />
-                        <FilterButton
-                            active={filter === 'removed'}
-                            onClick={() => setFilter('removed')}
-                            label="Removed"
-                            count={stats.removed}
-                            color="rose"
-                        />
-                        <FilterButton
-                            active={filter === 'modified'}
-                            onClick={() => setFilter('modified')}
-                            label="Modified"
-                            count={stats.changed}
-                            color="amber"
-                        />
-                    </div>
+            {/* Tabs */}
+            <div className={`${glassClasses.card} p-2 rounded-2xl`}>
+                <div className="flex gap-2">
+                    <TabButton
+                        active={activeTab === 'endpoints'}
+                        onClick={() => setActiveTab('endpoints')}
+                        icon={<List className="w-4 h-4" />}
+                        label="Endpoint Changes"
+                        count={stats.all}
+                    />
+                    <TabButton
+                        active={activeTab === 'dtos'}
+                        onClick={() => setActiveTab('dtos')}
+                        icon={<FileCode className="w-4 h-4" />}
+                        label="DTO Changes"
+                        count={dtoDiffs.length}
+                        badge={dtoBreakingSummary.totalBreaking > 0 ? dtoBreakingSummary.totalBreaking : undefined}
+                    />
                 </div>
             </div>
 
+            {/* 컨트롤 바 - 토글 & 필터 */}
+            {activeTab === 'endpoints' && (
+                <div className={`${glassClasses.card} p-4 rounded-2xl`}>
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        {/* 뷰 모드 토글 */}
+                        <div className="flex gap-2">
+                            <ToggleButton
+                                active={comparisonMode === 'split'}
+                                onClick={() => setComparisonMode('split')}
+                                icon={<Columns className="w-4 h-4" />}
+                                label="Split"
+                            />
+                            <ToggleButton
+                                active={comparisonMode === 'unified'}
+                                onClick={() => setComparisonMode('unified')}
+                                icon={<List className="w-4 h-4" />}
+                                label="Unified"
+                            />
+                        </div>
+
+                        {/* 필터 버튼 */}
+                        <div className="flex flex-wrap gap-2">
+                            <FilterButton
+                                active={filter === 'all'}
+                                onClick={() => setFilter('all')}
+                                label="All"
+                                count={stats.all}
+                            />
+                            <FilterButton
+                                active={filter === 'added'}
+                                onClick={() => setFilter('added')}
+                                label="Added"
+                                count={stats.added}
+                                color="emerald"
+                            />
+                            <FilterButton
+                                active={filter === 'removed'}
+                                onClick={() => setFilter('removed')}
+                                label="Removed"
+                                count={stats.removed}
+                                color="rose"
+                            />
+                            <FilterButton
+                                active={filter === 'modified'}
+                                onClick={() => setFilter('modified')}
+                                label="Modified"
+                                count={stats.changed}
+                                color="amber"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'dtos' && (
+                <div className={`${glassClasses.card} p-4 rounded-2xl`}>
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <h3 className="font-semibold text-sm">Filter by Severity</h3>
+                            <p className="text-xs text-muted-foreground">
+                                {dtoBreakingSummary.totalBreaking} breaking, {dtoBreakingSummary.totalMinor} minor, {dtoBreakingSummary.totalPatch} patch
+                            </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                            <FilterButton
+                                active={dtoSeverityFilter === 'all'}
+                                onClick={() => setDtoSeverityFilter('all')}
+                                label="All"
+                                count={dtoBreakingSummary.totalBreaking + dtoBreakingSummary.totalMinor + dtoBreakingSummary.totalPatch}
+                            />
+                            <FilterButton
+                                active={dtoSeverityFilter === 'breaking'}
+                                onClick={() => setDtoSeverityFilter('breaking')}
+                                label="Breaking"
+                                count={dtoBreakingSummary.totalBreaking}
+                                color="rose"
+                            />
+                            <FilterButton
+                                active={dtoSeverityFilter === 'minor'}
+                                onClick={() => setDtoSeverityFilter('minor')}
+                                label="Minor"
+                                count={dtoBreakingSummary.totalMinor}
+                                color="amber"
+                            />
+                            <FilterButton
+                                active={dtoSeverityFilter === 'patch'}
+                                onClick={() => setDtoSeverityFilter('patch')}
+                                label="Patch"
+                                count={dtoBreakingSummary.totalPatch}
+                                color="emerald"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Diff 컨텐츠 */}
             <AnimatePresence mode="wait">
-                {comparisonMode === 'split' ? (
-                    <SplitView key="split" changes={filteredChanges} />
-                ) : (
-                    <UnifiedView key="unified" changes={filteredChanges} />
+                {activeTab === 'endpoints' && (
+                    <>
+                        {comparisonMode === 'split' ? (
+                            <SplitView key="split" changes={filteredChanges} />
+                        ) : (
+                            <UnifiedView key="unified" changes={filteredChanges} />
+                        )}
+
+                        {/* 빈 상태 */}
+                        {filteredChanges.length === 0 && (
+                            <motion.div
+                                className={`${glassClasses.card} p-12 text-center rounded-2xl`}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                            >
+                                <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
+                                <p className="text-muted-foreground italic">
+                                    {filter === 'all'
+                                        ? '변경된 엔드포인트가 없습니다.'
+                                        : `필터링된 항목이 없습니다.`}
+                                </p>
+                            </motion.div>
+                        )}
+                    </>
+                )}
+
+                {activeTab === 'dtos' && (
+                    <motion.div
+                        key="dtos"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {filteredDtoDiffs.length > 0 ? (
+                            <MultiDtoFieldDiffTree diffs={filteredDtoDiffs} />
+                        ) : (
+                            <motion.div
+                                className={`${glassClasses.card} p-12 text-center rounded-2xl`}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                            >
+                                <FileCode className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
+                                <p className="text-muted-foreground italic">
+                                    {dtoSeverityFilter === 'all'
+                                        ? 'DTO 변경사항이 없습니다.'
+                                        : `${dtoSeverityFilter} 수준의 변경사항이 없습니다.`}
+                                </p>
+                            </motion.div>
+                        )}
+                    </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* 빈 상태 */}
-            {filteredChanges.length === 0 && (
-                <motion.div
-                    className={`${glassClasses.card} p-12 text-center rounded-2xl`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
-                    <p className="text-muted-foreground italic">
-                        {filter === 'all'
-                            ? '변경된 엔드포인트가 없습니다.'
-                            : `필터링된 항목이 없습니다.`}
-                    </p>
-                </motion.div>
-            )}
         </div>
     );
 }
@@ -552,6 +708,54 @@ function FilterButton({
             `}>
                 {count}
             </span>
+        </motion.button>
+    );
+}
+
+function TabButton({
+    active,
+    onClick,
+    icon,
+    label,
+    count,
+    badge
+}: {
+    active: boolean;
+    onClick: () => void;
+    icon: React.ReactNode;
+    label: string;
+    count?: number;
+    badge?: number;
+}) {
+    return (
+        <motion.button
+            onClick={onClick}
+            className={`
+                relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm
+                transition-all flex-1 lg:flex-none
+                ${active
+                    ? 'bg-primary text-primary-foreground shadow-lg'
+                    : 'bg-transparent text-muted-foreground hover:bg-secondary/50'
+                }
+            `}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+        >
+            {icon}
+            <span>{label}</span>
+            {count !== undefined && (
+                <span className={`
+                    px-2 py-0.5 rounded-md text-xs font-bold
+                    ${active ? 'bg-white/20' : 'bg-black/10 dark:bg-white/10'}
+                `}>
+                    {count}
+                </span>
+            )}
+            {badge !== undefined && badge > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg">
+                    {badge}
+                </span>
+            )}
         </motion.button>
     );
 }
