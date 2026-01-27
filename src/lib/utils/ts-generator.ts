@@ -1,4 +1,4 @@
-import { ApiModel, ApiField } from "../mock-db";
+import { ApiModel, ApiField } from "../api-types";
 
 export function generateTypeScriptType(model: ApiModel): string {
     if (!model || !model.fields) return "";

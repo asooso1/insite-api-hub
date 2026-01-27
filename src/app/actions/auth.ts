@@ -3,6 +3,7 @@
 import { db } from '@/lib/db';
 import { cookies } from 'next/headers';
 import { randomBytes } from 'crypto';
+import * as bcrypt from 'bcryptjs';
 
 export interface UserSession {
     id: string;
@@ -12,11 +13,8 @@ export interface UserSession {
     sessionToken?: string;
 }
 
-// Simple hash (In real prod, use bcrypt or similar. Here we implement a basic one due to install issues)
-async function hashPassword(password: string) {
-    // For demonstration, but we should try to use a real library if possible.
-    // Given the environment, we'll store as-is or simple transform for now.
-    return `hash:${password}`;
+async function hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 12);
 }
 
 export async function signUp(email: string, password: string, name: string) {
@@ -44,38 +42,55 @@ export async function signIn(email: string, password: string) {
         const res = await client.query('SELECT * FROM users WHERE email = $1', [email]);
         const user = res.rows[0];
 
-        if (user && user.password_hash === `hash:${password}`) {
-            // 세션 토큰 생성
-            const sessionToken = randomBytes(32).toString('hex');
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 7); // 1주일
+        if (user) {
+            // 기존 hash: 형식 지원 (마이그레이션 전 호환)
+            const isLegacyHash = user.password_hash.startsWith('hash:');
+            let isPasswordValid = false;
 
-            // DB에 세션 저장
-            await client.query(
-                `INSERT INTO user_sessions (user_id, session_token, expires_at, last_active_at)
-                 VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-                 ON CONFLICT (session_token) DO UPDATE SET last_active_at = CURRENT_TIMESTAMP`,
-                [user.id, sessionToken, expiresAt]
-            );
+            if (isLegacyHash) {
+                isPasswordValid = user.password_hash === `hash:${password}`;
+                // 레거시 비밀번호를 bcrypt로 자동 업그레이드
+                if (isPasswordValid) {
+                    const newHash = await hashPassword(password);
+                    await client.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, user.id]);
+                }
+            } else {
+                isPasswordValid = await bcrypt.compare(password, user.password_hash);
+            }
 
-            const sessionData: UserSession = {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                sessionToken: sessionToken
-            };
+            if (isPasswordValid) {
+                // 세션 토큰 생성
+                const sessionToken = randomBytes(32).toString('hex');
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + 7); // 1주일
 
-            const cookieStore = await cookies();
-            cookieStore.set('session', JSON.stringify(sessionData), {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 60 * 60 * 24 * 7, // 1 week
-                path: '/',
-                sameSite: 'lax',
-            });
+                // DB에 세션 저장
+                await client.query(
+                    `INSERT INTO user_sessions (user_id, session_token, expires_at, last_active_at)
+                     VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+                     ON CONFLICT (session_token) DO UPDATE SET last_active_at = CURRENT_TIMESTAMP`,
+                    [user.id, sessionToken, expiresAt]
+                );
 
-            return { success: true };
+                const sessionData: UserSession = {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                    sessionToken: sessionToken
+                };
+
+                const cookieStore = await cookies();
+                cookieStore.set('session', JSON.stringify(sessionData), {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 60 * 60 * 24 * 7, // 1 week
+                    path: '/',
+                    sameSite: 'lax',
+                });
+
+                return { success: true };
+            }
         }
         return { success: false, message: '이메일 또는 비밀번호가 일치하지 않습니다.' };
     } finally {

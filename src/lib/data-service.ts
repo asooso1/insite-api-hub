@@ -24,8 +24,8 @@ export async function getAppData(projectId?: string): Promise<MockDB> {
             };
         }
 
-        // 2, 3, 4. Fetch data in parallel
-        const [endpointsRes, modelsRes, envsRes] = await Promise.all([
+        // 2, 3, 4, 5. Fetch data in parallel
+        const [endpointsRes, modelsRes, envsRes, testCasesRes] = await Promise.all([
             db.query(`
                 SELECT
                     id::text,
@@ -49,7 +49,13 @@ export async function getAppData(projectId?: string): Promise<MockDB> {
             `, [targetProjectId]),
             db.query(`
                 SELECT env_type, base_url, token, dooray_webhook_url FROM environments
-            `)
+            `),
+            db.query(`
+                SELECT id::text, api_id as "apiId", name, payload, headers, expected_status as "expectedStatus", created_at as "createdAt"
+                FROM test_cases
+                WHERE project_id = $1
+                ORDER BY created_at DESC
+            `, [targetProjectId])
         ]);
 
         // Transform environments
@@ -73,7 +79,7 @@ export async function getAppData(projectId?: string): Promise<MockDB> {
             endpoints: endpointsRes.rows as ApiEndpoint[],
             models: modelsRes.rows as ApiModel[],
             environments: environments,
-            testCases: []
+            testCases: testCasesRes.rows as ApiTestCase[]
         };
     } catch (err) {
         console.error("DB Fetch Error:", err);

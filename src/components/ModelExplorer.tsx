@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, Database, Layers, Copy, Terminal, Code, Info, ArrowRight } from "lucide-react";
-import { ApiModel } from "@/lib/mock-db";
+import { ApiModel } from "@/lib/api-types";
 import { ApiModelTree } from "./ApiModelTree";
 import { generateTypeScriptType } from "@/lib/utils/ts-generator";
 import { useToast } from "@/components/ui/Toast";

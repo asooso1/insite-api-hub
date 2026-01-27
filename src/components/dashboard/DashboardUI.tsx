@@ -26,7 +26,7 @@ import {
     Folder
 } from "lucide-react";
 import Link from "next/link";
-import { MockDB } from "@/lib/mock-db";
+import { MockDB } from "@/lib/api-types";
 import { motion, AnimatePresence } from "framer-motion";
 import { RepoImporter } from "@/components/RepoImporter";
 import { ApiList } from "@/components/ApiList";

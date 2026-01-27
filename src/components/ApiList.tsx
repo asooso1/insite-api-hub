@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronRight, ChevronDown, Code, Clock, Database, ArrowRightLeft, User, MessageCircle } from "lucide-react";
-import { ApiEndpoint, ApiModel } from "@/lib/mock-db";
+import { ApiEndpoint, ApiModel } from "@/lib/api-types";
 import { ApiModelTree } from "./ApiModelTree";
 import { OwnerBadge } from "./OwnerBadge";
 import { CommentSection } from "./CommentSection";

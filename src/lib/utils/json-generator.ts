@@ -1,4 +1,4 @@
-import { ApiModel, ApiField } from "../mock-db";
+import { ApiModel, ApiField } from "../api-types";
 
 /**
  * ApiModel 정보를 바탕으로 예시 JSON 객체를 생성합니다.

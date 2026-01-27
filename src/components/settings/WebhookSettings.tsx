@@ -41,7 +41,6 @@ interface Project {
 
 export default function WebhookSettings() {
   const [copied, setCopied] = useState<'url' | 'secret' | null>(null);
-  const [secretVisible, setSecretVisible] = useState(false);
   const [projects, setProjects] = useState<Project[]>([
     { id: '1', name: 'API Hub Core', webhookEnabled: true },
     { id: '2', name: 'Mobile App', webhookEnabled: false },
@@ -88,9 +87,13 @@ export default function WebhookSettings() {
     ? `${window.location.origin}/api/webhooks/github`
     : '/api/webhooks/github';
 
-  const webhookSecret = process.env.NEXT_PUBLIC_GITHUB_WEBHOOK_SECRET || 'whsec_****************************';
+  const webhookSecret = 'Managed on server (not exposed to client)';
 
   const handleCopy = async (text: string, type: 'url' | 'secret') => {
+    if (type === 'secret') {
+      // Secret is not exposed to client, cannot copy
+      return;
+    }
     await navigator.clipboard.writeText(text);
     setCopied(type);
     setTimeout(() => setCopied(null), 2000);
@@ -177,38 +180,20 @@ export default function WebhookSettings() {
                 Secret key for validating webhook payloads
               </p>
             </div>
-            <button
-              onClick={() => setSecretVisible(!secretVisible)}
-              className="p-2 hover:bg-slate-100/50 dark:hover:bg-slate-700/50 rounded-lg transition-colors"
-            >
-              {secretVisible ? (
-                <EyeOff className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-              ) : (
-                <Eye className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-              )}
-            </button>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="flex-1 px-4 py-3 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-              <code className="text-sm font-mono text-slate-800 dark:text-slate-200">
-                {secretVisible ? webhookSecret : '•'.repeat(32)}
+              <code className="text-sm font-mono text-slate-600 dark:text-slate-400 italic">
+                {webhookSecret}
               </code>
             </div>
-            <GlassButton
-              variant="secondary"
-              size="md"
-              onClick={() => handleCopy(webhookSecret, 'secret')}
-              icon={copied === 'secret' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            >
-              {copied === 'secret' ? 'Copied!' : 'Copy'}
-            </GlassButton>
           </div>
 
           <div className="flex items-start gap-2 p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-700/50 rounded-lg">
             <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
             <p className="text-xs text-blue-700 dark:text-blue-300">
-              This secret is used to verify that webhook payloads are from GitHub. Keep it secure and never share it publicly.
+              The webhook secret is managed securely on the server. Contact your administrator to retrieve it for GitHub configuration.
             </p>
           </div>
         </div>

@@ -25,7 +25,7 @@ import {
     Network
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MockDB } from "@/lib/mock-db";
+import { MockDB } from "@/lib/api-types";
 import { ApiVersion } from "@/lib/api-types";
 import { DashboardTab } from "./DashboardUI";
 import { ApiList } from "@/components/ApiList";
@@ -44,6 +44,7 @@ import { ThreeDShowcase } from "@/components/demos/3DShowcase";
 import { TeamsV2 } from "@/components/teams/TeamsV2";
 import { ProjectsV2 } from "@/components/projects/ProjectsV2";
 import { HierarchyContent } from "@/components/hierarchy/HierarchyContent";
+import { DashboardOverview } from "./DashboardOverview";
 
 interface DashboardV2Props {
     initialData: MockDB;
@@ -274,6 +275,14 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                                             >
                                                 {activeTab === 'endpoints' && (
                                                     <div className="space-y-6">
+                                                        {/* Dashboard Overview - Bento Grid */}
+                                                        <DashboardOverview
+                                                            endpoints={initialData.endpoints}
+                                                            models={initialData.models}
+                                                            environments={initialData.environments}
+                                                            testHistory={testHistory}
+                                                        />
+
                                                         <div className="flex items-center justify-between">
                                                             <h3 className="font-black text-slate-800 flex items-center gap-2 uppercase tracking-tighter">
                                                                 <div className="w-2 h-2 bg-blue-600 rounded-full animate-ping" />
