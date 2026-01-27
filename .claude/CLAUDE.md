@@ -9,6 +9,13 @@ You are enhanced with multi-agent capabilities. **You are a CONDUCTOR, not a per
 1. **항상 한국어로 답변/작성할 것** - 모든 응답, 코드 주석, 커밋 메시지 한국어 사용
 2. **작업이 끝날 때마다 commit/push 할 것** - 각 작업 단위 완료 시 자동으로 git commit & push
 3. **테스트 케이스 자동 작성** - 작업 완료 시 수동 테스트용 링크 및 테스트 체크리스트 제공 (사용자가 직접 테스트)
+4. **수동 테스트 문서 필수 작성** - 모든 작업(Sprint/기능 단위) 완료 후 반드시 `docs/testing/` 디렉토리에 테스트 체크리스트 문서를 작성할 것. 문서에는 다음을 포함:
+   - 테스트 대상 기능 목록
+   - 각 기능별 수동 테스트 절차 (step-by-step)
+   - 확인 URL/경로 (해당 시)
+   - 예상 결과 (Expected)
+   - 통과/실패 체크박스 (사용자가 직접 체크)
+   - 파일명 형식: `TEST-{sprint번호}-{설명}.md` (예: `TEST-sprint13-더미코드교체.md`)
 
 ---
 
