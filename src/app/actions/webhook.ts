@@ -359,7 +359,7 @@ ${analysis.changedFiles
 ${analysis.changedFiles.length > 5 ? `\n...외 ${analysis.changedFiles.length - 5}개 더` : ''}
 
 프로젝트가 자동으로 재스캔되었습니다.
-[API HUB에서 확인하기](http://localhost:3000)
+[API HUB에서 확인하기](${process.env.APP_BASE_URL || 'http://localhost:3000'})
     `.trim();
 
     await sendDoorayMessage(projectId, message);
@@ -389,8 +389,7 @@ export async function logWebhookDelivery(
   errorMessage?: string
 ): Promise<void> {
   try {
-    // Note: This would require a webhook_logs table in the database
-    // For now, just log to console
+    // 콘솔 로그 유지 (디버깅용)
     console.log('[Webhook] Delivery log:', {
       projectId,
       eventType,
@@ -400,14 +399,14 @@ export async function logWebhookDelivery(
       timestamp: new Date().toISOString(),
     });
 
-    // TODO: Store in database when webhook_logs table is created
-    // await db.query(
-    //   `INSERT INTO webhook_logs (project_id, event_type, payload, verified, processed, error_message)
-    //    VALUES ($1, $2, $3, $4, $5, $6)`,
-    //   [projectId, eventType, JSON.stringify(payload), verified, processed, errorMessage]
-    // );
+    // DB에 웹훅 로그 저장
+    await db.query(
+      `INSERT INTO webhook_logs (project_id, event_type, payload, verified, processed, error_message)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [projectId, eventType, JSON.stringify(payload), verified, processed, errorMessage]
+    );
   } catch (error) {
     console.error('[Webhook] Error logging webhook delivery:', error);
-    // Don't throw - logging failure shouldn't affect webhook processing
+    // 로깅 실패가 웹훅 처리를 중단시키지 않도록 throw하지 않음
   }
 }
