@@ -117,7 +117,7 @@ export async function runBatchTest(
             `**API:** ${endpoint.summary || endpoint.path}\n` +
             `**환경:** ${env}\n` +
             `**결과:** 성공 ${summary.successCount} / 실패 ${summary.failCount}\n\n` +
-            `[API HUB에서 확인하기](http://localhost:3000)`
+            `[API HUB에서 확인하기](${process.env.APP_BASE_URL || 'http://localhost:3000'})`
         );
     }
 
@@ -415,7 +415,7 @@ export async function runEnhancedBatchTest(
       `**환경:** ${env}\n` +
       `**모드:** ${mode}\n` +
       `**결과:** 성공 ${summary.successCount} / 실패 ${summary.failCount}\n\n` +
-      `[API HUB에서 확인하기](http://localhost:3000)`
+      `[API HUB에서 확인하기](${process.env.APP_BASE_URL || 'http://localhost:3000'})`
     );
   }
 

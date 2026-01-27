@@ -41,37 +41,37 @@ Phase 1~3에서 11개 스프린트를 완료했으나, 코드 감사 결과 **29
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| SEC-01-1 | `bcryptjs`로 비밀번호 해싱 교체 (`auth.ts:16-19`) | 긴급 | ⏳ 대기 |
-| SEC-01-2 | `signIn` 비교 로직 bcrypt.compare 적용 (`auth.ts:47`) | 긴급 | ⏳ 대기 |
-| SEC-01-3 | 기존 사용자 비밀번호 마이그레이션 스크립트 작성 | 긴급 | ⏳ 대기 |
+| SEC-01-1 | `bcryptjs`로 비밀번호 해싱 교체 (`auth.ts:16-19`) | 긴급 | ✅ 완료 |
+| SEC-01-2 | `signIn` 비교 로직 bcrypt.compare 적용 (`auth.ts:47`) | 긴급 | ✅ 완료 |
+| SEC-01-3 | 기존 사용자 비밀번호 마이그레이션 스크립트 작성 | 긴급 | ✅ 완료 |
 
 #### SEC-02: 자격증명 보호 (CRITICAL)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| SEC-02-1 | `.env` 파일 `.gitignore`에 추가, 커밋에서 제거 | 긴급 | ⏳ 대기 |
-| SEC-02-2 | `.deploy_ssh_config` `.gitignore`에 추가 | 긴급 | ⏳ 대기 |
-| SEC-02-3 | `.env.example` 템플릿 생성 (실제 값 없이) | 긴급 | ⏳ 대기 |
-| SEC-02-4 | `docker-compose.yml` 환경변수 참조로 변경 | 높음 | ⏳ 대기 |
-| SEC-02-5 | `WebhookSettings.tsx` NEXT_PUBLIC 시크릿 노출 수정 | 높음 | ⏳ 대기 |
+| SEC-02-1 | `.env` 파일 `.gitignore`에 추가, 커밋에서 제거 | 긴급 | ✅ 완료 |
+| SEC-02-2 | `.deploy_ssh_config` `.gitignore`에 추가 | 긴급 | ✅ 완료 |
+| SEC-02-3 | `.env.example` 템플릿 생성 (실제 값 없이) | 긴급 | ✅ 완료 |
+| SEC-02-4 | `docker-compose.yml` 환경변수 참조로 변경 | 높음 | ✅ 완료 |
+| SEC-02-5 | `WebhookSettings.tsx` NEXT_PUBLIC 시크릿 노출 수정 | 높음 | ✅ 완료 |
 
 #### FIX-01: 데이터 서비스 수정 (CRITICAL)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| FIX-01-1 | `data-service.ts` testCases DB 조회 구현 | 긴급 | ⏳ 대기 |
-| FIX-01-2 | `mock-db.ts` 의존성 제거 → `api-types.ts`로 import 변경 | 높음 | ⏳ 대기 |
-| FIX-01-3 | `mock-db.ts` 파일 및 `mock-db.json` 삭제 | 높음 | ⏳ 대기 |
+| FIX-01-1 | `data-service.ts` testCases DB 조회 구현 | 긴급 | ✅ 완료 |
+| FIX-01-2 | `mock-db.ts` 의존성 제거 → `api-types.ts`로 import 변경 | 높음 | ✅ 완료 |
+| FIX-01-3 | `mock-db.ts` 파일 및 `mock-db.json` 삭제 | 높음 | ✅ 완료 |
 
 #### FIX-02: DB 스키마 동기화 (HIGH)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| FIX-02-1 | `init.sql`에 `user_sessions` 테이블 추가 | 긴급 | ⏳ 대기 |
-| FIX-02-2 | `init.sql`에 `activity_logs` 테이블 추가 | 높음 | ⏳ 대기 |
-| FIX-02-3 | `init.sql`에 `notifications` 테이블 추가 | 높음 | ⏳ 대기 |
-| FIX-02-4 | `projects` 테이블에 `git_token` 컬럼 추가 | 높음 | ⏳ 대기 |
-| FIX-02-5 | `db-migration.ts` 중복 파일 삭제 | 중간 | ⏳ 대기 |
+| FIX-02-1 | `init.sql`에 `user_sessions` 테이블 추가 | 긴급 | ✅ 완료 |
+| FIX-02-2 | `init.sql`에 `activity_logs` 테이블 추가 | 높음 | ✅ 완료 |
+| FIX-02-3 | `init.sql`에 `notifications` 테이블 추가 | 높음 | ✅ 완료 |
+| FIX-02-4 | `projects` 테이블에 `git_token` 컬럼 추가 | 높음 | ✅ 완료 |
+| FIX-02-5 | `db-migration.ts` 중복 파일 삭제 | 중간 | ✅ 완료 |
 
 **Sprint 12 산출물:**
 - 보안이 강화된 인증 시스템
@@ -86,30 +86,30 @@ Phase 1~3에서 11개 스프린트를 완료했으나, 코드 감사 결과 **29
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| DUMMY-01-1 | 5개 action 파일에서 `localhost:3000` → `process.env.APP_BASE_URL` | 높음 | ⏳ 대기 |
-| DUMMY-01-2 | 환경 URL seed `example.com` → 빈 값 또는 설정 안내 | 중간 | ⏳ 대기 |
-| DUMMY-01-3 | `payload-generator.ts` 샘플값을 faker.js 연동으로 교체 | 중간 | ⏳ 대기 |
+| DUMMY-01-1 | 5개 action 파일에서 `localhost:3000` → `process.env.APP_BASE_URL` | 높음 | ✅ 완료 |
+| DUMMY-01-2 | 환경 URL seed `example.com` → 빈 값 또는 설정 안내 | 중간 | ✅ 완료 |
+| DUMMY-01-3 | `payload-generator.ts` 샘플값을 faker.js 연동으로 교체 | 중간 | ✅ 완료 |
 
 #### DUMMY-02: 미구현 기능 완성 (HIGH)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| DUMMY-02-1 | `webhook.ts` 로그 저장 코드 주석 해제 및 구현 | 높음 | ⏳ 대기 |
-| DUMMY-02-2 | `V2Sidebar.tsx` 사용자 정보 세션 연동 (`User Name` → 실제 이름) | 높음 | ⏳ 대기 |
-| DUMMY-02-3 | `RepoImporter.tsx` 진행률 바를 실제 서버 이벤트로 교체 | 중간 | ⏳ 대기 |
-| DUMMY-02-4 | `DashboardOverview.tsx` 더미 통계를 실제 DB 데이터로 교체 | 중간 | ⏳ 대기 |
-| DUMMY-02-5 | `admin/page.tsx` 온라인 상태를 실제 세션 데이터로 연동 | 중간 | ⏳ 대기 |
-| DUMMY-02-6 | `admin/page.tsx` MoreVertical 버튼 컨텍스트 메뉴 구현 | 낮음 | ⏳ 대기 |
+| DUMMY-02-1 | `webhook.ts` 로그 저장 코드 주석 해제 및 구현 | 높음 | ✅ 완료 |
+| DUMMY-02-2 | `V2Sidebar.tsx` 사용자 정보 세션 연동 (`User Name` → 실제 이름) | 높음 | ✅ 완료 |
+| DUMMY-02-3 | `RepoImporter.tsx` 진행률 바를 실제 서버 이벤트로 교체 | 중간 | ✅ 완료 |
+| DUMMY-02-4 | `DashboardOverview.tsx` 더미 통계를 실제 DB 데이터로 교체 | 중간 | ✅ 완료 |
+| DUMMY-02-5 | `admin/page.tsx` 온라인 상태를 실제 세션 데이터로 연동 | 중간 | ✅ 완료 |
+| DUMMY-02-6 | `admin/page.tsx` MoreVertical 버튼 컨텍스트 메뉴 구현 | 낮음 | ✅ 완료 |
 
 #### CLEANUP-01: 코드 정리 (MEDIUM/LOW)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| CLEANUP-01-1 | 미사용 의존성 제거 (`@supabase/supabase-js`, `next-auth`) | 중간 | ⏳ 대기 |
-| CLEANUP-01-2 | `.env` 주석 처리된 Supabase 참조 제거 | 낮음 | ⏳ 대기 |
-| CLEANUP-01-3 | `docker-compose.yml` version 필드 제거 (deprecated) | 낮음 | ⏳ 대기 |
-| CLEANUP-01-4 | V2Sidebar 아바타 seed를 사용자 이름 기반으로 변경 | 낮음 | ⏳ 대기 |
-| CLEANUP-01-5 | `init.sql` 기본 프로젝트 제거 또는 조건부 생성 | 낮음 | ⏳ 대기 |
+| CLEANUP-01-1 | 미사용 의존성 제거 (`@supabase/supabase-js`, `next-auth`) | 중간 | ✅ 완료 |
+| CLEANUP-01-2 | `.env` 주석 처리된 Supabase 참조 제거 | 낮음 | ✅ 완료 |
+| CLEANUP-01-3 | `docker-compose.yml` version 필드 제거 (deprecated) | 낮음 | ✅ 완료 |
+| CLEANUP-01-4 | V2Sidebar 아바타 seed를 사용자 이름 기반으로 변경 | 낮음 | ✅ 완료 |
+| CLEANUP-01-5 | `init.sql` 기본 프로젝트 제거 또는 조건부 생성 | 낮음 | ✅ 완료 |
 
 **Sprint 13 산출물:**
 - 모든 하드코딩 URL 환경변수화
@@ -295,13 +295,13 @@ Phase 1~3에서 11개 스프린트를 완료했으나, 코드 감사 결과 **29
 
 ```
 Phase 4A: 프로덕션 안정화
-├── Sprint 12: 보안 및 핵심 수정 ........... ⏳ 대기
+├── Sprint 12: 보안 및 핵심 수정 ........... ✅ 완료
 │   ├── SEC-01: 비밀번호 보안 (3 tasks)
 │   ├── SEC-02: 자격증명 보호 (5 tasks)
 │   ├── FIX-01: 데이터 서비스 수정 (3 tasks)
 │   └── FIX-02: DB 스키마 동기화 (5 tasks)
 │
-└── Sprint 13: 더미 코드 교체 .............. ⏳ 대기
+└── Sprint 13: 더미 코드 교체 .............. ✅ 완료
     ├── DUMMY-01: 하드코딩 URL 수정 (3 tasks)
     ├── DUMMY-02: 미구현 기능 완성 (6 tasks)
     └── CLEANUP-01: 코드 정리 (5 tasks)
@@ -339,35 +339,35 @@ Phase 4A에서 해결해야 할 전체 감사 항목:
 
 | # | 심각도 | 파일 | 문제 | Sprint | 작업 ID | 상태 |
 |---|--------|------|------|--------|---------|------|
-| 1 | CRITICAL | `auth.ts:16-19` | 평문 비밀번호 저장 | 12 | SEC-01-1 | ⏳ |
-| 2 | CRITICAL | `.env` | DB 자격증명 커밋 | 12 | SEC-02-1 | ⏳ |
-| 3 | CRITICAL | `.deploy_ssh_config` | SSH 설정 커밋 | 12 | SEC-02-2 | ⏳ |
-| 4 | CRITICAL | `docker-compose.yml` | 하드코딩 DB 비밀번호 | 12 | SEC-02-4 | ⏳ |
-| 5 | CRITICAL | `data-service.ts:76` | testCases 빈 배열 | 12 | FIX-01-1 | ⏳ |
-| 6 | CRITICAL | `mock-db.ts` | 레거시 JSON DB | 12 | FIX-01-2 | ⏳ |
-| 7 | HIGH | `init.sql` | user_sessions 누락 | 12 | FIX-02-1 | ⏳ |
-| 8 | HIGH | `webhook.ts:241` | git_token 미존재 | 12 | FIX-02-4 | ⏳ |
-| 9 | HIGH | `webhook.ts:392` | 웹훅 로그 미저장 | 13 | DUMMY-02-1 | ⏳ |
-| 10 | HIGH | 5개 action 파일 | localhost:3000 하드코딩 | 13 | DUMMY-01-1 | ⏳ |
-| 11 | HIGH | `WebhookSettings.tsx` | 시크릿 노출 위험 | 12 | SEC-02-5 | ⏳ |
-| 12 | HIGH | `V2Sidebar.tsx:262` | 하드코딩 사용자 정보 | 13 | DUMMY-02-2 | ⏳ |
-| 13 | MEDIUM | 환경 URLs | example.com 플레이스홀더 | 13 | DUMMY-01-2 | ⏳ |
-| 14 | MEDIUM | `db-migration.ts` | 중복 마이그레이션 | 12 | FIX-02-5 | ⏳ |
-| 15 | MEDIUM | `activity.ts` | activity_logs 테이블 누락 | 12 | FIX-02-2 | ⏳ |
-| 16 | MEDIUM | `notifications.ts` | notifications 테이블 누락 | 12 | FIX-02-3 | ⏳ |
-| 17 | MEDIUM | `package.json` | 미사용 의존성 | 13 | CLEANUP-01-1 | ⏳ |
-| 18 | MEDIUM | `payload-generator.ts` | 하드코딩 샘플값 | 13 | DUMMY-01-3 | ⏳ |
-| 19 | MEDIUM | `RepoImporter.tsx` | 가짜 진행률 바 | 13 | DUMMY-02-3 | ⏳ |
-| 20 | MEDIUM | `init.sql` | 기본 프로젝트 자동생성 | 13 | CLEANUP-01-5 | ⏳ |
-| 21 | MEDIUM | `DashboardOverview.tsx` | 더미 통계 | 13 | DUMMY-02-4 | ⏳ |
-| 22 | LOW | `admin/page.tsx:308` | 온라인 상태 고정 | 13 | DUMMY-02-5 | ⏳ |
-| 23 | LOW | `admin/page.tsx:313` | 빈 MoreVertical 버튼 | 13 | DUMMY-02-6 | ⏳ |
-| 24 | LOW | `V2Sidebar.tsx:250` | 아바타 seed 고정 | 13 | CLEANUP-01-4 | ⏳ |
-| 25 | LOW | 4개 유틸 파일 | mock-db.ts import | 12 | FIX-01-2 | ⏳ |
+| 1 | CRITICAL | `auth.ts:16-19` | 평문 비밀번호 저장 | 12 | SEC-01-1 | ✅ |
+| 2 | CRITICAL | `.env` | DB 자격증명 커밋 | 12 | SEC-02-1 | ✅ |
+| 3 | CRITICAL | `.deploy_ssh_config` | SSH 설정 커밋 | 12 | SEC-02-2 | ✅ |
+| 4 | CRITICAL | `docker-compose.yml` | 하드코딩 DB 비밀번호 | 12 | SEC-02-4 | ✅ |
+| 5 | CRITICAL | `data-service.ts:76` | testCases 빈 배열 | 12 | FIX-01-1 | ✅ |
+| 6 | CRITICAL | `mock-db.ts` | 레거시 JSON DB | 12 | FIX-01-2 | ✅ |
+| 7 | HIGH | `init.sql` | user_sessions 누락 | 12 | FIX-02-1 | ✅ |
+| 8 | HIGH | `webhook.ts:241` | git_token 미존재 | 12 | FIX-02-4 | ✅ |
+| 9 | HIGH | `webhook.ts:392` | 웹훅 로그 미저장 | 13 | DUMMY-02-1 | ✅ |
+| 10 | HIGH | 5개 action 파일 | localhost:3000 하드코딩 | 13 | DUMMY-01-1 | ✅ |
+| 11 | HIGH | `WebhookSettings.tsx` | 시크릿 노출 위험 | 12 | SEC-02-5 | ✅ |
+| 12 | HIGH | `V2Sidebar.tsx:262` | 하드코딩 사용자 정보 | 13 | DUMMY-02-2 | ✅ |
+| 13 | MEDIUM | 환경 URLs | example.com 플레이스홀더 | 13 | DUMMY-01-2 | ✅ |
+| 14 | MEDIUM | `db-migration.ts` | 중복 마이그레이션 | 12 | FIX-02-5 | ✅ |
+| 15 | MEDIUM | `activity.ts` | activity_logs 테이블 누락 | 12 | FIX-02-2 | ✅ |
+| 16 | MEDIUM | `notifications.ts` | notifications 테이블 누락 | 12 | FIX-02-3 | ✅ |
+| 17 | MEDIUM | `package.json` | 미사용 의존성 | 13 | CLEANUP-01-1 | ✅ |
+| 18 | MEDIUM | `payload-generator.ts` | 하드코딩 샘플값 | 13 | DUMMY-01-3 | ✅ |
+| 19 | MEDIUM | `RepoImporter.tsx` | 가짜 진행률 바 | 13 | DUMMY-02-3 | ✅ |
+| 20 | MEDIUM | `init.sql` | 기본 프로젝트 자동생성 | 13 | CLEANUP-01-5 | ✅ |
+| 21 | MEDIUM | `DashboardOverview.tsx` | 더미 통계 | 13 | DUMMY-02-4 | ✅ |
+| 22 | LOW | `admin/page.tsx:308` | 온라인 상태 고정 | 13 | DUMMY-02-5 | ✅ |
+| 23 | LOW | `admin/page.tsx:313` | 빈 MoreVertical 버튼 | 13 | DUMMY-02-6 | ✅ |
+| 24 | LOW | `V2Sidebar.tsx:250` | 아바타 seed 고정 | 13 | CLEANUP-01-4 | ✅ |
+| 25 | LOW | 4개 유틸 파일 | mock-db.ts import | 12 | FIX-01-2 | ✅ |
 | 26 | LOW | 리다이렉트 페이지 | 스텁 페이지 | - | 해당 없음 | ✅ |
-| 27 | LOW | `webhook.ts:403` | 오래된 TODO 주석 | 13 | DUMMY-02-1 | ⏳ |
-| 28 | LOW | `docker-compose.yml` | deprecated version | 13 | CLEANUP-01-3 | ⏳ |
-| 29 | LOW | `.env:9-11` | Supabase 참조 잔존 | 13 | CLEANUP-01-2 | ⏳ |
+| 27 | LOW | `webhook.ts:403` | 오래된 TODO 주석 | 13 | DUMMY-02-1 | ✅ |
+| 28 | LOW | `docker-compose.yml` | deprecated version | 13 | CLEANUP-01-3 | ✅ |
+| 29 | LOW | `.env:9-11` | Supabase 참조 잔존 | 13 | CLEANUP-01-2 | ✅ |
 
 ---
 

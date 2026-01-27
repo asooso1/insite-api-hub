@@ -73,10 +73,10 @@ CREATE TABLE IF NOT EXISTS environments (
 );
 
 -- 초기 환경 데이터 삽입
-INSERT INTO environments (env_type, base_url) VALUES 
+INSERT INTO environments (env_type, base_url) VALUES
 ('DEV', 'http://localhost:8080'),
-('STG', 'https://stg-api.example.com'),
-('PRD', 'https://api.example.com')
+('STG', ''),
+('PRD', '')
 ON CONFLICT (env_type) DO NOTHING;
 
 -- 7. 테스트 케이스 테이블
@@ -252,7 +252,7 @@ CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_token TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_url TEXT;
 
--- 기본 프로젝트 생성
-INSERT INTO projects (name, description)
-VALUES ('Default Project', '자동 생성된 기본 프로젝트입니다.')
-ON CONFLICT DO NOTHING;
+-- 참고: 기본 프로젝트는 필요 시 사용자가 직접 생성합니다.
+-- INSERT INTO projects (name, description)
+-- VALUES ('Default Project', '자동 생성된 기본 프로젝트입니다.')
+-- ON CONFLICT DO NOTHING;

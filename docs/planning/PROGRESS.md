@@ -25,9 +25,9 @@ Phase 3 전체: ██████████ 100% ✅ 완료
 ├── Sprint 10 (문서화): ██████████ 100% ✅ 완료
 └── Sprint 11 (Mock강화): ██████████ 100% ✅ 완료
 
-Phase 4A 프로덕션 안정화: ░░░░░░░░░░ 0% ⏳ 대기
-├── Sprint 12 (보안/핵심수정): ░░░░░░░░░░ 0% ⏳ 대기
-└── Sprint 13 (더미코드교체): ░░░░░░░░░░ 0% ⏳ 대기
+Phase 4A 프로덕션 안정화: ██████████ 100% ✅ 완료
+├── Sprint 12 (보안/핵심수정): ██████████ 100% ✅ 완료
+└── Sprint 13 (더미코드교체): ██████████ 100% ✅ 완료
 
 Phase 4B UI/UX 고도화: ░░░░░░░░░░ 0% ⏳ 대기
 ├── Sprint 14 (V2+3D스타일): ░░░░░░░░░░ 0% ⏳ 대기
@@ -758,45 +758,45 @@ Phase 4C 협업 강화: ░░░░░░░░░░ 0% ⏳ 대기
 
 ## Phase 4A: 프로덕션 안정화
 
-### Sprint 12: 보안 및 핵심 수정 ⏳
+### Sprint 12: 보안 및 핵심 수정 ✅
 
 | 작업 ID | 설명 | 심각도 | 상태 |
 |---------|------|--------|------|
-| SEC-01-1 | bcryptjs 비밀번호 해싱 교체 | CRITICAL | ⏳ 대기 |
-| SEC-01-2 | signIn bcrypt.compare 적용 | CRITICAL | ⏳ 대기 |
-| SEC-01-3 | 기존 사용자 비밀번호 마이그레이션 | CRITICAL | ⏳ 대기 |
-| SEC-02-1 | .env 파일 .gitignore 추가 | CRITICAL | ⏳ 대기 |
-| SEC-02-2 | .deploy_ssh_config .gitignore 추가 | CRITICAL | ⏳ 대기 |
-| SEC-02-3 | .env.example 템플릿 생성 | CRITICAL | ⏳ 대기 |
-| SEC-02-4 | docker-compose 환경변수 참조 | HIGH | ⏳ 대기 |
-| SEC-02-5 | WebhookSettings 시크릿 노출 수정 | HIGH | ⏳ 대기 |
-| FIX-01-1 | data-service testCases DB 조회 | CRITICAL | ⏳ 대기 |
-| FIX-01-2 | mock-db.ts 의존성 → api-types.ts | HIGH | ⏳ 대기 |
-| FIX-01-3 | mock-db.ts, mock-db.json 삭제 | HIGH | ⏳ 대기 |
-| FIX-02-1 | init.sql user_sessions 테이블 추가 | HIGH | ⏳ 대기 |
-| FIX-02-2 | init.sql activity_logs 테이블 추가 | MEDIUM | ⏳ 대기 |
-| FIX-02-3 | init.sql notifications 테이블 추가 | MEDIUM | ⏳ 대기 |
-| FIX-02-4 | projects 테이블 git_token 추가 | HIGH | ⏳ 대기 |
-| FIX-02-5 | db-migration.ts 중복 삭제 | MEDIUM | ⏳ 대기 |
+| SEC-01-1 | bcryptjs 비밀번호 해싱 교체 | CRITICAL | ✅ 완료 |
+| SEC-01-2 | signIn bcrypt.compare 적용 | CRITICAL | ✅ 완료 |
+| SEC-01-3 | 기존 사용자 비밀번호 마이그레이션 | CRITICAL | ✅ 완료 |
+| SEC-02-1 | .env 파일 .gitignore 추가 | CRITICAL | ✅ 완료 |
+| SEC-02-2 | .deploy_ssh_config .gitignore 추가 | CRITICAL | ✅ 완료 |
+| SEC-02-3 | .env.example 템플릿 생성 | CRITICAL | ✅ 완료 |
+| SEC-02-4 | docker-compose 환경변수 참조 | HIGH | ✅ 완료 |
+| SEC-02-5 | WebhookSettings 시크릿 노출 수정 | HIGH | ✅ 완료 |
+| FIX-01-1 | data-service testCases DB 조회 | CRITICAL | ✅ 완료 |
+| FIX-01-2 | mock-db.ts 의존성 → api-types.ts | HIGH | ✅ 완료 |
+| FIX-01-3 | mock-db.ts, mock-db.json 삭제 | HIGH | ✅ 완료 |
+| FIX-02-1 | init.sql user_sessions 테이블 추가 | HIGH | ✅ 완료 |
+| FIX-02-2 | init.sql activity_logs 테이블 추가 | MEDIUM | ✅ 완료 |
+| FIX-02-3 | init.sql notifications 테이블 추가 | MEDIUM | ✅ 완료 |
+| FIX-02-4 | projects 테이블 git_token 추가 | HIGH | ✅ 완료 |
+| FIX-02-5 | db-migration.ts 중복 삭제 | MEDIUM | ✅ 완료 |
 
-### Sprint 13: 더미 코드 교체 ⏳
+### Sprint 13: 더미 코드 교체 ✅
 
 | 작업 ID | 설명 | 심각도 | 상태 |
 |---------|------|--------|------|
-| DUMMY-01-1 | localhost:3000 → env 변수 (5개 파일) | HIGH | ⏳ 대기 |
-| DUMMY-01-2 | 환경 URL example.com 교체 | MEDIUM | ⏳ 대기 |
-| DUMMY-01-3 | payload-generator faker.js 연동 | MEDIUM | ⏳ 대기 |
-| DUMMY-02-1 | webhook 로그 저장 구현 | HIGH | ⏳ 대기 |
-| DUMMY-02-2 | V2Sidebar 사용자 정보 세션 연동 | HIGH | ⏳ 대기 |
-| DUMMY-02-3 | RepoImporter 진행률 실제 연동 | MEDIUM | ⏳ 대기 |
-| DUMMY-02-4 | DashboardOverview 실제 DB 통계 | MEDIUM | ⏳ 대기 |
-| DUMMY-02-5 | admin 온라인 상태 세션 연동 | LOW | ⏳ 대기 |
-| DUMMY-02-6 | admin MoreVertical 메뉴 구현 | LOW | ⏳ 대기 |
-| CLEANUP-01-1 | 미사용 의존성 제거 | MEDIUM | ⏳ 대기 |
-| CLEANUP-01-2 | .env Supabase 참조 제거 | LOW | ⏳ 대기 |
-| CLEANUP-01-3 | docker-compose version 제거 | LOW | ⏳ 대기 |
-| CLEANUP-01-4 | 아바타 seed 사용자명 기반 | LOW | ⏳ 대기 |
-| CLEANUP-01-5 | 기본 프로젝트 조건부 생성 | LOW | ⏳ 대기 |
+| DUMMY-01-1 | localhost:3000 → env 변수 (5개 파일) | HIGH | ✅ 완료 |
+| DUMMY-01-2 | 환경 URL example.com 교체 | MEDIUM | ✅ 완료 |
+| DUMMY-01-3 | payload-generator faker.js 연동 | MEDIUM | ✅ 완료 |
+| DUMMY-02-1 | webhook 로그 저장 구현 | HIGH | ✅ 완료 |
+| DUMMY-02-2 | V2Sidebar 사용자 정보 세션 연동 | HIGH | ✅ 완료 |
+| DUMMY-02-3 | RepoImporter 진행률 실제 연동 | MEDIUM | ✅ 완료 |
+| DUMMY-02-4 | DashboardOverview 실제 DB 통계 | MEDIUM | ✅ 완료 |
+| DUMMY-02-5 | admin 온라인 상태 세션 연동 | LOW | ✅ 완료 |
+| DUMMY-02-6 | admin MoreVertical 메뉴 구현 | LOW | ✅ 완료 |
+| CLEANUP-01-1 | 미사용 의존성 제거 | MEDIUM | ✅ 완료 |
+| CLEANUP-01-2 | .env Supabase 참조 제거 | LOW | ✅ 완료 |
+| CLEANUP-01-3 | docker-compose version 제거 | LOW | ✅ 완료 |
+| CLEANUP-01-4 | 아바타 seed 사용자명 기반 | LOW | ✅ 완료 |
+| CLEANUP-01-5 | 기본 프로젝트 조건부 생성 | LOW | ✅ 완료 |
 
 ---
 
@@ -907,6 +907,26 @@ Phase 4C 협업 강화: ░░░░░░░░░░ 0% ⏳ 대기
 | - | Phase 4 작업 계획 수립 (7 Sprints, 3 Phases) | ✅ |
 | - | Playwright 설정 업데이트 | ✅ |
 | - | Architect 검증 + 2건 HIGH 이슈 수정 | ✅ |
+| - | Sprint 12 시작 (보안 및 핵심 수정) | ✅ |
+| - | SEC-01: bcryptjs 비밀번호 해싱 (평문 저장 제거) | ✅ |
+| - | SEC-02: .env/.gitignore 보안 강화 | ✅ |
+| - | FIX-01: data-service testCases DB 조회 구현 | ✅ |
+| - | FIX-02: init.sql 스키마 동기화 (5개 테이블) | ✅ |
+| - | docker-compose 환경변수 참조 전환 | ✅ |
+| - | Sprint 12 완료 | ✅ |
+| - | Sprint 13 시작 (더미 코드 교체) | ✅ |
+| - | DUMMY-01: localhost:3000 → APP_BASE_URL 환경변수화 (5개 파일) | ✅ |
+| - | DUMMY-01: payload-generator faker.js 연동 | ✅ |
+| - | DUMMY-02: webhook 로그 DB 저장 활성화 | ✅ |
+| - | DUMMY-02: V2Sidebar 세션 연동 + 아바타 seed 개선 | ✅ |
+| - | DUMMY-02: RepoImporter 단계별 진행률 구현 | ✅ |
+| - | DUMMY-02: DashboardOverview 실제 DB 통계 연동 | ✅ |
+| - | DUMMY-02: admin 페이지 온라인 상태 + MoreVertical 메뉴 | ✅ |
+| - | CLEANUP-01: 미사용 의존성 제거 (supabase, next-auth) | ✅ |
+| - | CLEANUP-01: .env/docker-compose/init.sql 정리 | ✅ |
+| - | TypeScript 빌드 검증 통과 | ✅ |
+| - | Sprint 13 완료 | ✅ |
+| - | **Phase 4A 완료** | ✅ |
 
 ---
 
