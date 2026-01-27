@@ -176,7 +176,7 @@ export async function runScenario(
             `**환경:** ${env}\n` +
             `**결과:** 성공 ${summary.successCount} / 실패 ${summary.failCount}\n\n` +
             `**실패 목록:**\n${failedTests}\n\n` +
-            `[API HUB에서 확인하기](http://localhost:3000)`
+            `[API HUB에서 확인하기](${process.env.APP_BASE_URL || 'http://localhost:3000'})`
         );
     }
 

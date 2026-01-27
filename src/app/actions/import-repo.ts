@@ -167,7 +167,7 @@ export async function importRepository(projectId: string, gitUrl: string, branch
                     `최근 저장소 업데이트를 통해 ${newApis.length}개의 새로운 API가 추가되었습니다.\n\n` +
                     `${newApis.slice(0, 10).join('\n')}` +
                     (newApis.length > 10 ? `\n...외 ${newApis.length - 10}개 더 있음` : "") +
-                    `\n\n[API HUB에서 확인하기](http://localhost:3000)`
+                    `\n\n[API HUB에서 확인하기](${process.env.APP_BASE_URL || 'http://localhost:3000'})`
                 );
             }
         } catch (e) {

@@ -64,8 +64,8 @@ const QUERIES = [
     );`,
     `INSERT INTO environments (env_type, base_url) VALUES 
         ('DEV', 'http://localhost:8080'),
-        ('STG', 'https://stg-api.example.com'),
-        ('PRD', 'https://api.example.com')
+        ('STG', ''),
+        ('PRD', '')
         ON CONFLICT (env_type) DO NOTHING;`,
     `CREATE TABLE IF NOT EXISTS test_cases (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -182,7 +182,7 @@ async function run() {
         database: process.env.DB_NAME,
         password: process.env.DB_PASSWORD,
         port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
-        ssl: connectionString?.includes('supabase') ? { rejectUnauthorized: false } : false
+        ssl: false
     });
 
     try {

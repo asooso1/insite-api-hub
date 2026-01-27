@@ -20,7 +20,9 @@ import {
     ExternalLink,
     Clock,
     LogOut,
-    Monitor
+    Monitor,
+    User,
+    UserX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -35,6 +37,7 @@ export default function AdminBackoffice() {
     const [searchQuery, setSearchQuery] = useState('');
     const [sessionSearchQuery, setSessionSearchQuery] = useState('');
     const [session, setSession] = useState<UserSession | null>(null);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null); // MoreVertical 메뉴 상태
     const { showToast } = useToast();
 
     useEffect(() => {
@@ -79,6 +82,12 @@ export default function AdminBackoffice() {
         } finally {
             setSessionsLoading(false);
         }
+    }
+
+    // 사용자별 온라인 상태 확인 함수
+    function getUserOnlineStatus(userId: string) {
+        const userSession = sessions.find(s => s.user_id === userId && s.is_active);
+        return !!userSession;
     }
 
     async function revokeSession(sessionToken: string) {
@@ -304,15 +313,74 @@ export default function AdminBackoffice() {
                                                 </div>
                                             </td>
                                             <td className="px-10 py-6">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                                                    <span className="text-[11px] font-black text-emerald-600 tracking-tight uppercase">온라인 (Active)</span>
-                                                </div>
+                                                {getUserOnlineStatus(user.id) ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                                                        <span className="text-[11px] font-black text-emerald-600 tracking-tight uppercase">온라인 (Active)</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 bg-slate-300 rounded-full" />
+                                                        <span className="text-[11px] font-black text-slate-400 tracking-tight uppercase">오프라인</span>
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-10 py-6 text-right">
-                                                <button className="p-2.5 text-slate-300 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl transition-all active:scale-95">
-                                                    <MoreVertical className="w-5 h-5" />
-                                                </button>
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
+                                                        className="p-2.5 text-slate-300 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl transition-all active:scale-95"
+                                                    >
+                                                        <MoreVertical className="w-5 h-5" />
+                                                    </button>
+
+                                                    {/* 드롭다운 메뉴 */}
+                                                    {openMenuId === user.id && (
+                                                        <>
+                                                            {/* 외부 클릭 감지용 오버레이 */}
+                                                            <div
+                                                                className="fixed inset-0 z-40"
+                                                                onClick={() => setOpenMenuId(null)}
+                                                            />
+                                                            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-50">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        console.log('프로필 보기:', user.id);
+                                                                        showToast('프로필 보기 기능은 준비 중입니다.', 'info');
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                                                >
+                                                                    <User className="w-4 h-4" />
+                                                                    프로필 보기
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        console.log('역할 변경:', user.id, user.role);
+                                                                        showToast('역할 변경 기능은 준비 중입니다.', 'info');
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                                                >
+                                                                    <Shield className="w-4 h-4" />
+                                                                    역할 변경
+                                                                </button>
+                                                                <div className="border-t border-slate-100 my-1" />
+                                                                <button
+                                                                    onClick={() => {
+                                                                        console.log('비활성화:', user.id);
+                                                                        showToast('사용자 비활성화 기능은 준비 중입니다.', 'info');
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                                >
+                                                                    <UserX className="w-4 h-4" />
+                                                                    비활성화
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         </motion.tr>
                                     ))}

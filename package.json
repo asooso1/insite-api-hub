@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@faker-js/faker": "^10.2.0",
-    "@supabase/supabase-js": "^2.89.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "axios": "^1.13.2",
@@ -23,7 +22,6 @@
     "json-schema": "^0.4.0",
     "lucide-react": "^0.562.0",
     "next": "^16.1.1-canary.13",
-    "next-auth": "^4.24.13",
     "pg": "^8.16.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

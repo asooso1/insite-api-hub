@@ -46,8 +46,8 @@ const QUERIES = [
     );`,
     `INSERT INTO environments (env_type, base_url) VALUES 
         ('DEV', 'http://localhost:8080'),
-        ('STG', 'https://stg-api.example.com'),
-        ('PRD', 'https://api.example.com')
+        ('STG', ''),
+        ('PRD', '')
         ON CONFLICT (env_type) DO NOTHING;`,
     `CREATE TABLE IF NOT EXISTS test_cases (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
