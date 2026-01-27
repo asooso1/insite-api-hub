@@ -1,5 +1,6 @@
 import { ApiModel, ApiField } from './api-types';
 import { v4 as uuidv4 } from 'uuid';
+import { faker } from '@faker-js/faker/locale/ko';
 
 export interface PayloadGeneratorOptions {
   includeOptional?: boolean;  // 선택 필드 포함 여부
@@ -21,31 +22,31 @@ export function getSmartValue(fieldName: string, fieldType: string): any {
 
   // Email 패턴
   if (lowerName.includes('email')) {
-    return 'user@example.com';
+    return faker.internet.email();
   }
 
   // Phone 패턴
   if (lowerName.includes('phone') || lowerName.includes('tel')) {
-    return '010-1234-5678';
+    return faker.phone.number();
   }
 
   // Name 패턴
   if (lowerName.includes('name') && !lowerName.includes('username')) {
-    return '홍길동';
+    return faker.person.fullName();
   }
 
   if (lowerName.includes('username')) {
-    return 'user123';
+    return faker.internet.username();
   }
 
   // Password 패턴
   if (lowerName.includes('password') || lowerName.includes('pwd')) {
-    return 'Password123!';
+    return faker.internet.password({ length: 12, memorable: true });
   }
 
   // URL 패턴
   if (lowerName.includes('url') || lowerName.includes('link')) {
-    return 'https://example.com';
+    return faker.internet.url();
   }
 
   // ID 패턴
@@ -56,42 +57,42 @@ export function getSmartValue(fieldName: string, fieldType: string): any {
 
   // Count/Quantity 패턴
   if (lowerName.includes('count') || lowerName.includes('quantity') || lowerName.includes('qty')) {
-    return Math.floor(Math.random() * 100) + 1;
+    return faker.number.int({ min: 1, max: 100 });
   }
 
   // Price/Amount 패턴
   if (lowerName.includes('price') || lowerName.includes('amount') || lowerName.includes('cost')) {
-    return 10000;
+    return faker.number.int({ min: 1000, max: 100000 });
   }
 
   // Age 패턴
   if (lowerName.includes('age')) {
-    return 25;
+    return faker.number.int({ min: 18, max: 80 });
   }
 
   // Description 패턴
   if (lowerName.includes('description') || lowerName.includes('desc')) {
-    return 'Sample description';
+    return faker.lorem.sentence();
   }
 
   // Title 패턴
   if (lowerName.includes('title')) {
-    return 'Sample Title';
+    return faker.lorem.words(3);
   }
 
   // Status 패턴
   if (lowerName.includes('status')) {
-    return 'ACTIVE';
+    return faker.helpers.arrayElement(['ACTIVE', 'INACTIVE', 'PENDING']);
   }
 
   // Code 패턴
   if (lowerName.includes('code')) {
-    return 'CODE001';
+    return faker.string.alphanumeric(6).toUpperCase();
   }
 
   // Address 패턴
   if (lowerName.includes('address')) {
-    return '서울시 강남구 테헤란로 123';
+    return faker.location.streetAddress();
   }
 
   // Date 관련 패턴
@@ -130,7 +131,7 @@ function getDefaultValueByType(fieldType: string): any {
   }
 
   // String (default)
-  return 'sample_string';
+  return faker.lorem.word();
 }
 
 /**
