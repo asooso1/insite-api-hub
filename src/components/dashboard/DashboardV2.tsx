@@ -281,6 +281,7 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                                                             models={initialData.models}
                                                             environments={initialData.environments}
                                                             testHistory={testHistory}
+                                                            projectId={currentProjectId || undefined}
                                                         />
 
                                                         <div className="flex items-center justify-between">

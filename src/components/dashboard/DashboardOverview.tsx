@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import {
     Activity,
     Database,
@@ -15,15 +16,21 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { ApiEndpoint, ApiModel, EnvConfig } from '@/lib/api-types';
+import { getActivityFeed, ActivityLog } from '@/app/actions/activity';
 
 interface DashboardOverviewProps {
     endpoints: ApiEndpoint[];
     models: ApiModel[];
     environments: Record<string, EnvConfig>;
     testHistory?: any[];
+    projectId?: string;
 }
 
-export function DashboardOverview({ endpoints, models, environments, testHistory = [] }: DashboardOverviewProps) {
+export function DashboardOverview({ endpoints, models, environments, testHistory = [], projectId }: DashboardOverviewProps) {
+    // 최근 활동 상태 관리
+    const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([]);
+    const [isLoadingActivities, setIsLoadingActivities] = useState(true);
+
     // Calculate metrics
     const totalEndpoints = endpoints.length;
     const totalModels = models.length;
@@ -44,18 +51,87 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
 
     const totalMethods = methods.reduce((sum, m) => sum + m.count, 0);
 
-    // Test success rate (mock data for now)
+    // 테스트 성공률 (실제 데이터 기반 계산)
     const testSuccessRate = testHistory.length > 0
         ? Math.round((testHistory.filter(t => t.success).length / testHistory.length) * 100)
-        : 94;
+        : 0;
 
-    // Recent activity (mock data)
-    const recentActivity = [
-        { type: 'add', text: '새 엔드포인트 추가', detail: '/api/users/profile', time: '2분 전', icon: Plus },
-        { type: 'update', text: '모델 업데이트', detail: 'UserDTO', time: '15분 전', icon: FileEdit },
-        { type: 'test', text: '테스트 성공', detail: '/api/orders', time: '1시간 전', icon: CheckCircle2 },
-        { type: 'error', text: '테스트 실패', detail: '/api/payments', time: '2시간 전', icon: AlertCircle },
-    ].slice(0, 4);
+    // 실제 활동 데이터 조회
+    useEffect(() => {
+        async function loadActivities() {
+            if (!projectId) {
+                setIsLoadingActivities(false);
+                return;
+            }
+
+            try {
+                const activities = await getActivityFeed(projectId, { limit: 4 });
+                setRecentActivities(activities);
+            } catch (error) {
+                console.error('활동 데이터 로드 실패:', error);
+            } finally {
+                setIsLoadingActivities(false);
+            }
+        }
+
+        loadActivities();
+    }, [projectId]);
+
+    // ActivityLog를 UI 형식으로 변환하는 헬퍼 함수
+    const getActivityIcon = (activityType: string) => {
+        if (activityType.includes('ADDED') || activityType === 'ENDPOINT_ADDED' || activityType === 'MODEL_ADDED') {
+            return Plus;
+        }
+        if (activityType.includes('MODIFIED') || activityType.includes('UPDATE')) {
+            return FileEdit;
+        }
+        if (activityType.includes('SUCCESS') || activityType.includes('RESOLVED')) {
+            return CheckCircle2;
+        }
+        if (activityType.includes('FAILED') || activityType.includes('ERROR')) {
+            return AlertCircle;
+        }
+        return Activity;
+    };
+
+    const getActivityColor = (activityType: string) => {
+        if (activityType.includes('ADDED')) {
+            return 'add';
+        }
+        if (activityType.includes('MODIFIED') || activityType.includes('UPDATE')) {
+            return 'update';
+        }
+        if (activityType.includes('SUCCESS') || activityType.includes('RESOLVED')) {
+            return 'test';
+        }
+        if (activityType.includes('FAILED') || activityType.includes('ERROR')) {
+            return 'error';
+        }
+        return 'update';
+    };
+
+    const formatTimeAgo = (timestamp: string) => {
+        const now = new Date();
+        const past = new Date(timestamp);
+        const diffMs = now.getTime() - past.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return '방금 전';
+        if (diffMins < 60) return `${diffMins}분 전`;
+        if (diffHours < 24) return `${diffHours}시간 전`;
+        return `${diffDays}일 전`;
+    };
+
+    // 실제 활동 데이터를 UI 포맷으로 변환
+    const recentActivity = recentActivities.map(activity => ({
+        type: getActivityColor(activity.activity_type),
+        text: activity.title,
+        detail: activity.description,
+        time: formatTimeAgo(activity.created_at),
+        icon: getActivityIcon(activity.activity_type)
+    }));
 
     // Animation variants
     const containerVariants = {
@@ -82,7 +158,7 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
         }
     };
 
-    // Metric cards data
+    // Metric cards data (트렌드 데이터는 실제 엔드포인트/모델 수로 교체)
     const metricCards = [
         {
             title: '전체 엔드포인트',
@@ -92,8 +168,8 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             bgGradient: 'from-blue-50 to-blue-100/50',
             iconBg: 'bg-blue-100',
             iconColor: 'text-blue-600',
-            trend: '+12%',
-            trendUp: true
+            trend: `${totalEndpoints}개`,
+            trendUp: null
         },
         {
             title: '데이터 모델',
@@ -103,8 +179,8 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             bgGradient: 'from-purple-50 to-purple-100/50',
             iconBg: 'bg-purple-100',
             iconColor: 'text-purple-600',
-            trend: '+8%',
-            trendUp: true
+            trend: `${totalModels}개`,
+            trendUp: null
         },
         {
             title: '활성 환경',
@@ -114,19 +190,19 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             bgGradient: 'from-emerald-50 to-emerald-100/50',
             iconBg: 'bg-emerald-100',
             iconColor: 'text-emerald-600',
-            trend: 'DEV/STG/PRD',
+            trend: activeEnvs.length > 0 ? activeEnvs.join('/').toUpperCase() : '없음',
             trendUp: null
         },
         {
             title: '테스트 성공률',
-            value: `${testSuccessRate}%`,
+            value: testHistory.length > 0 ? `${testSuccessRate}%` : '-',
             icon: CheckCircle2,
             color: 'amber',
             bgGradient: 'from-amber-50 to-amber-100/50',
             iconBg: 'bg-amber-100',
             iconColor: 'text-amber-600',
-            trend: '안정적',
-            trendUp: true
+            trend: testHistory.length > 0 ? `${testHistory.length}건 테스트` : '데이터 없음',
+            trendUp: null
         }
     ];
 
@@ -254,44 +330,59 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                 </div>
 
                 <div className="space-y-3">
-                    {recentActivity.map((activity, idx) => (
-                        <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.5 + idx * 0.1 }}
-                            className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors group/activity cursor-pointer"
-                        >
-                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                                activity.type === 'add' ? 'bg-blue-50 text-blue-600' :
-                                activity.type === 'update' ? 'bg-purple-50 text-purple-600' :
-                                activity.type === 'test' ? 'bg-emerald-50 text-emerald-600' :
-                                'bg-rose-50 text-rose-600'
-                            }`}>
-                                <activity.icon className="w-4 h-4" />
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                    <p className="text-xs font-black text-slate-800">
-                                        {activity.text}
-                                    </p>
-                                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-                                        <Clock className="w-3 h-3" />
-                                        {activity.time}
-                                    </div>
+                    {isLoadingActivities ? (
+                        // 로딩 상태
+                        <div className="flex items-center justify-center py-8 text-slate-400">
+                            <div className="animate-spin w-6 h-6 border-2 border-slate-300 border-t-blue-600 rounded-full"></div>
+                        </div>
+                    ) : recentActivity.length > 0 ? (
+                        // 실제 활동 데이터 표시
+                        recentActivity.map((activity, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.5 + idx * 0.1 }}
+                                className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors group/activity cursor-pointer"
+                            >
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                                    activity.type === 'add' ? 'bg-blue-50 text-blue-600' :
+                                    activity.type === 'update' ? 'bg-purple-50 text-purple-600' :
+                                    activity.type === 'test' ? 'bg-emerald-50 text-emerald-600' :
+                                    'bg-rose-50 text-rose-600'
+                                }`}>
+                                    <activity.icon className="w-4 h-4" />
                                 </div>
-                                <p className="text-[11px] font-mono text-slate-500 mt-0.5 truncate">
-                                    {activity.detail}
-                                </p>
-                            </div>
 
-                            {/* Status dot */}
-                            <div className={`w-2 h-2 rounded-full mt-2 ${
-                                activity.type === 'error' ? 'bg-rose-400' : 'bg-emerald-400'
-                            } opacity-0 group-hover/activity:opacity-100 transition-opacity`} />
-                        </motion.div>
-                    ))}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="text-xs font-black text-slate-800">
+                                            {activity.text}
+                                        </p>
+                                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                                            <Clock className="w-3 h-3" />
+                                            {activity.time}
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] font-mono text-slate-500 mt-0.5 truncate">
+                                        {activity.detail}
+                                    </p>
+                                </div>
+
+                                {/* Status dot */}
+                                <div className={`w-2 h-2 rounded-full mt-2 ${
+                                    activity.type === 'error' ? 'bg-rose-400' : 'bg-emerald-400'
+                                } opacity-0 group-hover/activity:opacity-100 transition-opacity`} />
+                            </motion.div>
+                        ))
+                    ) : (
+                        // 데이터가 없을 때
+                        <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                            <Activity className="w-12 h-12 mb-3 opacity-20" />
+                            <p className="text-sm font-bold">최근 활동이 없습니다</p>
+                            <p className="text-xs mt-1">엔드포인트 추가나 테스트를 시작하면 활동 내역이 표시됩니다</p>
+                        </div>
+                    )}
                 </div>
             </motion.div>
 
