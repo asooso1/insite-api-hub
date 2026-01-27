@@ -17,23 +17,40 @@ export function RepoImporter({ projectId }: RepoImporterProps) {
     const [gitToken, setGitToken] = useState("");
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [progressMessage, setProgressMessage] = useState("");
     const { showToast } = useToast();
 
     const handleImport = async () => {
         if (!gitUrl || !projectId) return;
         setLoading(true);
         setProgress(10);
+        setProgressMessage('저장소 연결 확인 중...');
 
         try {
-            // Fake progress steps because the actual server action is a single call
-            const timer = setInterval(() => {
-                setProgress(prev => (prev < 90 ? prev + Math.random() * 15 : prev));
-            }, 500);
+            // 단계별 진행 메시지와 함께 점진적 업데이트
+            const progressSteps = [
+                { progress: 20, message: '저장소 클론 중...', delay: 800 },
+                { progress: 40, message: 'Spring Controller 스캔 중...', delay: 1500 },
+                { progress: 60, message: 'DTO 구조 분석 중...', delay: 1200 },
+                { progress: 75, message: 'API 엔드포인트 매핑 중...', delay: 1000 },
+            ];
+
+            const timers: NodeJS.Timeout[] = [];
+            let accDelay = 0;
+            for (const step of progressSteps) {
+                accDelay += step.delay;
+                timers.push(setTimeout(() => {
+                    setProgress(step.progress);
+                    setProgressMessage(step.message);
+                }, accDelay));
+            }
 
             const result = await importRepository(projectId, gitUrl, branch, gitToken || undefined);
 
-            clearInterval(timer);
+            // 타이머 정리
+            timers.forEach(t => clearTimeout(t));
             setProgress(100);
+            setProgressMessage('완료!');
 
             if (result.success) {
                 showToast("API 분석 및 가져오기에 성공했습니다. 페이지를 새로고침합니다.", "success");
@@ -43,11 +60,13 @@ export function RepoImporter({ projectId }: RepoImporterProps) {
             } else {
                 showToast(`오류 발생: ${result.message}`, "error");
                 setProgress(0);
+                setProgressMessage('');
             }
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
             showToast(`실패: ${message}`, "error");
             setProgress(0);
+            setProgressMessage('');
         } finally {
             setLoading(false);
         }
@@ -136,7 +155,7 @@ export function RepoImporter({ projectId }: RepoImporterProps) {
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                                     </span>
-                                    {progress < 40 ? '저장소 클론 중' : progress < 80 ? 'DTO 구조 분석 중' : 'API 엔드포인트 매핑 중'}
+                                    {progressMessage || '저장소 클론 중'}
                                 </span>
                                 <span className="text-[10px] font-mono font-bold text-primary">{Math.floor(progress)}%</span>
                             </div>

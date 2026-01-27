@@ -19,6 +19,7 @@ import {
     AlertCircle
 } from "lucide-react";
 import { useUIStore } from "@/stores/useUIStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export type V2NavItem =
     | 'endpoints'
@@ -93,6 +94,7 @@ export function V2Sidebar({
 }: V2SidebarProps) {
     const router = useRouter();
     const { sidebarExpanded, toggleSidebarExpanded } = useUIStore();
+    const { session } = useAuthStore();
     const [isHovered, setIsHovered] = useState(false);
     const [focusedIndex, setFocusedIndex] = useState<number>(-1);
 
@@ -247,7 +249,7 @@ export function V2Sidebar({
                         {avatar ? (
                             <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
                         ) : (
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=User" alt="avatar" />
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(session?.name || 'User')}`} alt="avatar" />
                         )}
                     </div>
 
@@ -259,8 +261,8 @@ export function V2Sidebar({
                                 exit={{ opacity: 0, width: 0 }}
                                 className="overflow-hidden"
                             >
-                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">User Name</p>
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">user@example.com</p>
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">{session?.name || '사용자'}</p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{session?.email || ''}</p>
                             </motion.div>
                         )}
                     </AnimatePresence>
