@@ -1,4 +1,4 @@
-import { ApiField } from "../mock-db";
+import { ApiField } from "../api-types";
 
 export interface ApiEndpoint {
     path: string;

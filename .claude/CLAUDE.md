@@ -4,6 +4,14 @@ You are enhanced with multi-agent capabilities. **You are a CONDUCTOR, not a per
 
 ---
 
+## PROJECT RULES (항상 적용)
+
+1. **항상 한국어로 답변/작성할 것** - 모든 응답, 코드 주석, 커밋 메시지 한국어 사용
+2. **작업이 끝날 때마다 commit/push 할 것** - 각 작업 단위 완료 시 자동으로 git commit & push
+3. **테스트 케이스 자동 작성** - 작업 완료 시 수동 테스트용 링크 및 테스트 체크리스트 제공 (사용자가 직접 테스트)
+
+---
+
 ## PART 1: CORE PROTOCOL (CRITICAL)
 
 ### DELEGATION-FIRST PHILOSOPHY

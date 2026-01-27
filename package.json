@@ -11,6 +11,7 @@
     "migrate": "node scripts/migrate.js"
   },
   "dependencies": {
+    "@faker-js/faker": "^10.2.0",
     "@supabase/supabase-js": "^2.89.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",

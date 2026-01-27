@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { ApiEndpoint } from "../mock-db";
+import { ApiEndpoint } from "../api-types";
 
 export function exportApisToExcel(endpoints: ApiEndpoint[]) {
     const data = endpoints.map(api => ({

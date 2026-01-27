@@ -165,7 +165,94 @@ CREATE TABLE IF NOT EXISTS webhook_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_webhook_logs_project_id ON webhook_logs(project_id);
 
+-- 13. Mock 설정 테이블
+CREATE TABLE IF NOT EXISTS mock_configs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    endpoint_id UUID REFERENCES endpoints(id) ON DELETE CASCADE,
+    name TEXT NOT NULL DEFAULT 'Default',
+    enabled BOOLEAN DEFAULT TRUE,
+    -- Response configuration
+    status_code INTEGER DEFAULT 200,
+    response_template JSONB,
+    use_dynamic_generation BOOLEAN DEFAULT TRUE,
+    -- Network simulation
+    delay_ms INTEGER DEFAULT 0,
+    delay_random_min INTEGER DEFAULT 0,
+    delay_random_max INTEGER DEFAULT 0,
+    use_random_delay BOOLEAN DEFAULT FALSE,
+    simulate_timeout BOOLEAN DEFAULT FALSE,
+    timeout_ms INTEGER DEFAULT 30000,
+    simulate_network_error BOOLEAN DEFAULT FALSE,
+    network_error_type TEXT DEFAULT 'CONNECTION_REFUSED',
+    network_error_probability REAL DEFAULT 0.5,
+    -- Scenario
+    scenario_enabled BOOLEAN DEFAULT FALSE,
+    scenario_config JSONB,
+    sequence_enabled BOOLEAN DEFAULT FALSE,
+    sequence_responses JSONB,
+    -- Conditional rules
+    conditional_rules JSONB,
+    -- Error scenarios
+    error_scenarios JSONB,
+    -- Metadata
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_mock_configs_project_id ON mock_configs(project_id);
+CREATE INDEX IF NOT EXISTS idx_mock_configs_endpoint_id ON mock_configs(endpoint_id);
+
+-- 14. 사용자 세션 테이블
+CREATE TABLE IF NOT EXISTS user_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    session_token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_active_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at);
+
+-- 15. 알림 테이블
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    type TEXT NOT NULL, -- MENTION, COMMENT, REPLY, QUESTION_RESOLVED, API_CHANGE, TEST_FAILED, WEBHOOK_EVENT
+    title TEXT NOT NULL,
+    message TEXT,
+    link TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_project_id ON notifications(project_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+
+-- 16. 활동 로그 테이블
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_name TEXT,
+    action TEXT NOT NULL, -- API_ADDED, API_DELETED, API_MODIFIED, MODEL_ADDED, etc.
+    target_type TEXT, -- ENDPOINT, MODEL, TEST, SCENARIO, etc.
+    target_id TEXT,
+    target_name TEXT,
+    details JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_project_id ON activity_logs(project_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC);
+
+-- 프로젝트 테이블에 git_token 및 git_url 컬럼 추가
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_token TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_url TEXT;
+
 -- 기본 프로젝트 생성
-INSERT INTO projects (name, description) 
+INSERT INTO projects (name, description)
 VALUES ('Default Project', '자동 생성된 기본 프로젝트입니다.')
 ON CONFLICT DO NOTHING;
