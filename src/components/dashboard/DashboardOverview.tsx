@@ -220,7 +220,8 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                     <motion.div
                         key={card.title}
                         variants={cardVariants}
-                        className="group"
+                        className="group relative hover:z-10"
+                        whileHover={{ zIndex: 10 }}
                     >
                         <Tilt3DCard
                             variant="glass"

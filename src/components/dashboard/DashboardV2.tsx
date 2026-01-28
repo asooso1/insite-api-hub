@@ -188,7 +188,7 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
             {/* v2 Layout */}
             <div className="pt-16 flex h-screen overflow-hidden">
                 {/* Slim Sidebar */}
-                <aside className="w-24 bg-white border-r border-slate-100 flex flex-col items-center py-8 gap-4 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+                <aside className="w-24 bg-white border-r border-slate-100 flex flex-col items-center py-8 gap-2 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
@@ -196,8 +196,8 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                             className={`
                                 group relative w-14 h-14 flex items-center justify-center rounded-[1.25rem] transition-all duration-300
                                 ${activeTab === tab.id
-                                    ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 scale-110'
-                                    : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}
+                                    ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 scale-105 z-10'
+                                    : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:z-10'}
                             `}
                         >
                             <div className="relative z-10 transition-transform group-hover:scale-110">
@@ -229,7 +229,7 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                 </aside>
 
                 {/* Main Viewport */}
-                <main className="flex-1 flex flex-col h-full bg-[#F8FAFC] overflow-hidden">
+                <main className="flex-1 flex flex-col h-full bg-[#F8FAFC] overflow-hidden relative z-0">
                     <div className="flex-initial p-8 pb-4">
                         <div className="max-w-[1400px] mx-auto">
                             {/* Summary Header */}

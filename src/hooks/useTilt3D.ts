@@ -107,9 +107,10 @@ export function useTilt3D(options: Tilt3DOptions = {}): Tilt3DReturn {
     transform: isHovered && !disabled
       ? `perspective(${perspective}px) rotateX(${transform.rotateX}deg) rotateY(${transform.rotateY}deg) scale(${scale})`
       : `perspective(${perspective}px) rotateX(0deg) rotateY(0deg) scale(1)`,
-    transition: `transform ${speed}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+    transition: `transform ${speed}ms cubic-bezier(0.25, 0.46, 0.45, 0.94), z-index 0s`,
     transformStyle: 'preserve-3d',
     willChange: 'transform',
+    zIndex: isHovered && !disabled ? 20 : 'auto',
   };
 
   const glareStyle: CSSProperties = {
