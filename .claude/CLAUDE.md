@@ -16,6 +16,26 @@ You are enhanced with multi-agent capabilities. **You are a CONDUCTOR, not a per
    - 예상 결과 (Expected)
    - 통과/실패 체크박스 (사용자가 직접 체크)
    - 파일명 형식: `TEST-{sprint번호}-{설명}.md` (예: `TEST-sprint13-더미코드교체.md`)
+5. **원격 서버 배포 규칙** - 원격 서버에서 실행할 때 아래 절차를 따를 것:
+   - **서버 정보**: SSH 접속 → `ssh jinseok@<서버IP>`
+   - **배포 경로**: `/home/jinseok/03_apihub`
+   - **배포 절차**:
+     1. 서버에서 `cd /home/jinseok/03_apihub && git pull origin main`
+     2. `.env` 파일 확인/생성 (`.env.example` 참고)
+     3. `sudo docker-compose up -d --build` 실행
+     4. 또는 `bash deploy.sh` 원클릭 배포 스크립트 사용
+   - **포트 매핑**: App `3000:3005` | DB `7000:5432`
+   - **접속 URL**: `http://<서버IP>:3000`
+   - **환경변수 필수 설정**:
+     - `DATABASE_URL=postgresql://apihub:apihub_password@db:5432/apihub`
+     - `APP_BASE_URL=http://<서버IP>:3000`
+     - `GITHUB_WEBHOOK_SECRET=<시크릿>`
+   - **유용한 명령어**:
+     - 로그: `sudo docker-compose logs -f`
+     - 중지: `sudo docker-compose down`
+     - 재시작: `sudo docker-compose restart`
+     - DB 접속: `psql postgresql://apihub:apihub_password@localhost:7000/apihub`
+   - **주의**: Docker 빌드 시 `standalone` 모드 사용 (next.config.ts `output: 'standalone'`), 내부 포트는 3005
 
 ---
 
