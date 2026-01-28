@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TestHistory,
@@ -213,75 +213,158 @@ export function TestDashboard({
         initial="initial"
         animate="animate"
       >
-        <StatCard
-          icon={<Activity className="w-6 h-6" />}
-          label="총 테스트 수"
-          value={stats.total.toString()}
-          color="text-blue-500"
-          bgColor="bg-blue-500/10"
-          delay={0}
-        />
-
-        <StatCard
-          icon={<CheckCircle2 className="w-6 h-6" />}
-          label="성공률"
-          value={`${stats.successRate.toFixed(1)}%`}
-          subValue={
-            <CircularProgress
-              percentage={stats.successRate}
-              size={48}
-              strokeWidth={4}
-            />
-          }
-          color="text-emerald-500"
-          bgColor="bg-emerald-500/10"
-          delay={0.05}
-        />
-
-        <StatCard
-          icon={<Zap className="w-6 h-6" />}
-          label="평균 응답 시간"
-          value={`${stats.avgResponseTime.toFixed(0)}ms`}
-          subValue={
-            <div className="flex items-center gap-1 text-xs">
-              {stats.trend > 0 ? (
-                <>
-                  <TrendingUp className="w-3 h-3 text-rose-500" />
-                  <span className="text-rose-500 font-bold">
-                    +{stats.trend.toFixed(1)}%
-                  </span>
-                </>
-              ) : stats.trend < 0 ? (
-                <>
-                  <TrendingDown className="w-3 h-3 text-emerald-500" />
-                  <span className="text-emerald-500 font-bold">
-                    {stats.trend.toFixed(1)}%
-                  </span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">-</span>
-              )}
+        <FlipCard
+          className="h-[160px]"
+          front={
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm h-full flex flex-col justify-between">
+              <div className="bg-blue-500/10 text-blue-500 p-3 rounded-xl inline-flex w-fit">
+                <Activity className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                  총 테스트 수
+                </p>
+                <p className="text-3xl font-black text-blue-500 leading-none">
+                  {stats.total.toString()}
+                </p>
+              </div>
             </div>
           }
-          color="text-amber-500"
-          bgColor="bg-amber-500/10"
-          delay={0.1}
+          back={
+            <div className="bg-slate-900 rounded-3xl p-6 border border-slate-700 shadow-sm h-full flex flex-col justify-center items-center text-white">
+              <p className="text-sm font-black mb-2">상세 정보</p>
+              <p className="text-xs text-emerald-400 font-bold">성공: {stats.successCount}건</p>
+              <p className="text-xs text-rose-400 font-bold">실패: {stats.failCount}건</p>
+              <p className="text-xs text-slate-400 text-center mt-3">클릭하여 돌아가기</p>
+            </div>
+          }
         />
 
-        <StatCard
-          icon={<Calendar className="w-6 h-6" />}
-          label="마지막 실행"
-          value={
-            stats.lastExecuted
-              ? formatDistanceToNow(new Date(stats.lastExecuted), {
-                  addSuffix: true,
-                  locale: ko,
-                })
-              : 'N/A'
+        <FlipCard
+          className="h-[160px]"
+          front={
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm h-full flex flex-col justify-between">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="bg-emerald-500/10 text-emerald-500 p-3 rounded-xl inline-flex mb-4">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                    성공률
+                  </p>
+                  <p className="text-3xl font-black text-emerald-500 leading-none">
+                    {stats.successRate.toFixed(1)}%
+                  </p>
+                </div>
+                <div className="ml-4">
+                  <CircularProgress
+                    percentage={stats.successRate}
+                    size={48}
+                    strokeWidth={4}
+                  />
+                </div>
+              </div>
+            </div>
           }
-          color="text-violet-500"
-          bgColor="bg-violet-500/10"
-          delay={0.15}
+          back={
+            <div className="bg-slate-900 rounded-3xl p-6 border border-slate-700 shadow-sm h-full flex flex-col justify-center items-center text-white">
+              <p className="text-sm font-black mb-2">트렌드 정보</p>
+              <p className="text-xs text-slate-400 mb-1">목표: 95%</p>
+              <p className={`text-xs font-bold ${stats.successRate >= 95 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                현재 트렌드: {stats.successRate >= 95 ? '목표 달성' : '개선 필요'}
+              </p>
+              <p className="text-xs text-slate-400 text-center mt-3">클릭하여 돌아가기</p>
+            </div>
+          }
+        />
+
+        <FlipCard
+          className="h-[160px]"
+          front={
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm h-full flex flex-col justify-between">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="bg-amber-500/10 text-amber-500 p-3 rounded-xl inline-flex mb-4">
+                    <Zap className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                    평균 응답 시간
+                  </p>
+                  <p className="text-3xl font-black text-amber-500 leading-none">
+                    {stats.avgResponseTime.toFixed(0)}ms
+                  </p>
+                </div>
+                <div className="ml-4 flex items-center gap-1 text-xs">
+                  {stats.trend > 0 ? (
+                    <>
+                      <TrendingUp className="w-3 h-3 text-rose-500" />
+                      <span className="text-rose-500 font-bold">
+                        +{stats.trend.toFixed(1)}%
+                      </span>
+                    </>
+                  ) : stats.trend < 0 ? (
+                    <>
+                      <TrendingDown className="w-3 h-3 text-emerald-500" />
+                      <span className="text-emerald-500 font-bold">
+                        {stats.trend.toFixed(1)}%
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          }
+          back={
+            <div className="bg-slate-900 rounded-3xl p-6 border border-slate-700 shadow-sm h-full flex flex-col justify-center items-center text-white">
+              <p className="text-sm font-black mb-2">응답 시간 범위</p>
+              {testHistory.length > 0 ? (
+                <>
+                  <p className="text-xs text-emerald-400 font-bold">
+                    최소: {Math.min(...testHistory.map(t => t.response_time))}ms
+                  </p>
+                  <p className="text-xs text-rose-400 font-bold">
+                    최대: {Math.max(...testHistory.map(t => t.response_time))}ms
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-slate-400">데이터 없음</p>
+              )}
+              <p className="text-xs text-slate-400 text-center mt-3">클릭하여 돌아가기</p>
+            </div>
+          }
+        />
+
+        <FlipCard
+          className="h-[160px]"
+          front={
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm h-full flex flex-col justify-between">
+              <div className="bg-violet-500/10 text-violet-500 p-3 rounded-xl inline-flex w-fit">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                  마지막 실행
+                </p>
+                <p className="text-3xl font-black text-violet-500 leading-none">
+                  {stats.lastExecuted
+                    ? formatDistanceToNow(new Date(stats.lastExecuted), {
+                        addSuffix: true,
+                        locale: ko,
+                      })
+                    : 'N/A'}
+                </p>
+              </div>
+            </div>
+          }
+          back={
+            <div className="bg-slate-900 rounded-3xl p-6 border border-slate-700 shadow-sm h-full flex flex-col justify-center items-center text-white">
+              <p className="text-sm font-black mb-2">스케줄 정보</p>
+              <p className="text-xs text-amber-400 font-bold">다음 예정: 설정 필요</p>
+              <p className="text-xs text-slate-400 text-center mt-3">클릭하여 돌아가기</p>
+            </div>
+          }
         />
       </motion.div>
 
@@ -1079,6 +1162,50 @@ function AssertionDetails({ assertionResult }: AssertionDetailsProps) {
           </motion.div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ============================================
+// FlipCard Component (3D Flip Effect)
+// ============================================
+
+interface FlipCardProps {
+  front: ReactNode;
+  back: ReactNode;
+  className?: string;
+}
+
+function FlipCard({ front, back, className = '' }: FlipCardProps) {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  return (
+    <div
+      className={`relative cursor-pointer ${className}`}
+      style={{ perspective: '1000px' }}
+      onClick={() => setIsFlipped(!isFlipped)}
+    >
+      <motion.div
+        className="relative w-full h-full"
+        style={{ transformStyle: 'preserve-3d' }}
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+      >
+        {/* 앞면 */}
+        <div
+          className="absolute inset-0 w-full h-full"
+          style={{ backfaceVisibility: 'hidden' }}
+        >
+          {front}
+        </div>
+        {/* 뒷면 */}
+        <div
+          className="absolute inset-0 w-full h-full"
+          style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+        >
+          {back}
+        </div>
+      </motion.div>
     </div>
   );
 }

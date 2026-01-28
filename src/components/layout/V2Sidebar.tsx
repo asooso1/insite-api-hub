@@ -326,14 +326,23 @@ function NavButton({ item, isActive, isFocused, isExpanded, onClick }: NavButton
             className={`
                 group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                 ${isActive
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/50'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50'}
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25 dark:shadow-blue-500/20 ring-1 ring-blue-400/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 hover:shadow-sm'}
                 ${isFocused && !isActive ? 'ring-2 ring-blue-300 dark:ring-blue-700 ring-offset-2 dark:ring-offset-slate-900' : ''}
             `}
-            whileHover={{ x: 2 }}
+            whileHover={isActive ? { x: 4, scale: 1.02 } : { x: 2 }}
             whileTap={{ scale: 0.98 }}
             layout
         >
+            {/* Active glow effect */}
+            {isActive && (
+                <motion.div
+                    layoutId="activeGlow"
+                    className="absolute inset-0 bg-blue-500/20 rounded-xl blur-xl"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+            )}
+
             {/* Active indicator bar */}
             {isActive && (
                 <motion.div

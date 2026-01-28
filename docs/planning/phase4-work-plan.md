@@ -127,30 +127,30 @@ Phase 1~3에서 11개 스프린트를 완료했으나, 코드 감사 결과 **29
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| STYLE-01-1 | DashboardOverview 메트릭 카드에 `Tilt3DCard` 적용 | 높음 | ⏳ 대기 |
-| STYLE-01-2 | 사이드바 활성 탭에 Depth Layer + Glow 효과 | 높음 | ⏳ 대기 |
-| STYLE-01-3 | 모달 오픈 시 3D Perspective 진입 애니메이션 | 중간 | ⏳ 대기 |
-| STYLE-01-4 | 엔드포인트 카드에 호버 Tilt + Glare 효과 | 중간 | ⏳ 대기 |
-| STYLE-01-5 | 테스트 결과 카드에 성공/실패 시 3D Flip 애니메이션 | 중간 | ⏳ 대기 |
-| STYLE-01-6 | 페이지 전환 시 3D Depth 트랜지션 | 낮음 | ⏳ 대기 |
+| STYLE-01-1 | DashboardOverview 메트릭 카드에 `Tilt3DCard` 적용 | 높음 | ✅ 완료 |
+| STYLE-01-2 | 사이드바 활성 탭에 Depth Layer + Glow 효과 | 높음 | ✅ 완료 |
+| STYLE-01-3 | 모달 오픈 시 3D Perspective 진입 애니메이션 | 중간 | ✅ 완료 |
+| STYLE-01-4 | 엔드포인트 카드에 호버 Tilt + Glare 효과 | 중간 | ✅ 완료 |
+| STYLE-01-5 | 테스트 결과 카드에 성공/실패 시 3D Flip 애니메이션 | 중간 | ✅ 완료 |
+| STYLE-01-6 | 페이지 전환 시 3D Depth 트랜지션 | 낮음 | ✅ 완료 |
 
 #### STYLE-02: 자동 분석 엔진 UI 재배치
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| STYLE-02-1 | RepoImporter를 하단 Banner → 사이드바 하단 또는 헤더 액션으로 이동 | 높음 | ⏳ 대기 |
-| STYLE-02-2 | 동기화 상태 인디케이터 (마지막 동기화 시간, 진행 상태) | 높음 | ⏳ 대기 |
-| STYLE-02-3 | 동기화 결과 알림 토스트 | 중간 | ⏳ 대기 |
-| STYLE-02-4 | Git 저장소 연결 상태 카드 (Connected/Disconnected) | 중간 | ⏳ 대기 |
+| STYLE-02-1 | RepoImporter를 하단 Banner → 사이드바 하단 또는 헤더 액션으로 이동 | 높음 | ✅ 완료 |
+| STYLE-02-2 | 동기화 상태 인디케이터 (마지막 동기화 시간, 진행 상태) | 높음 | ✅ 완료 |
+| STYLE-02-3 | 동기화 결과 알림 토스트 | 중간 | ✅ 완료 |
+| STYLE-02-4 | Git 저장소 연결 상태 카드 (Connected/Disconnected) | 중간 | ✅ 완료 |
 
 #### STYLE-03: 데이터 모델 CSS 수정
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|----------|------|
-| STYLE-03-1 | ModelExplorer 레이아웃 깨짐 디버깅 및 수정 | 긴급 | ⏳ 대기 |
-| STYLE-03-2 | 모델 트리뷰 들여쓰기 및 연결선 CSS 수정 | 높음 | ⏳ 대기 |
-| STYLE-03-3 | 필드 타입 뱃지 반응형 처리 | 중간 | ⏳ 대기 |
-| STYLE-03-4 | 모델 카드 V2 테마 일관성 적용 (rounded-3xl, shadow-sm) | 중간 | ⏳ 대기 |
+| STYLE-03-1 | ModelExplorer 레이아웃 깨짐 디버깅 및 수정 | 긴급 | ✅ 완료 |
+| STYLE-03-2 | 모델 트리뷰 들여쓰기 및 연결선 CSS 수정 | 높음 | ✅ 완료 |
+| STYLE-03-3 | 필드 타입 뱃지 반응형 처리 | 중간 | ✅ 완료 |
+| STYLE-03-4 | 모델 카드 V2 테마 일관성 적용 (rounded-3xl, shadow-sm) | 중간 | ✅ 완료 |
 
 **Sprint 14 산출물:**
 - 3D 효과가 적용된 전체 UI
@@ -307,7 +307,7 @@ Phase 4A: 프로덕션 안정화
     └── CLEANUP-01: 코드 정리 (5 tasks)
 
 Phase 4B: UI/UX 고도화
-├── Sprint 14: V2 + 3D 스타일 ............. ⏳ 대기
+├── Sprint 14: V2 + 3D 스타일 ............. ✅ 완료
 │   ├── STYLE-01: 3D 효과 전면 적용 (6 tasks)
 │   ├── STYLE-02: 분석 엔진 UI 재배치 (4 tasks)
 │   └── STYLE-03: 데이터 모델 CSS 수정 (4 tasks)

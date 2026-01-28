@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { ApiEndpoint, ApiModel, EnvConfig } from '@/lib/api-types';
 import { getActivityFeed, ActivityLog } from '@/app/actions/activity';
+import { Tilt3DCard } from '@/components/ui/Tilt3DCard';
 
 interface DashboardOverviewProps {
     endpoints: ApiEndpoint[];
@@ -219,15 +220,14 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                     <motion.div
                         key={card.title}
                         variants={cardVariants}
-                        whileHover={{ y: -4, transition: { duration: 0.2 } }}
                         className="group"
                     >
-                        <div className={`relative bg-white rounded-3xl p-6 border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-xl ${
-                            card.color === 'blue' ? 'hover:shadow-blue-100/20 hover:border-blue-200' :
-                            card.color === 'purple' ? 'hover:shadow-purple-100/20 hover:border-purple-200' :
-                            card.color === 'emerald' ? 'hover:shadow-emerald-100/20 hover:border-emerald-200' :
-                            'hover:shadow-amber-100/20 hover:border-amber-200'
-                        }`}>
+                        <Tilt3DCard
+                            variant="glass"
+                            intensity="low"
+                            glare
+                            className="rounded-3xl"
+                        >
                             {/* Background gradient overlay */}
                             <div className={`absolute inset-0 bg-gradient-to-br ${card.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
 
@@ -261,7 +261,7 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Tilt3DCard>
                     </motion.div>
                 ))}
             </div>

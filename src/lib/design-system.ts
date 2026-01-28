@@ -626,3 +626,52 @@ export const gradientColors = {
   electric: 'from-cyan-500 via-blue-500 to-indigo-500',
   nature: 'from-green-500 via-emerald-500 to-teal-500',
 };
+
+// ============================================
+// 3D MODAL ANIMATION VARIANTS (STYLE-01-3)
+// ============================================
+
+/**
+ * 3D 모달 애니메이션 variants
+ * 모달 오픈 시 perspective 진입 효과와 블러 트랜지션 적용
+ */
+export const modal3DVariants = {
+  overlay: {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+    exit: { opacity: 0 },
+  },
+  content: {
+    hidden: {
+      opacity: 0,
+      scale: 0.8,
+      rotateX: -15,
+      y: 60,
+      filter: 'blur(10px)',
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotateX: 0,
+      y: 0,
+      filter: 'blur(0px)',
+      transition: {
+        type: 'spring' as const,
+        stiffness: 200,
+        damping: 25,
+        mass: 0.8,
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.9,
+      rotateX: 5,
+      y: 30,
+      filter: 'blur(5px)',
+      transition: {
+        duration: 0.2,
+        ease: 'easeIn' as const,
+      },
+    },
+  },
+} as const;
