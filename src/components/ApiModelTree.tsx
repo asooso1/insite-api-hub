@@ -19,12 +19,13 @@ interface ApiModelTreeProps {
 
 export function ApiModelTree({ name, fields }: ApiModelTreeProps) {
     return (
-        <div className="border border-border/50 rounded-xl overflow-hidden bg-card/20 backdrop-blur-sm">
-            <div className="bg-muted/30 px-4 py-3 border-b border-border/50 flex items-center gap-2">
-                <Box className="w-4 h-4 text-primary" />
-                <span className="font-bold text-sm">{name}</span>
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-slate-50 px-5 py-3.5 border-b border-slate-100 flex items-center gap-2.5">
+                <Box className="w-4 h-4 text-blue-600" />
+                <span className="font-black text-sm text-slate-800 tracking-tight">{name}</span>
+                <span className="ml-auto text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fields.length} fields</span>
             </div>
-            <div className="p-2 max-h-[600px] overflow-y-auto">
+            <div className="p-3 max-h-[600px] overflow-y-auto">
                 {fields.map((field, idx) => (
                     <FieldRow key={idx} field={field} depth={0} />
                 ))}
@@ -42,34 +43,34 @@ function FieldRow({ field, depth }: { field: Field, depth: number }) {
             <div
                 className={`
           flex items-center gap-3 py-2 px-3 rounded-lg transition-colors cursor-pointer
-          hover:bg-primary/5 group
+          hover:bg-blue-50/80 group
         `}
                 style={{ paddingLeft: `${(depth * 20) + 12}px` }}
                 onClick={() => hasChildren && setIsOpen(!isOpen)}
             >
                 <div className="flex items-center gap-2 flex-1 min-w-0 h-8">
                     {hasChildren ? (
-                        isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        isOpen ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />
                     ) : (
                         <div className="w-4" />
                     )}
 
                     <span className="font-mono text-sm font-semibold truncate">{field.name}</span>
-                    {field.isRequired && <Tag className="w-3 h-3 text-destructive fill-destructive" aria-label="Required" />}
+                    {field.isRequired && <Tag className="w-3 h-3 text-rose-600 fill-rose-600" aria-label="Required" />}
                 </div>
 
                 <div className="flex items-center gap-4 shrink-0">
-                    <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded uppercase font-bold">
+                    <span className="text-[10px] sm:text-xs font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg font-bold border border-blue-100 whitespace-nowrap">
                         {field.type}
                     </span>
                     {field.isRequired && (
-                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-chart-1/10 text-chart-1 border border-chart-1/20 shrink-0">
+                        <span className="px-1.5 py-0.5 rounded-md text-[8px] font-bold bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
                             필수
                         </span>
                     )}
                 </div>
                 {field.description && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5 ml-2 italic">
+                    <p className="text-[10px] text-slate-500 mt-0.5 ml-2 italic">
                         * {field.description}
                     </p>
                 )}
@@ -83,7 +84,7 @@ function FieldRow({ field, depth }: { field: Field, depth: number }) {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                     >
-                        <div className="ml-4 mt-2 border-l border-border/50 pl-4 space-y-2">
+                        <div className="ml-3 mt-2 border-l-2 border-slate-200 pl-3 space-y-2">
                             {field.refFields!.map((refField, i) => (
                                 <FieldRow key={i} field={refField} depth={depth + 1} />
                             ))}

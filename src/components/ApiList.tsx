@@ -8,6 +8,7 @@ import { OwnerBadge } from "./OwnerBadge";
 import { CommentSection } from "./CommentSection";
 import { motion, AnimatePresence } from "framer-motion";
 import { EmptyState } from "./ui/EmptyState";
+import { useTilt3D } from "@/hooks/useTilt3D";
 
 interface ExtendedApiEndpoint extends ApiEndpoint {
     ownerName?: string | null;
@@ -24,47 +25,57 @@ interface ApiListProps {
 
 type TabType = 'data' | 'owner' | 'comments';
 
-export function ApiList({ endpoints, allModels, projectId, userId, userName }: ApiListProps) {
-    const [expandedApiId, setExpandedApiId] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<Record<string, TabType>>({});
+interface EndpointCardItemProps {
+    api: ExtendedApiEndpoint;
+    idx: number;
+    isExpanded: boolean;
+    allModels: ApiModel[];
+    projectId?: string;
+    userId?: string | null;
+    userName?: string | null;
+    toggleExpand: (id: string) => void;
+    getActiveTab: (apiId: string) => TabType;
+    setTabForApi: (apiId: string, tab: TabType) => void;
+}
 
-    if (endpoints.length === 0) {
-        return (
-            <EmptyState
-                icon={Database}
-                title="데이터가 없습니다"
-                description="분석된 엔드포인트가 없습니다. 우측 하단의 분석기를 통해 저장소를 임포트하여 시작하세요."
-            />
-        );
-    }
+function EndpointCardItem({
+    api,
+    idx,
+    isExpanded,
+    allModels,
+    projectId,
+    userId,
+    userName,
+    toggleExpand,
+    getActiveTab,
+    setTabForApi
+}: EndpointCardItemProps) {
+    const apiId = api.id || `api-${idx}`;
+    const requestModel = allModels.find(m => m.name === api.requestBody);
+    const responseModel = allModels.find(m => m.name === api.responseType);
+    const currentTab = getActiveTab(apiId);
 
-    const toggleExpand = (id: string) => {
-        setExpandedApiId(expandedApiId === id ? null : id);
-    };
-
-    const getActiveTab = (apiId: string): TabType => activeTab[apiId] || 'data';
-
-    const setTabForApi = (apiId: string, tab: TabType) => {
-        setActiveTab(prev => ({ ...prev, [apiId]: tab }));
-    };
+    const tilt = useTilt3D({
+        maxTilt: 4,
+        scale: 1.01,
+        speed: 400,
+        glare: !isExpanded,
+        glareOpacity: 0.08,
+        disabled: isExpanded,
+    });
 
     return (
-        <div className="space-y-4">
-            {endpoints.map((api, idx) => {
-                const apiId = api.id || `api-${idx}`;
-                const isExpanded = expandedApiId === apiId;
-                const requestModel = allModels.find(m => m.name === api.requestBody);
-                const responseModel = allModels.find(m => m.name === api.responseType);
-                const currentTab = getActiveTab(apiId);
-
-                return (
-                    <div
-                        key={apiId}
-                        className={`
-                            group glass-panel transition-all p-0 rounded-2xl overflow-hidden
-                            ${isExpanded ? 'border-primary shadow-lg shadow-primary/5' : 'hover:border-primary/50'}
-                        `}
-                    >
+        <div
+            ref={tilt.ref as any}
+            style={tilt.style}
+            onMouseEnter={tilt.onMouseEnter}
+            onMouseMove={tilt.onMouseMove}
+            onMouseLeave={tilt.onMouseLeave}
+            className={`
+                group glass-panel transition-all p-0 rounded-2xl overflow-hidden relative
+                ${isExpanded ? 'border-primary shadow-lg shadow-primary/5' : 'hover:border-primary/50 hover:shadow-md'}
+            `}
+        >
                         <div
                             className="p-4 flex items-center justify-between cursor-pointer"
                             onClick={() => toggleExpand(apiId)}
@@ -264,7 +275,56 @@ export function ApiList({ endpoints, allModels, projectId, userId, userName }: A
                                 </motion.div>
                             )}
                         </AnimatePresence>
+
+                        {/* Glare overlay */}
+                        {!isExpanded && <div style={tilt.glareStyle} className="pointer-events-none" />}
                     </div>
+    );
+}
+
+export function ApiList({ endpoints, allModels, projectId, userId, userName }: ApiListProps) {
+    const [expandedApiId, setExpandedApiId] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<Record<string, TabType>>({});
+
+    if (endpoints.length === 0) {
+        return (
+            <EmptyState
+                icon={Database}
+                title="데이터가 없습니다"
+                description="분석된 엔드포인트가 없습니다. 우측 하단의 분석기를 통해 저장소를 임포트하여 시작하세요."
+            />
+        );
+    }
+
+    const toggleExpand = (id: string) => {
+        setExpandedApiId(expandedApiId === id ? null : id);
+    };
+
+    const getActiveTab = (apiId: string): TabType => activeTab[apiId] || 'data';
+
+    const setTabForApi = (apiId: string, tab: TabType) => {
+        setActiveTab(prev => ({ ...prev, [apiId]: tab }));
+    };
+
+    return (
+        <div className="space-y-4">
+            {endpoints.map((api, idx) => {
+                const apiId = api.id || `api-${idx}`;
+                const isExpanded = expandedApiId === apiId;
+                return (
+                    <EndpointCardItem
+                        key={apiId}
+                        api={api}
+                        idx={idx}
+                        isExpanded={isExpanded}
+                        allModels={allModels}
+                        projectId={projectId}
+                        userId={userId}
+                        userName={userName}
+                        toggleExpand={toggleExpand}
+                        getActiveTab={getActiveTab}
+                        setTabForApi={setTabForApi}
+                    />
                 );
             })}
         </div>

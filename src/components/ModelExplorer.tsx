@@ -76,9 +76,9 @@ export function ModelExplorer({ projectId, models }: ModelExplorerProps) {
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-280px)] animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[500px] max-h-[calc(100vh-200px)] animate-in fade-in duration-500">
             {/* Model List Sidebar */}
-            <div className="lg:col-span-4 flex flex-col gap-4">
+            <div className="lg:col-span-4 flex flex-col gap-4 min-h-0">
                 <div className="relative group">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
@@ -90,7 +90,7 @@ export function ModelExplorer({ projectId, models }: ModelExplorerProps) {
                     />
                 </div>
 
-                <div className="flex-1 overflow-y-auto no-scrollbar glass-panel rounded-3xl border border-slate-100 bg-white/50 p-3 space-y-1.5 shadow-sm">
+                <div className="flex-1 overflow-y-auto no-scrollbar rounded-3xl border border-slate-200 bg-white p-3 space-y-1.5 shadow-sm">
                     {filteredModels.map((model) => (
                         <button
                             key={model.id || model.name}
@@ -120,7 +120,7 @@ export function ModelExplorer({ projectId, models }: ModelExplorerProps) {
             </div>
 
             {/* Model Details View */}
-            <div className="lg:col-span-8 overflow-y-auto no-scrollbar rounded-2xl">
+            <div className="lg:col-span-8 overflow-y-auto no-scrollbar min-h-0">
                 <AnimatePresence mode="wait">
                     {selectedModel ? (
                         <motion.div
@@ -130,7 +130,7 @@ export function ModelExplorer({ projectId, models }: ModelExplorerProps) {
                             exit={{ opacity: 0, x: -20 }}
                             className="space-y-6 pb-12"
                         >
-                            <div className="glass-panel p-6 rounded-2xl border-primary/20 bg-primary/5">
+                            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
                                         <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary shadow-inner">
@@ -172,7 +172,7 @@ export function ModelExplorer({ projectId, models }: ModelExplorerProps) {
                                     </h4>
                                     <div className="relative group">
                                         <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        <pre className="relative p-6 bg-card border border-border rounded-2xl text-xs font-mono leading-relaxed overflow-x-auto shadow-inner min-h-[300px]">
+                                        <pre className="relative p-6 bg-slate-50 border border-slate-200 rounded-3xl text-xs font-mono leading-relaxed overflow-x-auto shadow-inner min-h-[300px]">
                                             {selectedModel.fields ? generateTypeScriptType(selectedModel) : "// 필드 데이터를 로딩 중입니다..."}
                                         </pre>
                                     </div>
