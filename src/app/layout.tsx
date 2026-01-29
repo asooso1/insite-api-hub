@@ -18,6 +18,8 @@ export const metadata: Metadata = {
 };
 
 import { ToastProvider } from "@/components/ui/Toast";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { GlobalKeyboardShortcuts } from "@/components/GlobalKeyboardShortcuts";
 
 export default function RootLayout({
   children,
@@ -29,9 +31,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            {children}
+            <GlobalKeyboardShortcuts />
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

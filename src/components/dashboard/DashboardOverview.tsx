@@ -166,9 +166,9 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             value: totalEndpoints,
             icon: Zap,
             color: 'blue',
-            bgGradient: 'from-blue-50 to-blue-100/50',
-            iconBg: 'bg-blue-100',
-            iconColor: 'text-blue-600',
+            bgGradient: 'from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/30',
+            iconBg: 'bg-blue-100 dark:bg-blue-900/50',
+            iconColor: 'text-blue-600 dark:text-blue-400',
             trend: `${totalEndpoints}개`,
             trendUp: null
         },
@@ -177,9 +177,9 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             value: totalModels,
             icon: Database,
             color: 'purple',
-            bgGradient: 'from-purple-50 to-purple-100/50',
-            iconBg: 'bg-purple-100',
-            iconColor: 'text-purple-600',
+            bgGradient: 'from-purple-50 to-purple-100/50 dark:from-purple-950/50 dark:to-purple-900/30',
+            iconBg: 'bg-purple-100 dark:bg-purple-900/50',
+            iconColor: 'text-purple-600 dark:text-purple-400',
             trend: `${totalModels}개`,
             trendUp: null
         },
@@ -188,9 +188,9 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             value: activeEnvs.length,
             icon: Server,
             color: 'emerald',
-            bgGradient: 'from-emerald-50 to-emerald-100/50',
-            iconBg: 'bg-emerald-100',
-            iconColor: 'text-emerald-600',
+            bgGradient: 'from-emerald-50 to-emerald-100/50 dark:from-emerald-950/50 dark:to-emerald-900/30',
+            iconBg: 'bg-emerald-100 dark:bg-emerald-900/50',
+            iconColor: 'text-emerald-600 dark:text-emerald-400',
             trend: activeEnvs.length > 0 ? activeEnvs.join('/').toUpperCase() : '없음',
             trendUp: null
         },
@@ -199,9 +199,9 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             value: testHistory.length > 0 ? `${testSuccessRate}%` : '-',
             icon: CheckCircle2,
             color: 'amber',
-            bgGradient: 'from-amber-50 to-amber-100/50',
-            iconBg: 'bg-amber-100',
-            iconColor: 'text-amber-600',
+            bgGradient: 'from-amber-50 to-amber-100/50 dark:from-amber-950/50 dark:to-amber-900/30',
+            iconBg: 'bg-amber-100 dark:bg-amber-900/50',
+            iconColor: 'text-amber-600 dark:text-amber-400',
             trend: testHistory.length > 0 ? `${testHistory.length}건 테스트` : '데이터 없음',
             trendUp: null
         }
@@ -240,24 +240,24 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                                     </div>
                                     {card.trendUp !== null && (
                                         <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black ${
-                                            card.trendUp ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-500'
+                                            card.trendUp ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                                         }`}>
                                             {card.trendUp && <TrendingUp className="w-3 h-3" />}
                                             {card.trend}
                                         </div>
                                     )}
                                     {card.trendUp === null && (
-                                        <div className="px-2 py-1 rounded-lg text-[10px] font-black bg-slate-50 text-slate-500">
+                                        <div className="px-2 py-1 rounded-lg text-[10px] font-black bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                                             {card.trend}
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="space-y-1">
-                                    <div className="text-4xl font-black text-slate-900 tracking-tight">
+                                    <div className="text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                                         {card.value}
                                     </div>
-                                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                                    <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                                         {card.title}
                                     </div>
                                 </div>
@@ -270,22 +270,22 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             {/* Method Distribution Bar */}
             <motion.div
                 variants={cardVariants}
-                className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm"
+                className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-slate-950/30"
             >
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <Layers className="w-5 h-5 text-slate-600" />
-                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide">
+                        <Layers className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                        <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
                             HTTP 메서드 분포
                         </h3>
                     </div>
-                    <div className="text-xs font-bold text-slate-400">
+                    <div className="text-xs font-bold text-slate-400 dark:text-slate-500">
                         총 {totalMethods}개
                     </div>
                 </div>
 
                 {/* Distribution Bar */}
-                <div className="flex gap-1 h-12 rounded-2xl overflow-hidden bg-slate-50">
+                <div className="flex gap-1 h-12 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-800">
                     {methods.map((method, idx) => {
                         const percentage = totalMethods > 0 ? (method.count / totalMethods) * 100 : 0;
                         return percentage > 0 ? (
@@ -310,7 +310,7 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                     {methods.map(method => (
                         <div key={method.name} className="flex items-center gap-2">
                             <div className={`w-3 h-3 rounded ${method.color}`} />
-                            <span className="text-[11px] font-bold text-slate-600">
+                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
                                 {method.name}: {method.count}개
                             </span>
                         </div>
@@ -321,11 +321,11 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             {/* Recent Activity Timeline */}
             <motion.div
                 variants={cardVariants}
-                className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm"
+                className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-slate-950/30"
             >
                 <div className="flex items-center gap-2 mb-5">
-                    <Activity className="w-5 h-5 text-slate-600" />
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide">
+                    <Activity className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                    <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
                         최근 활동
                     </h3>
                 </div>
@@ -333,8 +333,8 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                 <div className="space-y-3">
                     {isLoadingActivities ? (
                         // 로딩 상태
-                        <div className="flex items-center justify-center py-8 text-slate-400">
-                            <div className="animate-spin w-6 h-6 border-2 border-slate-300 border-t-blue-600 rounded-full"></div>
+                        <div className="flex items-center justify-center py-8 text-slate-400 dark:text-slate-500">
+                            <div className="animate-spin w-6 h-6 border-2 border-slate-300 dark:border-slate-600 border-t-blue-600 dark:border-t-blue-400 rounded-full"></div>
                         </div>
                     ) : recentActivity.length > 0 ? (
                         // 실제 활동 데이터 표시
@@ -344,28 +344,28 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.5 + idx * 0.1 }}
-                                className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors group/activity cursor-pointer"
+                                className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group/activity cursor-pointer"
                             >
                                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                                    activity.type === 'add' ? 'bg-blue-50 text-blue-600' :
-                                    activity.type === 'update' ? 'bg-purple-50 text-purple-600' :
-                                    activity.type === 'test' ? 'bg-emerald-50 text-emerald-600' :
-                                    'bg-rose-50 text-rose-600'
+                                    activity.type === 'add' ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' :
+                                    activity.type === 'update' ? 'bg-purple-50 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400' :
+                                    activity.type === 'test' ? 'bg-emerald-50 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' :
+                                    'bg-rose-50 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400'
                                 }`}>
                                     <activity.icon className="w-4 h-4" />
                                 </div>
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
-                                        <p className="text-xs font-black text-slate-800">
+                                        <p className="text-xs font-black text-slate-800 dark:text-slate-200">
                                             {activity.text}
                                         </p>
-                                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500">
                                             <Clock className="w-3 h-3" />
                                             {activity.time}
                                         </div>
                                     </div>
-                                    <p className="text-[11px] font-mono text-slate-500 mt-0.5 truncate">
+                                    <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                                         {activity.detail}
                                     </p>
                                 </div>
@@ -378,7 +378,7 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                         ))
                     ) : (
                         // 데이터가 없을 때
-                        <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                        <div className="flex flex-col items-center justify-center py-8 text-slate-400 dark:text-slate-500">
                             <Activity className="w-12 h-12 mb-3 opacity-20" />
                             <p className="text-sm font-bold">최근 활동이 없습니다</p>
                             <p className="text-xs mt-1">엔드포인트 추가나 테스트를 시작하면 활동 내역이 표시됩니다</p>
