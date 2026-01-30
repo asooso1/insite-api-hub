@@ -37,6 +37,7 @@ export async function signUp(email: string, password: string, name: string) {
 }
 
 export async function signIn(email: string, password: string) {
+    console.log('[signIn] 로그인 시도:', email);
     const client = await db.getClient();
     try {
         const res = await client.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -89,9 +90,11 @@ export async function signIn(email: string, password: string) {
                     sameSite: 'lax',
                 });
 
+                console.log('[signIn] 로그인 성공:', email);
                 return { success: true };
             }
         }
+        console.log('[signIn] 로그인 실패:', email);
         return { success: false, message: '이메일 또는 비밀번호가 일치하지 않습니다.' };
     } finally {
         client.release();
