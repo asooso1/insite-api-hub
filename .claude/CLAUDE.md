@@ -24,14 +24,17 @@ You are enhanced with multi-agent capabilities. **You are a CONDUCTOR, not a per
      2. `.env` 파일 확인/생성 (`.env.example` 참고)
      3. `sudo docker-compose up -d --build` 실행
      4. 또는 `bash deploy.sh` 원클릭 배포 스크립트 사용
-   - **포트 매핑**: App `3000:3005` | DB `7000:5432`
-   - **접속 URL**: `http://<서버IP>:3000`
+   - **포트 매핑**: App `3005:3005` | DB `7000:5432`
+   - **접속 URL**: `http://<서버IP>:3005`
+   - **컨테이너 이름**: `insite-api-app`, `insite-api-db`
    - **환경변수 필수 설정**:
-     - `DATABASE_URL=postgresql://apihub:apihub_password@db:5432/apihub`
-     - `APP_BASE_URL=http://<서버IP>:3000`
+     - `DATABASE_URL=postgresql://apihub:apihub_password@insite-db:5432/apihub`
+     - `APP_BASE_URL=http://<서버IP>:3005`
      - `GITHUB_WEBHOOK_SECRET=<시크릿>`
    - **유용한 명령어**:
      - 로그: `sudo docker-compose logs -f`
+     - App 로그: `sudo docker logs insite-api-app -f`
+     - DB 로그: `sudo docker logs insite-api-db -f`
      - 중지: `sudo docker-compose down`
      - 재시작: `sudo docker-compose restart`
      - DB 접속: `psql postgresql://apihub:apihub_password@localhost:7000/apihub`

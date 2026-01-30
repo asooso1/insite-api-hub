@@ -1,9 +1,9 @@
 version: '2.2'
 
 services:
-  db:
+  insite-db:
     image: postgres:15-alpine
-    container_name: apihub-db
+    container_name: insite-api-db
     restart: always
     environment:
       POSTGRES_USER: apihub
@@ -12,27 +12,27 @@ services:
     ports:
       - "7000:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - insite_postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - apihub-network
+      - insite-network
 
-  app:
+  insite-app:
     build: .
-    container_name: apihub-app
+    container_name: insite-api-app
     restart: always
     ports:
-      - "3000:3005"
+      - "3005:3005"
     environment:
-      DATABASE_URL: postgresql://apihub:apihub_password@db:5432/apihub
+      DATABASE_URL: postgresql://apihub:apihub_password@insite-db:5432/apihub
     depends_on:
-      - db
+      - insite-db
     networks:
-      - apihub-network
+      - insite-network
 
 networks:
-  apihub-network:
+  insite-network:
     driver: bridge
 
 volumes:
-  postgres_data:
+  insite_postgres_data:
