@@ -126,53 +126,59 @@ export async function getSession(): Promise<UserSession | null> {
     const cookieStore = await cookies();
     const session = cookieStore.get('session');
     if (!session) return null;
-    
+
     try {
         const sessionData = JSON.parse(session.value) as UserSession;
-        
+
         // DB에서 세션 확인 및 활성 상태 업데이트
         if (sessionData.sessionToken) {
-            const client = await db.getClient();
             try {
-                const res = await client.query(
-                    `SELECT us.*, u.email, u.name, u.role 
-                     FROM user_sessions us
-                     JOIN users u ON us.user_id = u.id
-                     WHERE us.session_token = $1 AND us.expires_at > CURRENT_TIMESTAMP`,
-                    [sessionData.sessionToken]
-                );
-                
-                if (res.rows.length === 0) {
-                    // 세션이 만료되었거나 존재하지 않음
-                    cookieStore.delete('session');
-                    return null;
-                }
-                
-                // last_active_at 업데이트 (5분마다 한 번씩만)
-                const lastActive = new Date(res.rows[0].last_active_at);
-                const now = new Date();
-                const diffMinutes = (now.getTime() - lastActive.getTime()) / (1000 * 60);
-                
-                if (diffMinutes >= 5) {
-                    await client.query(
-                        'UPDATE user_sessions SET last_active_at = CURRENT_TIMESTAMP WHERE session_token = $1',
+                const client = await db.getClient();
+                try {
+                    const res = await client.query(
+                        `SELECT us.*, u.email, u.name, u.role
+                         FROM user_sessions us
+                         JOIN users u ON us.user_id = u.id
+                         WHERE us.session_token = $1 AND us.expires_at > CURRENT_TIMESTAMP`,
                         [sessionData.sessionToken]
                     );
+
+                    if (res.rows.length === 0) {
+                        // 세션이 만료되었거나 존재하지 않음
+                        cookieStore.delete('session');
+                        return null;
+                    }
+
+                    // last_active_at 업데이트 (5분마다 한 번씩만)
+                    const lastActive = new Date(res.rows[0].last_active_at);
+                    const now = new Date();
+                    const diffMinutes = (now.getTime() - lastActive.getTime()) / (1000 * 60);
+
+                    if (diffMinutes >= 5) {
+                        await client.query(
+                            'UPDATE user_sessions SET last_active_at = CURRENT_TIMESTAMP WHERE session_token = $1',
+                            [sessionData.sessionToken]
+                        );
+                    }
+
+                    // 최신 사용자 정보 반환
+                    return {
+                        id: res.rows[0].user_id,
+                        email: res.rows[0].email,
+                        name: res.rows[0].name,
+                        role: res.rows[0].role,
+                        sessionToken: sessionData.sessionToken
+                    };
+                } finally {
+                    client.release();
                 }
-                
-                // 최신 사용자 정보 반환
-                return {
-                    id: res.rows[0].user_id,
-                    email: res.rows[0].email,
-                    name: res.rows[0].name,
-                    role: res.rows[0].role,
-                    sessionToken: sessionData.sessionToken
-                };
-            } finally {
-                client.release();
+            } catch (dbError) {
+                // DB 연결 실패 시 쿠키 기반으로 세션 유지 (폴백)
+                console.error('[getSession] DB 연결 실패, 쿠키 기반 세션 사용:', dbError);
+                return sessionData;
             }
         }
-        
+
         // 세션 토큰이 없는 경우 (구버전 쿠키)
         return sessionData;
     } catch {
