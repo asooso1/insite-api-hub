@@ -84,7 +84,7 @@ export async function signIn(email: string, password: string) {
                 const cookieStore = await cookies();
                 cookieStore.set('session', JSON.stringify(sessionData), {
                     httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
+                    secure: false, // HTTP 환경에서도 쿠키 허용 (HTTPS 미사용 시)
                     maxAge: 60 * 60 * 24 * 7, // 1 week
                     path: '/',
                     sameSite: 'lax',
