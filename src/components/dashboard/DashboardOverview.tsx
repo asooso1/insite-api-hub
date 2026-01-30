@@ -224,14 +224,11 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                         whileHover={{ zIndex: 10 }}
                     >
                         <Tilt3DCard
-                            variant="glass"
+                            variant="solid"
                             intensity="low"
-                            glare
+                            glare={false}
                             className="rounded-3xl"
                         >
-                            {/* Background gradient overlay */}
-                            <div className={`absolute inset-0 bg-gradient-to-br ${card.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-
                             {/* Content */}
                             <div className="relative z-10">
                                 <div className="flex items-start justify-between mb-4">
