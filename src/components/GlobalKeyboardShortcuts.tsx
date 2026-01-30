@@ -2,7 +2,6 @@
 
 import { useKeyboardShortcuts, SHORTCUT_PATTERNS } from '@/hooks/useKeyboardShortcuts';
 import { useUIStore } from '@/stores/useUIStore';
-import { CommandPalette } from '@/components/ui/CommandPalette';
 import { KeyboardShortcutsHelp } from '@/components/ui/KeyboardShortcutsHelp';
 
 /**
@@ -36,10 +35,8 @@ import { KeyboardShortcutsHelp } from '@/components/ui/KeyboardShortcutsHelp';
  */
 export function GlobalKeyboardShortcuts() {
   const {
-    commandPaletteOpen,
     shortcutsHelpOpen,
     openCommandPalette,
-    closeCommandPalette,
     openShortcutsHelp,
     closeShortcutsHelp,
     setActiveTab,
@@ -107,7 +104,7 @@ export function GlobalKeyboardShortcuts() {
 
   return (
     <>
-      <CommandPalette isOpen={commandPaletteOpen} onClose={closeCommandPalette} />
+      {/* CommandPalette는 DashboardV2의 GlobalSearch에서 통합 관리됨 */}
       <KeyboardShortcutsHelp isOpen={shortcutsHelpOpen} onClose={closeShortcutsHelp} />
     </>
   );

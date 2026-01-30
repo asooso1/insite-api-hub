@@ -157,8 +157,8 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                         <Monitor className="w-3 h-3" /> v1 전환
                     </button>
 
-                    {/* 테마 토글 */}
-                    <ThemeToggle variant="compact" />
+                    {/* 테마 토글 - 다크/라이트/시스템 3가지 옵션 드롭다운 */}
+                    <ThemeToggle variant="dropdown" />
 
                     <div className="w-[1px] h-4 bg-slate-200 dark:bg-slate-700 mx-2" />
                     <button className="p-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors relative">

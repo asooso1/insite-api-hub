@@ -43,7 +43,7 @@ export function V2Layout({
     }, [fetchSession]);
 
     return (
-        <div className="min-h-screen bg-[#F5F7FA] text-slate-900 font-sans selection:bg-blue-100">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-300">
             {/* 상단 헤더 */}
             <V2Header
                 session={session}
@@ -66,21 +66,21 @@ export function V2Layout({
                 />
 
                 {/* 메인 컨텐츠 영역 */}
-                <main className="flex-1 flex flex-col h-full bg-[#F8FAFC] overflow-hidden">
+                <main className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
                     {/* 페이지 헤더 */}
                     <div className="flex-initial p-8 pb-4">
                         <div className="max-w-[1400px] mx-auto">
                             <div className="flex items-end justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <div>
-                                    <nav className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                                    <nav className="flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
                                         {breadcrumb.map((item, idx) => (
-                                            <span key={idx} className={idx === breadcrumb.length - 1 ? "text-slate-800" : ""}>
+                                            <span key={idx} className={idx === breadcrumb.length - 1 ? "text-slate-800 dark:text-slate-200" : ""}>
                                                 {item}
                                                 {idx < breadcrumb.length - 1 && <ChevronDown className="w-3 h-3 inline ml-2 -rotate-90" />}
                                             </span>
                                         ))}
                                     </nav>
-                                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+                                    <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                                         {title}
                                     </h2>
                                     {subtitle && (
@@ -121,8 +121,8 @@ export function V2Card({
 }) {
     return (
         <div className={`
-            bg-white rounded-3xl p-8 border border-slate-200 shadow-sm transition-all
-            ${hover ? 'hover:shadow-xl hover:shadow-slate-200/50' : ''}
+            bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-slate-950/30 transition-all
+            ${hover ? 'hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-950/50' : ''}
             ${className}
         `}>
             {children}
@@ -147,10 +147,10 @@ export function V2Button({
     className?: string;
 }) {
     const variants = {
-        primary: 'bg-blue-600 text-white shadow-lg shadow-blue-100 hover:shadow-blue-200',
-        secondary: 'bg-white border border-slate-200 text-slate-700 shadow-sm hover:shadow-md',
-        danger: 'bg-rose-500 text-white shadow-lg shadow-rose-100 hover:shadow-rose-200',
-        ghost: 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+        primary: 'bg-blue-600 dark:bg-blue-500 text-white shadow-lg shadow-blue-100 dark:shadow-blue-900/50 hover:shadow-blue-200 dark:hover:shadow-blue-900/70',
+        secondary: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 shadow-sm dark:shadow-slate-950/30 hover:shadow-md dark:hover:shadow-slate-950/50',
+        danger: 'bg-rose-500 dark:bg-rose-600 text-white shadow-lg shadow-rose-100 dark:shadow-rose-900/50 hover:shadow-rose-200 dark:hover:shadow-rose-900/70',
+        ghost: 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
     };
 
     const sizes = {
@@ -198,18 +198,18 @@ export function V2Modal({
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div
-                className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm"
+                className="absolute inset-0 bg-slate-900/20 dark:bg-black/50 backdrop-blur-sm"
                 onClick={onClose}
             />
             <div className={`
-                relative w-full ${maxWidth} bg-white border border-slate-200
-                rounded-[2rem] shadow-2xl shadow-slate-200/50 overflow-hidden
+                relative w-full ${maxWidth} bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700
+                rounded-[2rem] shadow-2xl shadow-slate-200/50 dark:shadow-slate-950/50 overflow-hidden
                 animate-in fade-in zoom-in-95 duration-200
             `}>
                 <div className="p-8">
-                    <h2 className="text-2xl font-black text-slate-900 mb-1">{title}</h2>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 mb-1">{title}</h2>
                     {subtitle && (
-                        <p className="text-sm text-slate-500 mb-6">{subtitle}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{subtitle}</p>
                     )}
                     {children}
                 </div>
@@ -237,16 +237,16 @@ export function V2Input({
     rows?: number;
 }) {
     const inputClass = `
-        w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl
-        text-sm text-slate-800 placeholder:text-slate-400
-        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+        w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl
+        text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500
+        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400
         transition-all
     `;
 
     return (
         <div className="space-y-2">
             {label && (
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {label} {required && <span className="text-rose-500">*</span>}
                 </label>
             )}
@@ -281,7 +281,7 @@ export function V2Skeleton({
     variant?: 'card' | 'row' | 'text' | 'avatar';
     count?: number;
 }) {
-    const baseClass = "bg-white border border-slate-200 animate-pulse rounded-3xl";
+    const baseClass = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 animate-pulse rounded-3xl";
 
     const variants = {
         card: "h-48",

@@ -175,15 +175,15 @@ export function useKeyboardShortcuts(
     if (!enabled) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Ignore shortcuts when typing in input fields (unless global scope)
-      if (scope !== 'global') {
-        const target = event.target as HTMLElement;
-        const isInput =
-          target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.isContentEditable;
+      const target = event.target as HTMLElement;
+      const isInput =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable;
 
-        if (isInput) return;
+      // Ignore shortcuts when typing in input fields (unless global scope)
+      if (scope !== 'global' && isInput) {
+        return;
       }
 
       // Find matching shortcut
@@ -195,6 +195,13 @@ export function useKeyboardShortcuts(
       });
 
       if (matchedShortcut) {
+        // input 필드에서는 modifier 없는 단축키(숫자, 문자 등)를 무시
+        // Cmd+K, Ctrl+/ 등 modifier가 있는 단축키는 input에서도 동작
+        const hasModifiers = matchedShortcut.modifiers && matchedShortcut.modifiers.length > 0;
+        if (isInput && !hasModifiers) {
+          return; // modifier 없는 단축키는 input에서 무시
+        }
+
         event.preventDefault();
         event.stopPropagation();
         matchedShortcut.action();
