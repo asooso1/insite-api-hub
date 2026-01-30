@@ -100,6 +100,8 @@ export function GlobalSearch({ onSelectResult, projectId }: GlobalSearchProps) {
   // 검색 실행
   const performSearch = useCallback(
     async (searchQuery: string) => {
+      console.log('[GlobalSearch] 검색 시작:', searchQuery);
+
       if (!searchQuery.trim()) {
         setResults([]);
         return;
@@ -112,16 +114,18 @@ export function GlobalSearch({ onSelectResult, projectId }: GlobalSearchProps) {
             ? undefined
             : [selectedType as 'endpoint' | 'model' | 'project' | 'team'];
 
+        console.log('[GlobalSearch] searchAll 호출:', { searchQuery, projectId, types });
         const response = await searchAll(searchQuery, {
           projectId,
           types,
           limit: 20,
         });
 
+        console.log('[GlobalSearch] 검색 결과:', response);
         setResults(response.results);
         setSelectedIndex(0);
       } catch (error) {
-        console.error('검색 오류:', error);
+        console.error('[GlobalSearch] 검색 오류:', error);
         setResults([]);
       } finally {
         setIsLoading(false);

@@ -48,6 +48,8 @@ export async function searchAll(
   // 타입 필터 (기본: 모든 타입)
   const searchTypes = types || ['endpoint', 'model', 'project', 'team'];
 
+  console.log('[검색] 시작:', { query, searchTerm, types: searchTypes, projectId });
+
   try {
     // 1. 엔드포인트 검색
     if (searchTypes.includes('endpoint')) {
@@ -218,13 +220,14 @@ export async function searchAll(
       return aExact - bExact;
     });
 
+    console.log('[검색] 완료:', { totalResults: results.length, query });
     return {
       results: results.slice(0, limit),
       totalCount: results.length,
       query,
     };
   } catch (error) {
-    console.error('검색 실패:', error);
+    console.error('[검색] 실패:', error);
     return { results: [], totalCount: 0, query };
   }
 }
