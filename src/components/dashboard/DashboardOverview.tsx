@@ -224,9 +224,9 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                         whileHover={{ zIndex: 10 }}
                     >
                         <Tilt3DCard
-                            variant="solid"
-                            intensity="low"
-                            glare={false}
+                            variant="glass"
+                            intensity="medium"
+                            glare={true}
                             className="rounded-3xl"
                         >
                             {/* Content */}
