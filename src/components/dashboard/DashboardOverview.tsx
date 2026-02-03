@@ -16,8 +16,10 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { ApiEndpoint, ApiModel, EnvConfig } from '@/lib/api-types';
-import { getActivityFeed, ActivityLog } from '@/app/actions/activity';
+import { getActivityFeed, ActivityLog, getActivityStats } from '@/app/actions/activity';
+import { getActivityIcon, getActivityColor, getActivityTypeLabel } from '@/lib/activity-utils';
 import { Tilt3DCard } from '@/components/ui/Tilt3DCard';
+import Link from 'next/link';
 
 interface DashboardOverviewProps {
     endpoints: ApiEndpoint[];
@@ -31,6 +33,7 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
     // 최근 활동 상태 관리
     const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([]);
     const [isLoadingActivities, setIsLoadingActivities] = useState(true);
+    const [activityStats, setActivityStats] = useState<{ todayCount: number; weekCount: number }>({ todayCount: 0, weekCount: 0 });
 
     // Calculate metrics
     const totalEndpoints = endpoints.length;
@@ -66,8 +69,24 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             }
 
             try {
-                const activities = await getActivityFeed(projectId, { limit: 4 });
+                // 최근 활동 5건 조회
+                const activities = await getActivityFeed(projectId, { limit: 5 });
                 setRecentActivities(activities);
+
+                // 활동 통계 조회 (7일간)
+                const stats = await getActivityStats(projectId, 7);
+                const totalWeekCount = Object.values(stats).reduce((sum, count) => sum + count, 0);
+
+                // 오늘 활동 수 계산 (created_at이 오늘인 것들)
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const todayCount = activities.filter(a => {
+                    const activityDate = new Date(a.created_at);
+                    activityDate.setHours(0, 0, 0, 0);
+                    return activityDate.getTime() === today.getTime();
+                }).length;
+
+                setActivityStats({ todayCount, weekCount: totalWeekCount });
             } catch (error) {
                 console.error('활동 데이터 로드 실패:', error);
             } finally {
@@ -78,39 +97,7 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
         loadActivities();
     }, [projectId]);
 
-    // ActivityLog를 UI 형식으로 변환하는 헬퍼 함수
-    const getActivityIcon = (activityType: string) => {
-        if (activityType.includes('ADDED') || activityType === 'ENDPOINT_ADDED' || activityType === 'MODEL_ADDED') {
-            return Plus;
-        }
-        if (activityType.includes('MODIFIED') || activityType.includes('UPDATE')) {
-            return FileEdit;
-        }
-        if (activityType.includes('SUCCESS') || activityType.includes('RESOLVED')) {
-            return CheckCircle2;
-        }
-        if (activityType.includes('FAILED') || activityType.includes('ERROR')) {
-            return AlertCircle;
-        }
-        return Activity;
-    };
-
-    const getActivityColor = (activityType: string) => {
-        if (activityType.includes('ADDED')) {
-            return 'add';
-        }
-        if (activityType.includes('MODIFIED') || activityType.includes('UPDATE')) {
-            return 'update';
-        }
-        if (activityType.includes('SUCCESS') || activityType.includes('RESOLVED')) {
-            return 'test';
-        }
-        if (activityType.includes('FAILED') || activityType.includes('ERROR')) {
-            return 'error';
-        }
-        return 'update';
-    };
-
+    // 시간 경과 포맷 함수
     const formatTimeAgo = (timestamp: string) => {
         const now = new Date();
         const past = new Date(timestamp);
@@ -124,15 +111,6 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
         if (diffHours < 24) return `${diffHours}시간 전`;
         return `${diffDays}일 전`;
     };
-
-    // 실제 활동 데이터를 UI 포맷으로 변환
-    const recentActivity = recentActivities.map(activity => ({
-        type: getActivityColor(activity.activity_type),
-        text: activity.title,
-        detail: activity.description,
-        time: formatTimeAgo(activity.created_at),
-        icon: getActivityIcon(activity.activity_type)
-    }));
 
     // Animation variants
     const containerVariants = {
@@ -320,11 +298,21 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                 variants={cardVariants}
                 className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-slate-950/30"
             >
-                <div className="flex items-center gap-2 mb-5">
-                    <Activity className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                    <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
-                        최근 활동
-                    </h3>
+                <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                        <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                            최근 활동
+                        </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="px-2 py-1 rounded-lg text-[10px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                            오늘 {activityStats.todayCount}건
+                        </div>
+                        <div className="px-2 py-1 rounded-lg text-[10px] font-black bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                            이번 주 {activityStats.weekCount}건
+                        </div>
+                    </div>
                 </div>
 
                 <div className="space-y-3">
@@ -333,46 +321,66 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
                         <div className="flex items-center justify-center py-8 text-slate-400 dark:text-slate-500">
                             <div className="animate-spin w-6 h-6 border-2 border-slate-300 dark:border-slate-600 border-t-blue-600 dark:border-t-blue-400 rounded-full"></div>
                         </div>
-                    ) : recentActivity.length > 0 ? (
+                    ) : recentActivities.length > 0 ? (
                         // 실제 활동 데이터 표시
-                        recentActivity.map((activity, idx) => (
-                            <motion.div
-                                key={idx}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.5 + idx * 0.1 }}
-                                className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group/activity cursor-pointer"
-                            >
-                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                                    activity.type === 'add' ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' :
-                                    activity.type === 'update' ? 'bg-purple-50 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400' :
-                                    activity.type === 'test' ? 'bg-emerald-50 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' :
-                                    'bg-rose-50 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400'
-                                }`}>
-                                    <activity.icon className="w-4 h-4" />
-                                </div>
+                        <>
+                            {recentActivities.map((activity, idx) => {
+                                const Icon = getActivityIcon(activity.activity_type);
+                                const colors = getActivityColor(activity.activity_type);
 
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <p className="text-xs font-black text-slate-800 dark:text-slate-200">
-                                            {activity.text}
-                                        </p>
-                                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500">
-                                            <Clock className="w-3 h-3" />
-                                            {activity.time}
+                                return (
+                                    <motion.div
+                                        key={activity.id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.5 + idx * 0.1 }}
+                                        className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group/activity cursor-pointer"
+                                    >
+                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${colors.bg} ${colors.text}`}>
+                                            <Icon className="w-4 h-4" />
                                         </div>
-                                    </div>
-                                    <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                                        {activity.detail}
-                                    </p>
-                                </div>
 
-                                {/* Status dot */}
-                                <div className={`w-2 h-2 rounded-full mt-2 ${
-                                    activity.type === 'error' ? 'bg-rose-400' : 'bg-emerald-400'
-                                } opacity-0 group-hover/activity:opacity-100 transition-opacity`} />
-                            </motion.div>
-                        ))
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-xs font-black text-slate-800 dark:text-slate-200">
+                                                    {activity.title}
+                                                </p>
+                                                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                                                    <Clock className="w-3 h-3" />
+                                                    {formatTimeAgo(activity.created_at)}
+                                                </div>
+                                            </div>
+                                            {activity.description && (
+                                                <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                                                    {activity.description}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Status dot */}
+                                        <div className={`w-2 h-2 rounded-full mt-2 ${
+                                            activity.activity_type.includes('FAILED') || activity.activity_type.includes('DELETED')
+                                                ? 'bg-rose-400'
+                                                : 'bg-emerald-400'
+                                        } opacity-0 group-hover/activity:opacity-100 transition-opacity`} />
+                                    </motion.div>
+                                );
+                            })}
+
+                            {/* 더보기 버튼 */}
+                            {projectId && recentActivities.length >= 5 && (
+                                <Link href={`/project/${projectId}/activity`}>
+                                    <motion.button
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 1 }}
+                                        className="w-full mt-2 py-2 px-4 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700"
+                                    >
+                                        전체 활동 피드 보기
+                                    </motion.button>
+                                </Link>
+                            )}
+                        </>
                     ) : (
                         // 데이터가 없을 때
                         <div className="flex flex-col items-center justify-center py-8 text-slate-400 dark:text-slate-500">
