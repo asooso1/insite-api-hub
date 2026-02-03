@@ -1,7 +1,7 @@
 # 작업 진행 상황 (실시간 업데이트)
 
 **마지막 업데이트**: 2026-02-03
-**현재 단계**: Phase 4C 완료 (Sprint 17 완료)
+**현재 단계**: Sprint 18 진행중 (의존성 그래프 시각화)
 
 ---
 
@@ -36,7 +36,7 @@ Phase 4B UI/UX 고도화: ██████████ 100% ✅ 완료
 
 Phase 4C 협업 강화: ██████████ 100% ✅ 완료 (Sprint 17)
 ├── Sprint 17 (협업확장): ██████████ 100% ✅ 완료
-└── Sprint 18 (추가아이디어): ░░░░░░░░░░ 0% ⏳ 대기
+└── Sprint 18 (의존성그래프): ██████░░░░ 50% 🔄 진행중
 ```
 
 ### Phase 4 감사 결과 요약
@@ -996,12 +996,12 @@ Phase 4C 협업 강화: ██████████ 100% ✅ 완료 (Sprint 1
 
 ---
 
-### Sprint 18: 추가 아이디어 ⏳
+### Sprint 18: 추가 아이디어 🔄 진행중
 
 | 작업 ID | 설명 | 상태 |
 |---------|------|------|
-| IDEA-01-1 | API 의존성 그래프 시각화 | ⏳ 대기 |
-| IDEA-01-2 | Breaking Change 영향 클라이언트 식별 | ⏳ 대기 |
+| IDEA-01-1 | API 의존성 그래프 시각화 | ✅ 완료 |
+| IDEA-01-2 | Breaking Change 영향 분석 | ✅ 완료 |
 | IDEA-01-3 | API 사용량 메트릭 | ⏳ 대기 |
 | IDEA-02-1 | API Changelog 자동 생성 | ⏳ 대기 |
 | IDEA-02-2 | Postman Collection 내보내기 | ⏳ 대기 |
@@ -1011,6 +1011,38 @@ Phase 4C 협업 강화: ██████████ 100% ✅ 완료 (Sprint 1
 | IDEA-03-2 | API 계약 검증 자동화 | ⏳ 대기 |
 | IDEA-03-3 | TypeScript SDK 자동 생성 | ⏳ 대기 |
 | IDEA-03-4 | 버전 호환성 매트릭스 | ⏳ 대기 |
+
+### Sprint 18 산출물 (의존성 그래프)
+
+- `src/lib/dependency-graph.ts` - 의존성 분석 로직
+- `src/app/actions/dependency-graph.ts` - 의존성 그래프 서버 액션
+- `src/components/dependency/DependencyGraphView.tsx` - React Flow 그래프 뷰
+- `src/components/dependency/DependencyGraphPanel.tsx` - 대시보드 통합 패널
+- `src/components/dependency/CustomNodes.tsx` - 커스텀 노드 컴포넌트
+
+### Sprint 18 주요 기능
+
+1. **의존성 그래프 시각화**
+   - @xyflow/react (React Flow) 기반 인터랙티브 그래프
+   - 모델 노드 (보라색), 엔드포인트 노드 (초록색)
+   - Request/Response/Reference 관계 엣지
+   - 미니맵, 컨트롤, 전체화면 지원
+
+2. **Breaking Change 영향 분석**
+   - 모델 클릭 시 영향 범위 자동 분석
+   - BFS 알고리즘 기반 의존성 탐색
+   - 직접/간접 의존 모델 구분
+   - 영향받는 엔드포인트 목록
+   - 영향 수준 (low/medium/high/critical) 계산
+
+3. **순환 참조 감지**
+   - 모델 간 순환 참조 자동 탐지
+   - 그래프 하단에 경고 표시
+   - 순환 경로 시각화 (A → B → A)
+
+4. **검색/필터링**
+   - 모델명/엔드포인트 검색
+   - 타입별 필터링 (전체/모델만/엔드포인트만)
 
 ---
 
@@ -1114,6 +1146,19 @@ Phase 4C 협업 강화: ██████████ 100% ✅ 완료 (Sprint 1
 | - | TypeScript 빌드 검증 통과 | ✅ |
 | - | Sprint 17 완료 | ✅ |
 | - | **Phase 4C 완료** | ✅ |
+| - | Sprint 18 시작 (의존성 그래프) | ✅ |
+| - | @xyflow/react 설치 | ✅ |
+| - | dependency-graph.ts 의존성 분석 로직 | ✅ |
+| - | dependency-graph.ts 서버 액션 | ✅ |
+| - | DependencyGraphView React Flow 컴포넌트 | ✅ |
+| - | DependencyGraphPanel 대시보드 패널 | ✅ |
+| - | CustomNodes 커스텀 노드 컴포넌트 | ✅ |
+| - | Breaking Change 영향 분석 기능 | ✅ |
+| - | 순환 참조 감지 기능 | ✅ |
+| - | 대시보드 '의존성 그래프' 탭 추가 | ✅ |
+| - | DashboardTab 타입 업데이트 | ✅ |
+| - | TypeScript 빌드 검증 통과 | ✅ |
+| - | activity_type → action 컬럼명 오류 수정 | ✅ |
 
 ---
 
