@@ -47,6 +47,8 @@ export interface DependencyGraph {
         totalEdges: number;
         isolatedNodes: number; // 연결 없는 노드
     };
+    // 내부 캐시 (순환 참조 탐지 등에서 재사용)
+    _modelDeps?: Map<string, string[]>;
 }
 
 // 영향 분석 결과
@@ -292,7 +294,9 @@ export function buildDependencyGraph(
             totalEndpoints: endpoints.length,
             totalEdges: edges.length,
             isolatedNodes
-        }
+        },
+        // 내부 캐시 (순환 참조 탐지에서 재사용)
+        _modelDeps: modelDeps
     };
 }
 
@@ -387,46 +391,78 @@ export function analyzeImpact(
 }
 
 /**
- * 순환 참조 감지
+ * 순환 참조 감지 (최적화 버전)
+ * - 배열 복사 대신 Map 기반 경로 추적으로 O(1) 접근
+ * - 중복 순환 자동 필터링
+ * @param models 모델 목록
+ * @param existingModelDeps 이미 계산된 의존성 맵 (재사용 시)
  */
-export function detectCircularDependencies(models: ApiModel[]): string[][] {
-    const cycles: string[][] = [];
-    const modelDeps = buildModelDependencyMap(models);
+export function detectCircularDependencies(
+    models: ApiModel[],
+    existingModelDeps?: Map<string, string[]>
+): string[][] {
+    const modelDeps = existingModelDeps || buildModelDependencyMap(models);
     const visited = new Set<string>();
-    const recursionStack = new Set<string>();
+    const cycleSet = new Set<string>(); // 중복 순환 방지용
 
-    function dfs(model: string, path: string[]): boolean {
+    function dfs(
+        model: string,
+        pathSet: Set<string>,      // O(1) 조회용
+        pathArray: string[]        // 순서 유지용 (참조만 전달)
+    ): void {
+        if (visited.has(model) && !pathSet.has(model)) return;
+
+        if (pathSet.has(model)) {
+            // 순환 발견 - 정규화하여 중복 방지
+            const cycleStart = pathArray.indexOf(model);
+            const cycle = pathArray.slice(cycleStart);
+            // 순환을 정규화 (가장 작은 값부터 시작하도록 회전)
+            const normalizedCycle = normalizeCycle(cycle);
+            const cycleKey = normalizedCycle.join('->');
+            if (!cycleSet.has(cycleKey)) {
+                cycleSet.add(cycleKey);
+            }
+            return;
+        }
+
         visited.add(model);
-        recursionStack.add(model);
+        pathSet.add(model);
+        pathArray.push(model);
 
-        const deps = modelDeps.get(model) || [];
-        for (const dep of deps) {
-            if (!visited.has(dep)) {
-                if (dfs(dep, [...path, dep])) {
-                    return true;
-                }
-            } else if (recursionStack.has(dep)) {
-                // 순환 발견
-                const cycleStart = path.indexOf(dep);
-                if (cycleStart !== -1) {
-                    cycles.push(path.slice(cycleStart));
-                } else {
-                    cycles.push([...path, dep]);
-                }
+        const deps = modelDeps.get(model);
+        if (deps) {
+            for (const dep of deps) {
+                dfs(dep, pathSet, pathArray);
             }
         }
 
-        recursionStack.delete(model);
-        return false;
+        pathSet.delete(model);
+        pathArray.pop();
     }
 
     for (const model of models) {
-        if (!visited.has(model.name)) {
-            dfs(model.name, [model.name]);
+        dfs(model.name, new Set(), []);
+    }
+
+    // cycleSet에서 실제 순환 배열로 변환
+    return Array.from(cycleSet).map(key => key.split('->'));
+}
+
+/**
+ * 순환을 정규화 (가장 작은 값부터 시작하도록 회전)
+ * 예: [B, C, A] -> [A, B, C]
+ */
+function normalizeCycle(cycle: string[]): string[] {
+    if (cycle.length === 0) return cycle;
+
+    let minIdx = 0;
+    for (let i = 1; i < cycle.length; i++) {
+        if (cycle[i] < cycle[minIdx]) {
+            minIdx = i;
         }
     }
 
-    return cycles;
+    return [...cycle.slice(minIdx), ...cycle.slice(0, minIdx)];
 }
 
 /**

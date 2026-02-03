@@ -21,6 +21,15 @@ interface CachedData {
 const projectDataCache = new Map<string, CachedData>();
 const CACHE_TTL = 5000; // 5초 캐시
 
+// 순환 참조 캐시 (모델 수 기준으로 무효화)
+interface CircularDepsCache {
+    modelCount: number;
+    result: string[][];
+    timestamp: number;
+}
+const circularDepsCache = new Map<string, CircularDepsCache>();
+const CIRCULAR_CACHE_TTL = 30000; // 30초 캐시
+
 /**
  * 프로젝트 데이터 조회 (캐싱 적용)
  */
@@ -92,8 +101,25 @@ export async function getDependencyGraphWithStats(projectId: string): Promise<{
         // React Flow 형식 변환
         const reactFlow = toReactFlowFormat(graph);
 
-        // 순환 참조 감지
-        const circularDeps = detectCircularDependencies(models);
+        // 순환 참조 감지 (캐싱 적용)
+        let circularDeps: string[][];
+        const cachedCircular = circularDepsCache.get(projectId);
+        const now = Date.now();
+
+        if (cachedCircular &&
+            cachedCircular.modelCount === models.length &&
+            now - cachedCircular.timestamp < CIRCULAR_CACHE_TTL) {
+            // 캐시 히트
+            circularDeps = cachedCircular.result;
+        } else {
+            // 캐시 미스 - 새로 계산 (그래프에서 이미 계산된 modelDeps 재사용)
+            circularDeps = detectCircularDependencies(models, graph._modelDeps);
+            circularDepsCache.set(projectId, {
+                modelCount: models.length,
+                result: circularDeps,
+                timestamp: now
+            });
+        }
 
         // 모델별 참조 횟수 계산 (통계용)
         const referenceCount = new Map<string, number>();
