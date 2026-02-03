@@ -95,7 +95,7 @@ export async function generateDailyDigest(userId: string): Promise<DigestData> {
             `SELECT * FROM digest_settings WHERE user_id = $1`,
             [userId]
         );
-        const settings: DigestSettings = settingsRes.rows[0] || {
+        const settings: DigestSettings = (settingsRes.rows[0] as DigestSettings) || {
             user_id: userId,
             enabled: true,
             frequency: 'daily',
@@ -385,7 +385,7 @@ export async function getDigestSettings(userId: string): Promise<DigestSettings>
             };
         }
 
-        return res.rows[0];
+        return res.rows[0] as DigestSettings;
     } catch (error) {
         console.error('[Digest] Failed to get digest settings:', error);
         throw error;
