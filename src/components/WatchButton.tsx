@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toggleWatch, isWatching } from '@/app/actions/watch';
+import { toggleWatch } from '@/app/actions/watch';
 
 interface WatchButtonProps {
     endpointId: string;
     userId: string | null;
     compact?: boolean;
+    /** 초기 구독 상태 (배치 조회 시 사용, undefined이면 개별 조회 안 함) */
+    initialWatching?: boolean;
 }
 
 /**
@@ -19,19 +21,16 @@ interface WatchButtonProps {
  * @param endpointId - 엔드포인트 ID
  * @param userId - 현재 사용자 ID
  * @param compact - 컴팩트 모드 (아이콘만 표시)
+ * @param initialWatching - 초기 구독 상태 (배치 조회로 전달받은 값)
  */
-export function WatchButton({ endpointId, userId, compact = false }: WatchButtonProps) {
-    const [watching, setWatching] = useState(false);
+export function WatchButton({ endpointId, userId, compact = false, initialWatching = false }: WatchButtonProps) {
+    const [watching, setWatching] = useState(initialWatching);
     const [loading, setLoading] = useState(false);
 
-    // 초기 상태 로드
+    // initialWatching이 변경되면 상태 동기화
     useEffect(() => {
-        if (!userId) return;
-
-        isWatching(endpointId, userId).then(result => {
-            setWatching(result);
-        });
-    }, [endpointId, userId]);
+        setWatching(initialWatching);
+    }, [initialWatching]);
 
     const handleToggle = async (e: React.MouseEvent) => {
         e.stopPropagation();
