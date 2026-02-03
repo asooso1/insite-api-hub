@@ -1,7 +1,7 @@
 # 작업 진행 상황 (실시간 업데이트)
 
 **마지막 업데이트**: 2026-02-03
-**현재 단계**: Phase 4B 완료 (Sprint 16 완료)
+**현재 단계**: Phase 4C 완료 (Sprint 17 완료)
 
 ---
 
@@ -34,8 +34,8 @@ Phase 4B UI/UX 고도화: ██████████ 100% ✅ 완료
 ├── Sprint 15 (다크모드/검색): ██████████ 100% ✅ 완료
 └── Sprint 16 (최근활동/인터랙션): ██████████ 100% ✅ 완료
 
-Phase 4C 협업 강화: ░░░░░░░░░░ 0% ⏳ 대기
-├── Sprint 17 (협업확장): ░░░░░░░░░░ 0% ⏳ 대기
+Phase 4C 협업 강화: ██████████ 100% ✅ 완료 (Sprint 17)
+├── Sprint 17 (협업확장): ██████████ 100% ✅ 완료
 └── Sprint 18 (추가아이디어): ░░░░░░░░░░ 0% ⏳ 대기
 ```
 
@@ -913,19 +913,88 @@ Phase 4C 협업 강화: ░░░░░░░░░░ 0% ⏳ 대기
 
 ## Phase 4C: 협업 강화
 
-### Sprint 17: 협업 기능 확장 ⏳
+### Sprint 17: 협업 기능 확장 ✅
 
 | 작업 ID | 설명 | 상태 |
 |---------|------|------|
-| COLLAB-01-1 | API 소유자 지정 | ⏳ 대기 |
-| COLLAB-01-2 | API 상태 워크플로우 | ⏳ 대기 |
-| COLLAB-01-3 | 리뷰 요청 워크플로우 | ⏳ 대기 |
-| COLLAB-01-4 | 인라인 코멘트 개선 | ⏳ 대기 |
-| COLLAB-01-5 | 팀별 API 대시보드 뷰 | ⏳ 대기 |
-| COLLAB-02-1 | 이메일 알림 연동 | ⏳ 대기 |
-| COLLAB-02-2 | 알림 설정 (ON/OFF) | ⏳ 대기 |
-| COLLAB-02-3 | Breaking Change 자동 알림 | ⏳ 대기 |
-| COLLAB-02-4 | 일일 다이제스트 | ⏳ 대기 |
+| COLLAB-01-1 | API 소유자 지정 | ✅ 완료 |
+| COLLAB-01-2 | API 상태 관리 | ✅ 완료 |
+| COLLAB-01-3 | 리뷰 요청 워크플로우 | ✅ 완료 |
+| COLLAB-01-4 | 인라인 코멘트 개선 | ✅ 완료 |
+| COLLAB-01-5 | 팀별 대시보드 | ✅ 완료 |
+| COLLAB-02-1 | 이메일 알림 | ✅ 완료 |
+| COLLAB-02-2 | 알림 설정 | ✅ 완료 |
+| COLLAB-02-3 | Breaking Change 알림 | ✅ 완료 |
+| COLLAB-02-4 | 일일 다이제스트 | ✅ 완료 |
+
+### Sprint 17 산출물
+
+- `init.sql` - endpoint_owners, review_requests 테이블 추가, endpoints 테이블에 status/status_notes 컬럼 추가
+- `src/app/actions/endpoint-ownership.ts` - 소유자 지정/조회/제거 서버 액션
+- `src/app/actions/api-status.ts` - API 상태 변경/조회 서버 액션
+- `src/app/actions/review-requests.ts` - 리뷰 요청 CRUD 서버 액션
+- `src/components/collaboration/OwnershipManager.tsx` - 소유자 지정 UI
+- `src/components/collaboration/ApiStatusManager.tsx` - 상태 워크플로우 UI
+- `src/components/collaboration/ReviewRequestPanel.tsx` - 리뷰 요청 UI
+- `src/components/collaboration/InlineCommentEditor.tsx` - 인라인 코멘트 UI
+- `src/components/collaboration/TeamDashboard.tsx` - 팀별 대시보드 UI
+- `src/lib/email-service.ts` - 이메일 전송 서비스 (Nodemailer)
+- `src/app/actions/notification-settings.ts` - 알림 설정 CRUD 서버 액션
+- `src/components/settings/NotificationSettings.tsx` - 알림 설정 UI
+- `src/lib/notification-triggers.ts` - Breaking Change 알림 트리거
+- `src/lib/cron/daily-digest.ts` - 일일 다이제스트 크론잡
+
+### Sprint 17 주요 기능
+
+1. **API 소유자 지정**
+   - endpoint_owners 테이블 (user_id, endpoint_id)
+   - 엔드포인트별 소유자 지정/조회/제거
+   - OwnershipManager UI (소유자 배정, 다중 선택)
+
+2. **API 상태 관리**
+   - endpoints 테이블에 status/status_notes 컬럼
+   - 6가지 상태: DRAFT, IN_REVIEW, APPROVED, DEPRECATED, ARCHIVED, ACTIVE
+   - 상태 변경 이력 추적 (activity_logs)
+   - ApiStatusManager UI (상태 변경, 메모 기록)
+
+3. **리뷰 요청 워크플로우**
+   - review_requests 테이블 (상태: PENDING/APPROVED/REJECTED/CANCELLED)
+   - 리뷰어 배정, 코멘트 기록
+   - 리뷰 승인/거부 액션
+   - ReviewRequestPanel UI (리뷰 요청/응답)
+
+4. **인라인 코멘트 개선**
+   - comments 테이블에 file_path, line_number 컬럼 추가
+   - 코드 위치 기반 코멘트 작성
+   - InlineCommentEditor UI (라인별 스레드)
+
+5. **팀별 대시보드**
+   - TeamDashboard 컴포넌트
+   - 소유자/담당자별 필터링
+   - 상태별 통계 표시
+
+6. **이메일 알림**
+   - Nodemailer 기반 이메일 전송 서비스
+   - 7가지 알림 템플릿 (멘션, 코멘트, 리뷰 요청, 리뷰 응답, API 변경, Breaking Change, 일일 다이제스트)
+   - SMTP 설정 (Gmail/SendGrid 지원)
+
+7. **알림 설정**
+   - users.notification_settings JSONB 컬럼
+   - 알림 유형별 ON/OFF 토글
+   - 이메일/인앱 알림 분리 설정
+   - NotificationSettings UI
+
+8. **Breaking Change 자동 알림**
+   - DTO 변경 감지 시 Breaking Change 규칙 적용
+   - 심각도 기반 알림 트리거
+   - 소유자/구독자 일괄 알림
+
+9. **일일 다이제스트**
+   - 일일 활동 요약 이메일 (매일 오전 9시)
+   - 사용자별 맞춤 요약 (소유 API, 구독 API)
+   - 최근 24시간 활동 집계
+
+---
 
 ### Sprint 18: 추가 아이디어 ⏳
 
@@ -1032,6 +1101,19 @@ Phase 4C 협업 강화: ░░░░░░░░░░ 0% ⏳ 대기
 | - | TypeScript 빌드 검증 통과 | ✅ |
 | - | Sprint 16 완료 | ✅ |
 | - | **Phase 4B 완료** | ✅ |
+| - | Sprint 17 시작 (협업 기능 확장) | ✅ |
+| - | COLLAB-01-1: endpoint_owners 테이블 + 소유자 지정 액션 | ✅ |
+| - | COLLAB-01-2: endpoints.status/status_notes + API 상태 관리 | ✅ |
+| - | COLLAB-01-3: review_requests 테이블 + 리뷰 요청 워크플로우 | ✅ |
+| - | COLLAB-01-4: Comment 인라인 코멘트 (파일/라인 위치 저장) | ✅ |
+| - | COLLAB-01-5: TeamDashboard 컴포넌트 (팀별 필터링) | ✅ |
+| - | COLLAB-02-1: email-service 이메일 전송 (Nodemailer) | ✅ |
+| - | COLLAB-02-2: users.notification_settings + 알림 설정 UI | ✅ |
+| - | COLLAB-02-3: Breaking Change 감지 → 이메일 알림 | ✅ |
+| - | COLLAB-02-4: 일일 다이제스트 이메일 크론잡 | ✅ |
+| - | TypeScript 빌드 검증 통과 | ✅ |
+| - | Sprint 17 완료 | ✅ |
+| - | **Phase 4C 완료** | ✅ |
 
 ---
 
