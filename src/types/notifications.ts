@@ -9,7 +9,8 @@ export type NotificationType =
     | 'QUESTION_RESOLVED' // 질문 해결됨
     | 'API_CHANGE'        // API 변경 알림
     | 'TEST_FAILED'       // 테스트 실패
-    | 'WEBHOOK_EVENT';    // 웹훅 이벤트
+    | 'WEBHOOK_EVENT'     // 웹훅 이벤트
+    | 'DIGEST';           // 일일 다이제스트
 
 export interface Notification {
     id: string;
@@ -43,6 +44,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
     API_CHANGE: 'API 변경',
     TEST_FAILED: '테스트 실패',
     WEBHOOK_EVENT: '웹훅 이벤트',
+    DIGEST: '다이제스트',
 };
 
 export const NOTIFICATION_TYPE_DESCRIPTIONS: Record<NotificationType, string> = {
@@ -53,4 +55,5 @@ export const NOTIFICATION_TYPE_DESCRIPTIONS: Record<NotificationType, string> = 
     API_CHANGE: '구독한 API의 스펙이 변경되었을 때',
     TEST_FAILED: 'API 테스트가 실패했을 때',
     WEBHOOK_EVENT: 'GitHub 푸시, PR, 이슈 등 이벤트 발생 시',
+    DIGEST: '일일/주간 업데이트 요약',
 };

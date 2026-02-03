@@ -270,6 +270,7 @@ CREATE TABLE IF NOT EXISTS notification_settings (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     notification_type TEXT NOT NULL,  -- 'COMMENT', 'REPLY', 'MENTION', 'API_CHANGE', 'TEST_FAILED', 'WEBHOOK_EVENT', 'QUESTION_RESOLVED'
     enabled BOOLEAN DEFAULT TRUE,
+    email_enabled BOOLEAN DEFAULT FALSE,  -- 이메일 알림 활성화 여부 (기본값: 비활성화)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, notification_type)
@@ -298,6 +299,24 @@ CREATE INDEX IF NOT EXISTS idx_review_requests_status ON review_requests(status)
 -- 프로젝트 테이블에 git_token 및 git_url 컬럼 추가
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_token TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_url TEXT;
+
+-- 20. 다이제스트 설정 테이블
+CREATE TABLE IF NOT EXISTS digest_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    enabled BOOLEAN DEFAULT TRUE,
+    frequency TEXT DEFAULT 'daily',  -- 'daily', 'weekly', 'none'
+    send_time TEXT DEFAULT '09:00',  -- HH:MM 형식
+    include_comments BOOLEAN DEFAULT TRUE,
+    include_api_changes BOOLEAN DEFAULT TRUE,
+    include_test_results BOOLEAN DEFAULT TRUE,
+    include_review_requests BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_digest_settings_user_id ON digest_settings(user_id);
+CREATE INDEX IF NOT EXISTS idx_digest_settings_enabled ON digest_settings(enabled);
 
 -- 참고: 기본 프로젝트는 필요 시 사용자가 직접 생성합니다.
 -- INSERT INTO projects (name, description)
