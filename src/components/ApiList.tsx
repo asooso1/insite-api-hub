@@ -8,6 +8,8 @@ import { OwnerBadge } from "./OwnerBadge";
 import { CommentSection } from "./CommentSection";
 import { EndpointActivityTimeline } from "./activity/EndpointActivityTimeline";
 import { WatchButton } from "./WatchButton";
+import { EndpointStatusBadge } from "./EndpointStatusBadge";
+import { type EndpointStatus } from "@/app/actions/endpoint-status";
 import { motion, AnimatePresence } from "framer-motion";
 import { EmptyState } from "./ui/EmptyState";
 import { useTilt3D } from "@/hooks/useTilt3D";
@@ -16,6 +18,7 @@ import { getRecentlyChangedEndpoints } from "@/app/actions/activity";
 interface ExtendedApiEndpoint extends ApiEndpoint {
     ownerName?: string | null;
     ownerContact?: string | null;
+    status?: EndpointStatus;
 }
 
 interface ApiListProps {
@@ -109,6 +112,12 @@ function EndpointCardItem({
                                         최근 변경{changeCount >= 2 ? ` (${changeCount})` : ''}
                                     </span>
                                 )}
+                                {/* 상태 뱃지 */}
+                                <EndpointStatusBadge
+                                    status={api.status || 'draft'}
+                                    endpointId={apiId}
+                                    canEdit={true}
+                                />
                                 <div className="overflow-hidden">
                                     <div className="flex items-center gap-2">
                                         <code className="text-sm font-mono text-foreground font-semibold truncate">
@@ -336,6 +345,7 @@ export function ApiList({ endpoints, allModels, projectId, userId, userName }: A
     const [expandedApiId, setExpandedApiId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<Record<string, TabType>>({});
     const [recentlyChanged, setRecentlyChanged] = useState<{ endpoint_id: string; last_modified: string; change_count: number }[]>([]);
+    const [statusFilter, setStatusFilter] = useState<EndpointStatus | 'all'>('all');
 
     useEffect(() => {
         if (!projectId) return;
@@ -368,9 +378,68 @@ export function ApiList({ endpoints, allModels, projectId, userId, userName }: A
         setActiveTab(prev => ({ ...prev, [apiId]: tab }));
     };
 
+    // 상태 필터링
+    const filteredEndpoints = statusFilter === 'all'
+        ? endpoints
+        : endpoints.filter(ep => (ep.status || 'draft') === statusFilter);
+
     return (
         <div className="space-y-4">
-            {endpoints.map((api, idx) => {
+            {/* 상태 필터 탭 */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                        statusFilter === 'all'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    전체 ({endpoints.length})
+                </button>
+                <button
+                    onClick={() => setStatusFilter('draft')}
+                    className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                        statusFilter === 'draft'
+                            ? 'bg-slate-500 text-white'
+                            : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Draft ({endpoints.filter(e => (e.status || 'draft') === 'draft').length})
+                </button>
+                <button
+                    onClick={() => setStatusFilter('review')}
+                    className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                        statusFilter === 'review'
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Review ({endpoints.filter(e => e.status === 'review').length})
+                </button>
+                <button
+                    onClick={() => setStatusFilter('approved')}
+                    className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                        statusFilter === 'approved'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Approved ({endpoints.filter(e => e.status === 'approved').length})
+                </button>
+                <button
+                    onClick={() => setStatusFilter('deprecated')}
+                    className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                        statusFilter === 'deprecated'
+                            ? 'bg-red-500 text-white'
+                            : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Deprecated ({endpoints.filter(e => e.status === 'deprecated').length})
+                </button>
+            </div>
+
+            {filteredEndpoints.map((api, idx) => {
                 const apiId = api.id || `api-${idx}`;
                 const isExpanded = expandedApiId === apiId;
                 return (
