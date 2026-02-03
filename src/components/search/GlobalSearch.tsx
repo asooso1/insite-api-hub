@@ -134,11 +134,11 @@ export function GlobalSearch({ onSelectResult, projectId }: GlobalSearchProps) {
     [projectId, selectedType]
   );
 
-  // 디바운스 검색
+  // 디바운스 검색 (200ms → 400ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       performSearch(query);
-    }, 200);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [query, performSearch]);

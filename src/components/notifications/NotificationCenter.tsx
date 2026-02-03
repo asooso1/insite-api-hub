@@ -78,8 +78,8 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
 
     useEffect(() => {
         loadNotifications();
-        // Poll for new notifications every 30 seconds
-        const interval = setInterval(loadNotifications, 30000);
+        // Poll for new notifications every 60 seconds
+        const interval = setInterval(loadNotifications, 60000);
         return () => clearInterval(interval);
     }, [loadNotifications]);
 
@@ -329,7 +329,7 @@ function NotificationItem({
     return content;
 }
 
-// Mini version for header
+// Mini version for header (폴링 제거 - NotificationCenter에서만 관리)
 export function NotificationBell({ userId }: { userId: string }) {
     const [unreadCount, setUnreadCount] = useState(0);
 
@@ -339,8 +339,7 @@ export function NotificationBell({ userId }: { userId: string }) {
             setUnreadCount(count);
         };
         load();
-        const interval = setInterval(load, 30000);
-        return () => clearInterval(interval);
+        // 폴링 제거: NotificationCenter에서 이미 폴링하고 있으므로 중복 제거
     }, [userId]);
 
     return (

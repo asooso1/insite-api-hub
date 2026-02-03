@@ -34,13 +34,10 @@ export function V2Layout({
     headerActions
 }: V2LayoutProps) {
     const session = useAuthStore((state) => state.session);
-    const fetchSession = useAuthStore((state) => state.fetchSession);
     const isMobileMenuOpen = useUIStore((state) => state.mobileSidebarOpen);
     const toggleMobileMenu = useUIStore((state) => state.toggleMobileSidebar);
 
-    useEffect(() => {
-        fetchSession();
-    }, [fetchSession]);
+    // fetchSession 제거: DashboardUI에서만 호출하도록 중복 제거
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-300">
