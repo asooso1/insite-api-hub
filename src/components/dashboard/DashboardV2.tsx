@@ -23,7 +23,8 @@ import {
     Users,
     Folder,
     Network,
-    Command
+    Command,
+    Target
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,6 +49,7 @@ import { ProjectsV2 } from "@/components/projects/ProjectsV2";
 import { HierarchyContent } from "@/components/hierarchy/HierarchyContent";
 import { DashboardOverview } from "./DashboardOverview";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
+import { MyApiDashboard } from "./MyApiDashboard";
 
 interface DashboardV2Props {
     initialData: MockDB;
@@ -81,7 +83,7 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
         router.push(`/?tab=${tab}`, { scroll: false });
     }, [setActiveTab, router]);
 
-    const validTabs = ['endpoints', 'models', 'test', 'scenarios', 'versions', 'environments', 'settings', 'testResults', 'demo', 'teams', 'projects', 'hierarchy'];
+    const validTabs = ['endpoints', 'myApis', 'models', 'test', 'scenarios', 'versions', 'environments', 'settings', 'testResults', 'demo', 'teams', 'projects', 'hierarchy'];
 
     // URL 쿼리 파라미터에서 탭 읽기
     useEffect(() => {
@@ -106,6 +108,7 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
 
     const tabs = [
         { id: 'endpoints', label: '엔드포인트', icon: <List className="w-4 h-4" />, color: 'blue' },
+        { id: 'myApis', label: '내 담당 API', icon: <Target className="w-4 h-4" />, color: 'violet' },
         { id: 'models', label: '데이터 모델', icon: <Layers className="w-4 h-4" />, color: 'purple' },
         { id: 'test', label: 'API 테스트', icon: <Zap className="w-4 h-4" />, color: 'amber' },
         { id: 'testResults', label: '테스트 결과', icon: <Monitor className="w-4 h-4" />, color: 'emerald' },
@@ -315,6 +318,13 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                                                                                 userName={session?.name}
                                                                             />
                                                     </div>
+                                                )}
+
+                                                {activeTab === 'myApis' && session?.id && (
+                                                    <MyApiDashboard
+                                                        userId={session.id}
+                                                        projectId={currentProjectId || undefined}
+                                                    />
                                                 )}
 
                                                 {activeTab === 'models' && (

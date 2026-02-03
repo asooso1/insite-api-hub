@@ -136,7 +136,7 @@ export async function notifyBreakingChange(params: {
  * @param changes - Breaking Change 목록
  * @returns 요약 문자열
  */
-export function generateSummaryText(changes: BreakingChange[]): string {
+export async function generateSummaryText(changes: BreakingChange[]): Promise<string> {
   return generateBreakingChangeSummary(changes);
 }
 
@@ -146,7 +146,7 @@ export function generateSummaryText(changes: BreakingChange[]): string {
  * @param changes - Breaking Change 목록
  * @returns 카테고리별로 그룹화된 객체
  */
-export function groupByCategory(changes: BreakingChange[]): Record<string, BreakingChange[]> {
+export async function groupByCategory(changes: BreakingChange[]): Promise<Record<string, BreakingChange[]>> {
   const grouped: Record<string, BreakingChange[]> = {};
 
   for (const change of changes) {
@@ -166,10 +166,10 @@ export function groupByCategory(changes: BreakingChange[]): Record<string, Break
  * @param changes - Breaking Change 목록
  * @returns 심각도별 개수
  */
-export function getBreakingChangeStats(changes: BreakingChange[]): {
+export async function getBreakingChangeStats(changes: BreakingChange[]): Promise<{
   total: number;
   byCategory: Record<string, number>;
-} {
+}> {
   const byCategory: Record<string, number> = {};
 
   for (const change of changes) {

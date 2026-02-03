@@ -2,7 +2,7 @@
 
 import 'server-only';
 import { db } from '@/lib/db';
-import { logActivity } from '@/lib/activity-utils';
+import { logActivity } from '@/app/actions/activity';
 
 export type EndpointStatus = 'draft' | 'review' | 'approved' | 'deprecated';
 
@@ -46,20 +46,22 @@ export async function updateEndpointStatus(
         const endpoint = result.rows[0];
 
         // 2. 활동 로그 생성
-        await logActivity({
-            projectId: endpoint.project_id,
-            userId,
-            action: 'ENDPOINT_STATUS_CHANGED',
-            targetType: 'ENDPOINT',
-            targetId: endpointId,
-            targetName: `${endpoint.method} ${endpoint.path}`,
-            details: {
-                status,
-                endpoint_id: endpointId,
-                path: endpoint.path,
-                method: endpoint.method
+        await logActivity(
+            endpoint.project_id,
+            'ENDPOINT_MODIFIED',
+            `엔드포인트 상태 변경: ${endpoint.method} ${endpoint.path}`,
+            `상태가 '${status}'로 변경되었습니다.`,
+            {
+                userId,
+                entityType: 'ENDPOINT',
+                entityId: endpointId,
+                metadata: {
+                    status,
+                    path: endpoint.path,
+                    method: endpoint.method
+                }
             }
-        });
+        );
 
         return { success: true };
     } catch (error: any) {

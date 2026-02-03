@@ -39,7 +39,10 @@ const notificationIcons: Record<NotificationType, React.ReactNode> = {
     QUESTION_RESOLVED: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
     API_CHANGE: <GitBranch className="w-4 h-4 text-purple-500" />,
     TEST_FAILED: <AlertTriangle className="w-4 h-4 text-red-500" />,
-    WEBHOOK_EVENT: <TestTube2 className="w-4 h-4 text-orange-500" />
+    WEBHOOK_EVENT: <TestTube2 className="w-4 h-4 text-orange-500" />,
+    REVIEW_REQUEST: <MessageCircle className="w-4 h-4 text-amber-500" />,
+    REVIEW_APPROVED: <CheckCircle2 className="w-4 h-4 text-green-500" />,
+    REVIEW_REJECTED: <X className="w-4 h-4 text-red-500" />
 };
 
 const notificationColors: Record<NotificationType, string> = {
@@ -48,6 +51,9 @@ const notificationColors: Record<NotificationType, string> = {
     REPLY: 'bg-green-50 border-green-200',
     QUESTION_RESOLVED: 'bg-emerald-50 border-emerald-200',
     API_CHANGE: 'bg-purple-50 border-purple-200',
+    REVIEW_REQUEST: 'bg-amber-50 border-amber-200',
+    REVIEW_APPROVED: 'bg-green-50 border-green-200',
+    REVIEW_REJECTED: 'bg-red-50 border-red-200',
     TEST_FAILED: 'bg-red-50 border-red-200',
     WEBHOOK_EVENT: 'bg-orange-50 border-orange-200'
 };

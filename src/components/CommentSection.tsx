@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageCircle, HelpCircle, CheckCircle, Send, Reply, Trash2, MoreVertical, Check } from "lucide-react";
+import { MessageCircle, HelpCircle, CheckCircle, Send, Reply, Trash2, MoreVertical, Check, Edit2, ChevronDown, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     ApiComment,
@@ -9,8 +9,10 @@ import {
     getCommentsByEndpoint,
     createComment,
     deleteComment,
-    resolveQuestion
+    resolveQuestion,
+    updateComment
 } from "@/app/actions/comment";
+import { MentionInput, renderMentions } from "@/components/comments/MentionInput";
 
 interface CommentSectionProps {
     projectId: string;
@@ -30,11 +32,32 @@ function CommentTypeIcon({ type, resolved }: { type: CommentType; resolved?: boo
     return <MessageCircle className="w-4 h-4 text-blue-500" />;
 }
 
+// 상대 시간 표시 함수
+function getRelativeTime(dateString: string): string {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "방금 전";
+    if (diffMins < 60) return `${diffMins}분 전`;
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    if (diffDays < 7) return `${diffDays}일 전`;
+
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
 function SingleComment({
     comment,
     onReply,
     onDelete,
     onResolve,
+    onEdit,
     currentUserId,
     depth = 0
 }: {
@@ -42,12 +65,25 @@ function SingleComment({
     onReply: (parentId: string, type: CommentType) => void;
     onDelete: (id: string) => void;
     onResolve: (id: string, resolved: boolean) => void;
+    onEdit: (id: string, content: string) => void;
     currentUserId?: string | null;
     depth?: number;
 }) {
     const [showMenu, setShowMenu] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState(comment.content);
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const isOwner = currentUserId && comment.user_id === currentUserId;
     const canResolve = comment.comment_type === 'QUESTION' && !comment.is_resolved;
+    const hasReplies = comment.replies && comment.replies.length > 0;
+    const isResolved = comment.is_resolved;
+    const isEdited = comment.updated_at !== comment.created_at;
+
+    const handleEditSubmit = async () => {
+        if (!editContent.trim()) return;
+        await onEdit(comment.id, editContent);
+        setIsEditing(false);
+    };
 
     return (
         <div className={`${depth > 0 ? 'ml-6 pl-4 border-l-2 border-border/50' : ''}`}>
@@ -56,6 +92,7 @@ function SingleComment({
                 animate={{ opacity: 1, y: 0 }}
                 className={`
                     p-3 rounded-xl mb-2 group relative
+                    ${isResolved ? 'opacity-60' : ''}
                     ${comment.comment_type === 'QUESTION' && !comment.is_resolved
                         ? 'bg-amber-500/5 border border-amber-500/20'
                         : comment.comment_type === 'QUESTION' && comment.is_resolved
@@ -65,17 +102,27 @@ function SingleComment({
                 `}
             >
                 <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        {hasReplies && (
+                            <button
+                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                className="p-0.5 hover:bg-muted rounded transition-colors"
+                            >
+                                {isCollapsed ? (
+                                    <ChevronRight className="w-3 h-3" />
+                                ) : (
+                                    <ChevronDown className="w-3 h-3" />
+                                )}
+                            </button>
+                        )}
                         <CommentTypeIcon type={comment.comment_type} resolved={comment.is_resolved} />
                         <span className="text-xs font-semibold">{comment.user_name || '익명'}</span>
                         <span className="text-[10px] text-muted-foreground">
-                            {new Date(comment.created_at).toLocaleString('ko-KR', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
+                            {getRelativeTime(comment.created_at)}
                         </span>
+                        {isEdited && (
+                            <span className="text-[10px] text-muted-foreground">(수정됨)</span>
+                        )}
                         {comment.comment_type === 'QUESTION' && (
                             <span className={`
                                 text-[10px] px-1.5 py-0.5 rounded-full font-bold
@@ -109,6 +156,17 @@ function SingleComment({
                                     >
                                         <Reply className="w-3 h-3" /> 답글
                                     </button>
+                                    {isOwner && (
+                                        <button
+                                            onClick={() => {
+                                                setIsEditing(true);
+                                                setShowMenu(false);
+                                            }}
+                                            className="w-full px-3 py-1.5 text-xs text-left hover:bg-muted flex items-center gap-2"
+                                        >
+                                            <Edit2 className="w-3 h-3" /> 편집
+                                        </button>
+                                    )}
                                     {canResolve && (
                                         <button
                                             onClick={() => {
@@ -118,6 +176,17 @@ function SingleComment({
                                             className="w-full px-3 py-1.5 text-xs text-left hover:bg-muted flex items-center gap-2 text-green-600"
                                         >
                                             <Check className="w-3 h-3" /> 해결됨으로 표시
+                                        </button>
+                                    )}
+                                    {comment.is_resolved && canResolve && (
+                                        <button
+                                            onClick={() => {
+                                                onResolve(comment.id, false);
+                                                setShowMenu(false);
+                                            }}
+                                            className="w-full px-3 py-1.5 text-xs text-left hover:bg-muted flex items-center gap-2 text-amber-600"
+                                        >
+                                            <HelpCircle className="w-3 h-3" /> 미해결로 표시
                                         </button>
                                     )}
                                     {isOwner && (
@@ -136,22 +205,65 @@ function SingleComment({
                         </AnimatePresence>
                     </div>
                 </div>
-                <p className="text-sm text-foreground whitespace-pre-wrap">{comment.content}</p>
+
+                {isEditing ? (
+                    <div className="space-y-2">
+                        <textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg resize-none focus:outline-none focus:border-primary"
+                            rows={3}
+                        />
+                        <div className="flex gap-2 justify-end">
+                            <button
+                                onClick={() => {
+                                    setIsEditing(false);
+                                    setEditContent(comment.content);
+                                }}
+                                className="px-3 py-1 text-xs bg-muted rounded-lg hover:bg-muted/80"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleEditSubmit}
+                                disabled={!editContent.trim()}
+                                className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50"
+                            >
+                                저장
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <p className={`text-sm text-foreground whitespace-pre-wrap ${isResolved ? 'line-through' : ''}`}>
+                        {renderMentions(comment.content)}
+                    </p>
+                )}
             </motion.div>
-            {comment.replies && comment.replies.length > 0 && (
+
+            {!isCollapsed && hasReplies && (
                 <div className="mt-2">
-                    {comment.replies.map(reply => (
+                    {comment.replies!.map(reply => (
                         <SingleComment
                             key={reply.id}
                             comment={reply}
                             onReply={onReply}
                             onDelete={onDelete}
                             onResolve={onResolve}
+                            onEdit={onEdit}
                             currentUserId={currentUserId}
                             depth={depth + 1}
                         />
                     ))}
                 </div>
+            )}
+
+            {isCollapsed && hasReplies && (
+                <button
+                    onClick={() => setIsCollapsed(false)}
+                    className="ml-6 text-xs text-muted-foreground hover:text-foreground"
+                >
+                    {comment.replies!.length}개의 답글 보기
+                </button>
             )}
         </div>
     );
@@ -208,6 +320,11 @@ export function CommentSection({ projectId, endpointId, userId, userName }: Comm
         await loadComments();
     }
 
+    async function handleEdit(commentId: string, content: string) {
+        await updateComment(commentId, content);
+        await loadComments();
+    }
+
     const unresolvedQuestions = comments.filter(c => c.comment_type === 'QUESTION' && !c.is_resolved);
 
     return (
@@ -242,6 +359,7 @@ export function CommentSection({ projectId, endpointId, userId, userName }: Comm
                             onReply={(id, type) => setReplyTo({ id, type })}
                             onDelete={handleDelete}
                             onResolve={handleResolve}
+                            onEdit={handleEdit}
                             currentUserId={userId}
                         />
                     ))
@@ -299,23 +417,17 @@ export function CommentSection({ projectId, endpointId, userId, userName }: Comm
                         </button>
                     </div>
                 )}
-                <div className="flex gap-2">
-                    <textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder={
-                            replyTo
-                                ? replyTo.type === 'ANSWER' ? '답변을 작성하세요...' : '답글을 작성하세요...'
-                                : commentType === 'QUESTION' ? '질문을 작성하세요...' : '코멘트를 작성하세요...'
-                        }
-                        className="flex-1 px-4 py-3 text-sm bg-background border border-border rounded-xl resize-none focus:outline-none focus:border-primary min-h-[80px]"
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                                handleSubmit();
-                            }
-                        }}
-                    />
-                </div>
+                <MentionInput
+                    value={newComment}
+                    onChange={setNewComment}
+                    onSubmit={handleSubmit}
+                    placeholder={
+                        replyTo
+                            ? replyTo.type === 'ANSWER' ? '답변을 작성하세요... @로 멘션' : '답글을 작성하세요... @로 멘션'
+                            : commentType === 'QUESTION' ? '질문을 작성하세요... @로 멘션' : '코멘트를 작성하세요... @로 멘션'
+                    }
+                    rows={3}
+                />
                 <div className="flex justify-between items-center">
                     <span className="text-[10px] text-muted-foreground">
                         {userName ? `${userName}(으)로 작성` : '익명으로 작성'}
