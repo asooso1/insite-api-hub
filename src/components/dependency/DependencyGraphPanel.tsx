@@ -7,7 +7,7 @@ import {
     GitBranch, AlertTriangle, Loader2, RefreshCw,
     Database, Server, TrendingUp, AlertCircle
 } from 'lucide-react';
-import { getDependencyGraph, getModelImpact, getDependencyStats } from '@/app/actions/dependency-graph';
+import { getDependencyGraphWithStats, getModelImpact } from '@/app/actions/dependency-graph';
 import { ImpactAnalysis } from '@/lib/dependency-graph';
 
 // React Flow는 클라이언트 전용이므로 dynamic import
@@ -45,24 +45,22 @@ export function DependencyGraphPanel({ projectId }: DependencyGraphPanelProps) {
         mostReferencedModels: { name: string; referenceCount: number }[];
     } | null>(null);
 
-    // 그래프 데이터 로드
+    // 그래프 데이터 로드 (단일 API 호출로 최적화)
     const loadGraphData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
 
         try {
-            const [graphResult, statsResult] = await Promise.all([
-                getDependencyGraph(projectId),
-                getDependencyStats(projectId)
-            ]);
+            // 통합 API로 단일 호출 (중복 쿼리 제거)
+            const result = await getDependencyGraphWithStats(projectId);
 
             setGraphData({
-                nodes: graphResult.reactFlow.nodes,
-                edges: graphResult.reactFlow.edges,
-                stats: graphResult.graph.stats,
-                circularDeps: graphResult.circularDeps
+                nodes: result.reactFlow.nodes,
+                edges: result.reactFlow.edges,
+                stats: result.graph.stats,
+                circularDeps: result.circularDeps
             });
-            setQuickStats(statsResult);
+            setQuickStats(result.stats);
         } catch (err) {
             console.error('Failed to load dependency graph:', err);
             setError('의존성 그래프를 불러오는데 실패했습니다.');
