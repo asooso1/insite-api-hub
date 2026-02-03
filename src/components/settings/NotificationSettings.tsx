@@ -25,6 +25,10 @@ import {
 } from '@/app/actions/notification-settings';
 import { NotificationType } from '@/app/actions/notifications';
 
+interface Props {
+  userId: string;
+}
+
 interface NotificationGroup {
   id: string;
   title: string;
@@ -107,7 +111,7 @@ const NOTIFICATION_GROUPS: NotificationGroup[] = [
   },
 ];
 
-export default function NotificationSettings() {
+export default function NotificationSettings({ userId }: Props) {
   const [settings, setSettings] = useState<NotificationSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -115,12 +119,10 @@ export default function NotificationSettings() {
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [userId]);
 
   const loadSettings = async () => {
     setLoading(true);
-    // Mock user ID - in production, get from session
-    const userId = 'current-user-id';
     const data = await getNotificationSettings(userId);
     setSettings(data);
 
@@ -133,9 +135,6 @@ export default function NotificationSettings() {
 
   const handleToggle = async (type: NotificationType) => {
     setUpdating(type);
-
-    // Mock user ID
-    const userId = 'current-user-id';
 
     // Find current setting
     const currentSetting = settings.find((s) => s.notification_type === type);
@@ -176,8 +175,6 @@ export default function NotificationSettings() {
   const handleToggleAll = async () => {
     setUpdating('all');
 
-    // Mock user ID
-    const userId = 'current-user-id';
     const newEnabled = !allEnabled;
 
     const result = await toggleAllNotifications(userId, newEnabled);
