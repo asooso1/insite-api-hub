@@ -1,0 +1,32 @@
+name: Daily Digest
+
+on:
+  schedule:
+    # 매일 UTC 00:00 (한국 시간 09:00)에 실행
+    - cron: '0 0 * * *'
+  # 수동 실행 가능
+  workflow_dispatch:
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Daily Digest
+        env:
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          echo "Sending daily digest..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "${APP_BASE_URL}/api/cron/daily-digest?secret=${CRON_SECRET}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Failed to send daily digest"
+            exit 1
+          fi
+
+          echo "Daily digest sent successfully"
