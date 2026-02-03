@@ -55,9 +55,12 @@ export function MyApiDashboard({ userId, projectId }: MyApiDashboardProps) {
     const [showUnresolvedOnly, setShowUnresolvedOnly] = useState(false);
     const [sortBy, setSortBy] = useState<SortOption>('recent');
 
-    // 데이터 로드
+    // 데이터 로드 (300ms 지연 추가)
     useEffect(() => {
-        loadData();
+        const timer = setTimeout(() => {
+            loadData();
+        }, 300);
+        return () => clearTimeout(timer);
     }, [userId, projectId, selectedStatus, showUnresolvedOnly, sortBy]);
 
     const loadData = async () => {

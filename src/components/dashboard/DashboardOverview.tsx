@@ -60,7 +60,7 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
         ? Math.round((testHistory.filter(t => t.success).length / testHistory.length) * 100)
         : 0;
 
-    // 실제 활동 데이터 조회
+    // 실제 활동 데이터 조회 (300ms 지연 추가)
     useEffect(() => {
         async function loadActivities() {
             if (!projectId) {
@@ -94,7 +94,10 @@ export function DashboardOverview({ endpoints, models, environments, testHistory
             }
         }
 
-        loadActivities();
+        const timer = setTimeout(() => {
+            loadActivities();
+        }, 300);
+        return () => clearTimeout(timer);
     }, [projectId]);
 
     // 시간 경과 포맷 함수
