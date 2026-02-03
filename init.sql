@@ -46,10 +46,12 @@ CREATE TABLE IF NOT EXISTS endpoints (
     owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
     owner_name TEXT,
     owner_contact TEXT,
+    status TEXT DEFAULT 'draft', -- draft | review | approved | deprecated
     synced_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_endpoints_project_id ON endpoints(project_id);
 CREATE INDEX IF NOT EXISTS idx_endpoints_owner_id ON endpoints(owner_id);
+CREATE INDEX IF NOT EXISTS idx_endpoints_status ON endpoints(status);
 
 -- 5. 데이터 모델(DTO/VO) 테이블
 CREATE TABLE IF NOT EXISTS api_models (
@@ -219,15 +221,18 @@ CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
     project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     type TEXT NOT NULL, -- MENTION, COMMENT, REPLY, QUESTION_RESOLVED, API_CHANGE, TEST_FAILED, WEBHOOK_EVENT
     title TEXT NOT NULL,
     message TEXT,
     link TEXT,
+    metadata JSONB DEFAULT '{}',
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_actor_id ON notifications(actor_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_project_id ON notifications(project_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
 
