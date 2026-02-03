@@ -227,14 +227,18 @@ export async function createComment(
 
         // 7. Activity 로그 기록
         if (userId) {
-            await logActivity({
-                userId,
+            await logActivity(
                 projectId,
-                actionType: 'comment',
-                targetType: 'endpoint',
-                targetId: endpointId,
-                metadata: { commentId, content: content.slice(0, 100) }
-            });
+                'COMMENT_CREATED',
+                '새 댓글 작성',
+                content.slice(0, 100),
+                {
+                    userId,
+                    entityType: 'ENDPOINT',
+                    entityId: endpointId,
+                    metadata: { commentId }
+                }
+            );
         }
 
         revalidatePath('/');
