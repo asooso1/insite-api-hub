@@ -248,6 +248,17 @@ CREATE INDEX IF NOT EXISTS idx_activity_logs_project_id ON activity_logs(project
 CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC);
 
+-- 17. 엔드포인트 구독 테이블 (Watch 기능)
+CREATE TABLE IF NOT EXISTS endpoint_watchers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    endpoint_id UUID NOT NULL REFERENCES endpoints(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(endpoint_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_endpoint_watchers_endpoint_id ON endpoint_watchers(endpoint_id);
+CREATE INDEX IF NOT EXISTS idx_endpoint_watchers_user_id ON endpoint_watchers(user_id);
+
 -- 프로젝트 테이블에 git_token 및 git_url 컬럼 추가
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_token TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_url TEXT;

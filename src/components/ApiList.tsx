@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronRight, ChevronDown, Code, Clock, Database, ArrowRightLeft, User, MessageCircle, Activity } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronRight, ChevronDown, Code, Clock, Database, ArrowRightLeft, User, MessageCircle, Activity, Zap } from "lucide-react";
 import { ApiEndpoint, ApiModel } from "@/lib/api-types";
 import { ApiModelTree } from "./ApiModelTree";
 import { OwnerBadge } from "./OwnerBadge";
 import { CommentSection } from "./CommentSection";
 import { EndpointActivityTimeline } from "./activity/EndpointActivityTimeline";
+import { WatchButton } from "./WatchButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { EmptyState } from "./ui/EmptyState";
 import { useTilt3D } from "@/hooks/useTilt3D";
+import { getRecentlyChangedEndpoints } from "@/app/actions/activity";
 
 interface ExtendedApiEndpoint extends ApiEndpoint {
     ownerName?: string | null;
@@ -37,6 +39,7 @@ interface EndpointCardItemProps {
     toggleExpand: (id: string) => void;
     getActiveTab: (apiId: string) => TabType;
     setTabForApi: (apiId: string, tab: TabType) => void;
+    recentlyChanged?: { endpoint_id: string; last_modified: string; change_count: number }[];
 }
 
 function EndpointCardItem({
@@ -49,12 +52,18 @@ function EndpointCardItem({
     userName,
     toggleExpand,
     getActiveTab,
-    setTabForApi
+    setTabForApi,
+    recentlyChanged
 }: EndpointCardItemProps) {
     const apiId = api.id || `api-${idx}`;
     const requestModel = allModels.find(m => m.name === api.requestBody);
     const responseModel = allModels.find(m => m.name === api.responseType);
     const currentTab = getActiveTab(apiId);
+
+    // 최근 변경 여부 확인
+    const recentChangeInfo = recentlyChanged?.find(item => item.endpoint_id === apiId);
+    const isRecentlyChanged = !!recentChangeInfo;
+    const changeCount = recentChangeInfo?.change_count || 0;
 
     const tilt = useTilt3D({
         maxTilt: 4,
@@ -91,6 +100,15 @@ function EndpointCardItem({
                                 `}>
                                     {api.method}
                                 </span>
+                                {isRecentlyChanged && (
+                                    <span
+                                        className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full flex items-center gap-1 shrink-0"
+                                        title={`최근 24시간 내 ${changeCount}회 변경`}
+                                    >
+                                        <Zap className="w-3 h-3" />
+                                        최근 변경{changeCount >= 2 ? ` (${changeCount})` : ''}
+                                    </span>
+                                )}
                                 <div className="overflow-hidden">
                                     <div className="flex items-center gap-2">
                                         <code className="text-sm font-mono text-foreground font-semibold truncate">
@@ -109,6 +127,12 @@ function EndpointCardItem({
                             </div>
 
                             <div className="flex items-center gap-6 shrink-0">
+                                {/* Watch Button */}
+                                <WatchButton
+                                    endpointId={apiId}
+                                    userId={userId}
+                                    compact={true}
+                                />
                                 {/* Owner Badge (Compact) */}
                                 {api.ownerName && (
                                     <div className="hidden md:flex items-center gap-1.5 text-[10px] text-muted-foreground">
@@ -311,6 +335,18 @@ function EndpointCardItem({
 export function ApiList({ endpoints, allModels, projectId, userId, userName }: ApiListProps) {
     const [expandedApiId, setExpandedApiId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<Record<string, TabType>>({});
+    const [recentlyChanged, setRecentlyChanged] = useState<{ endpoint_id: string; last_modified: string; change_count: number }[]>([]);
+
+    useEffect(() => {
+        if (!projectId) return;
+
+        getRecentlyChangedEndpoints(projectId, 50).then(data => {
+            // 최근 24시간 이내 변경된 엔드포인트만 필터링
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recentChanges = data.filter(item => new Date(item.last_modified) > oneDayAgo);
+            setRecentlyChanged(recentChanges);
+        });
+    }, [projectId]);
 
     if (endpoints.length === 0) {
         return (
@@ -350,6 +386,7 @@ export function ApiList({ endpoints, allModels, projectId, userId, userName }: A
                         toggleExpand={toggleExpand}
                         getActiveTab={getActiveTab}
                         setTabForApi={setTabForApi}
+                        recentlyChanged={recentlyChanged}
                     />
                 );
             })}
