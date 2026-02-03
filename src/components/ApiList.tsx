@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, ChevronDown, Code, Clock, Database, ArrowRightLeft, User, MessageCircle } from "lucide-react";
+import { ChevronRight, ChevronDown, Code, Clock, Database, ArrowRightLeft, User, MessageCircle, Activity } from "lucide-react";
 import { ApiEndpoint, ApiModel } from "@/lib/api-types";
 import { ApiModelTree } from "./ApiModelTree";
 import { OwnerBadge } from "./OwnerBadge";
 import { CommentSection } from "./CommentSection";
+import { EndpointActivityTimeline } from "./activity/EndpointActivityTimeline";
 import { motion, AnimatePresence } from "framer-motion";
 import { EmptyState } from "./ui/EmptyState";
 import { useTilt3D } from "@/hooks/useTilt3D";
@@ -23,7 +24,7 @@ interface ApiListProps {
     userName?: string | null;
 }
 
-type TabType = 'data' | 'owner' | 'comments';
+type TabType = 'data' | 'owner' | 'comments' | 'activity';
 
 interface EndpointCardItemProps {
     api: ExtendedApiEndpoint;
@@ -179,6 +180,17 @@ function EndpointCardItem({
                                             <MessageCircle className="w-3.5 h-3.5" />
                                             코멘트
                                         </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setTabForApi(apiId, 'activity'); }}
+                                            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+                                                currentTab === 'activity'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            <Activity className="w-3.5 h-3.5" />
+                                            활동 로그
+                                        </button>
                                     </div>
 
                                     {/* Tab Content */}
@@ -259,6 +271,20 @@ function EndpointCardItem({
                                                     endpointId={apiId}
                                                     userId={userId}
                                                     userName={userName}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {currentTab === 'activity' && projectId && (
+                                            <div>
+                                                <div className="flex items-center gap-2 pb-2 border-b border-border/50 mb-4">
+                                                    <Activity className="w-4 h-4 text-orange-500" />
+                                                    <h4 className="text-sm font-bold">활동 타임라인</h4>
+                                                </div>
+                                                <EndpointActivityTimeline
+                                                    projectId={projectId}
+                                                    endpointId={apiId}
+                                                    limit={10}
                                                 />
                                             </div>
                                         )}
