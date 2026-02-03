@@ -139,15 +139,20 @@ export async function logActivity(
 
 export async function getActivityStats(projectId: string, days: number = 7) {
     try {
+        // SQL Injection 방지: days 파라미터 검증 및 날짜 계산
+        const safeDays = Math.min(Math.max(Math.floor(Number(days) || 7), 1), 365);
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - safeDays);
+
         const res = await db.query(
             `SELECT
                 activity_type,
                 COUNT(*) as count
              FROM activity_logs
              WHERE project_id = $1
-               AND created_at >= NOW() - INTERVAL '${days} days'
+               AND created_at >= $2
              GROUP BY activity_type`,
-            [projectId]
+            [projectId, cutoffDate.toISOString()]
         );
 
         return res.rows.reduce((acc, row) => {
