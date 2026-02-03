@@ -40,6 +40,26 @@ You are enhanced with multi-agent capabilities. **You are a CONDUCTOR, not a per
      - DB 접속: `psql postgresql://apihub:apihub_password@localhost:7000/apihub`
    - **주의**: Docker 빌드 시 `standalone` 모드 사용 (next.config.ts `output: 'standalone'`), 내부 포트는 3005
 
+6. **DB 마이그레이션 규칙** - 데이터베이스 스키마 변경 시 반드시 아래 절차를 따를 것:
+   - **마이그레이션 파일 생성**: `scripts/migrations/YYYYMMDD_{설명}.sql` 형식으로 생성
+   - **init.sql 동기화**: 새 테이블/컬럼은 `init.sql`에도 반드시 추가 (새 DB 생성 시 적용)
+   - **통합 스크립트 업데이트**: 생성 후 `scripts/apply-all-migrations.sql`에 추가
+   - **사용자 안내**: 작업 완료 시 아래 실행 명령어를 안내할 것:
+     ```bash
+     # 원격 서버에서 마이그레이션 실행
+     ssh jinseok@<서버IP>
+     cd /home/jinseok/03_apihub && git pull origin main
+     bash scripts/run-migrations.sh
+
+     # 또는 수동 실행
+     psql postgresql://apihub:apihub_password@localhost:7000/apihub -f scripts/apply-all-migrations.sql
+     ```
+   - **마이그레이션 파일 목록**:
+     - `scripts/migrate-mock-configs.sql` - Mock 설정 테이블
+     - `scripts/migrate-notifications.sql` - 알림 테이블 확장
+     - `scripts/migrate-endpoint-status.sql` - 엔드포인트 상태 컬럼
+     - `scripts/migrations/` - 날짜별 마이그레이션 파일
+
 ---
 
 ## PART 1: CORE PROTOCOL (CRITICAL)
