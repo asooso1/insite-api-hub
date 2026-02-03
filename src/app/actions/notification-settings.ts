@@ -110,16 +110,15 @@ export async function initializeNotificationSettings(userId: string): Promise<vo
             return;
         }
 
-        // 모든 기본 알림 유형 활성화 상태로 초기화
-        const values = DEFAULT_NOTIFICATION_TYPES.map(
-            (type) => `('${userId}', '${type}', TRUE)`
-        ).join(', ');
-
-        await db.query(
-            `INSERT INTO notification_settings (user_id, notification_type, enabled)
-             VALUES ${values}
-             ON CONFLICT (user_id, notification_type) DO NOTHING`
-        );
+        // 모든 기본 알림 유형 활성화 상태로 초기화 (파라미터 바인딩 사용)
+        for (const type of DEFAULT_NOTIFICATION_TYPES) {
+            await db.query(
+                `INSERT INTO notification_settings (user_id, notification_type, enabled)
+                 VALUES ($1, $2, TRUE)
+                 ON CONFLICT (user_id, notification_type) DO NOTHING`,
+                [userId, type]
+            );
+        }
 
         console.log(`Initialized notification settings for user ${userId}`);
     } catch (error) {

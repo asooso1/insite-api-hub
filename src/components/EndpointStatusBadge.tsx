@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 interface EndpointStatusBadgeProps {
     status: EndpointStatus;
     endpointId: string;
+    userId: string;
     canEdit?: boolean;
     onStatusChange?: (status: EndpointStatus) => void;
 }
@@ -42,6 +43,7 @@ const statusConfig: Record<EndpointStatus, { label: string; color: string; bg: s
 export function EndpointStatusBadge({
     status,
     endpointId,
+    userId,
     canEdit = true,
     onStatusChange
 }: EndpointStatusBadgeProps) {
@@ -74,9 +76,7 @@ export function EndpointStatusBadge({
 
         setUpdating(true);
         try {
-            // 사용자 ID는 실제 세션에서 가져와야 하지만, 여기서는 임시로 'system' 사용
-            // TODO: 실제 로그인한 사용자 ID로 교체 필요
-            const result = await updateEndpointStatus(endpointId, newStatus, 'system');
+            const result = await updateEndpointStatus(endpointId, newStatus, userId);
 
             if (result.success) {
                 setCurrentStatus(newStatus);
