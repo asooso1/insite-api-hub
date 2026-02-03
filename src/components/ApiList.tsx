@@ -116,6 +116,7 @@ function EndpointCardItem({
                                 <EndpointStatusBadge
                                     status={api.status || 'draft'}
                                     endpointId={apiId}
+                                    userId={userId || 'system'}
                                     canEdit={true}
                                 />
                                 <div className="overflow-hidden">

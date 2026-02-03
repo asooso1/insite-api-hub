@@ -21,6 +21,7 @@ import {
     getMyPendingReviews,
     cancelReviewRequest
 } from '@/app/actions/review-request';
+import { getProjectMembers, type ProjectMember } from '@/app/actions/project-members';
 
 interface ReviewRequestPanelProps {
     projectId?: string;
@@ -56,7 +57,7 @@ export function ReviewRequestPanel({
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [selectedReviewerId, setSelectedReviewerId] = useState('');
-    const [availableReviewers, setAvailableReviewers] = useState<{ id: string; name: string }[]>([]);
+    const [availableReviewers, setAvailableReviewers] = useState<ProjectMember[]>([]);
 
     // Response form state
     const [respondingToId, setRespondingToId] = useState<string | null>(null);
@@ -88,12 +89,17 @@ export function ReviewRequestPanel({
     };
 
     const loadAvailableReviewers = async () => {
-        // TODO: 프로젝트 멤버 조회 API 연동
-        // 임시로 빈 배열
-        setAvailableReviewers([
-            { id: 'reviewer-1', name: '김리뷰' },
-            { id: 'reviewer-2', name: '박승인' },
-        ]);
+        if (!projectId) return;
+
+        try {
+            const members = await getProjectMembers(projectId);
+            // 본인을 제외한 멤버만 리뷰어로 선택 가능
+            const filteredMembers = members.filter(member => member.user_id !== currentUserId);
+            setAvailableReviewers(filteredMembers);
+        } catch (error) {
+            console.error('Failed to load project members:', error);
+            setAvailableReviewers([]);
+        }
     };
 
     const handleCreateReview = async () => {
@@ -263,8 +269,8 @@ export function ReviewRequestPanel({
                                 >
                                     <option value="">리뷰어를 선택하세요</option>
                                     {availableReviewers.map((reviewer) => (
-                                        <option key={reviewer.id} value={reviewer.id}>
-                                            {reviewer.name}
+                                        <option key={reviewer.user_id} value={reviewer.user_id}>
+                                            {reviewer.user_name || reviewer.user_email}
                                         </option>
                                     ))}
                                 </select>
