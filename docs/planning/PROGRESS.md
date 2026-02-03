@@ -1,7 +1,7 @@
 # 작업 진행 상황 (실시간 업데이트)
 
-**마지막 업데이트**: 2026-01-29
-**현재 단계**: Phase 4B 진행중 (Sprint 15 완료)
+**마지막 업데이트**: 2026-02-03
+**현재 단계**: Phase 4B 완료 (Sprint 16 완료)
 
 ---
 
@@ -29,10 +29,10 @@ Phase 4A 프로덕션 안정화: ██████████ 100% ✅ 완료
 ├── Sprint 12 (보안/핵심수정): ██████████ 100% ✅ 완료
 └── Sprint 13 (더미코드교체): ██████████ 100% ✅ 완료
 
-Phase 4B UI/UX 고도화: ██████░░░░ 66% 🔄 진행중
+Phase 4B UI/UX 고도화: ██████████ 100% ✅ 완료
 ├── Sprint 14 (V2+3D스타일): ██████████ 100% ✅ 완료
 ├── Sprint 15 (다크모드/검색): ██████████ 100% ✅ 완료
-└── Sprint 16 (최근활동/인터랙션): ░░░░░░░░░░ 0% ⏳ 대기
+└── Sprint 16 (최근활동/인터랙션): ██████████ 100% ✅ 완료
 
 Phase 4C 협업 강화: ░░░░░░░░░░ 0% ⏳ 대기
 ├── Sprint 17 (협업확장): ░░░░░░░░░░ 0% ⏳ 대기
@@ -842,22 +842,72 @@ Phase 4C 협업 강화: ░░░░░░░░░░ 0% ⏳ 대기
 | SEARCH-01-6 | 검색 결과 하이라이팅 | ✅ 완료 |
 | SEARCH-01-7 | 검색 필터 (타입별) | ✅ 완료 |
 
-### Sprint 16: 최근활동 & 마이크로인터랙션 ⏳
+### Sprint 16: 최근활동 & 마이크로인터랙션 ✅
 
 | 작업 ID | 설명 | 상태 |
 |---------|------|------|
-| ACTIVITY-01-1 | 엔드포인트별 활동 조회 서버 액션 | ⏳ 대기 |
-| ACTIVITY-01-2 | 상세 패널 활동 타임라인 | ⏳ 대기 |
-| ACTIVITY-01-3 | 활동 유형별 아이콘/색상 | ⏳ 대기 |
-| ACTIVITY-01-4 | DashboardOverview 실제 활동 연결 | ⏳ 대기 |
-| ACTIVITY-01-5 | "최근 변경" 뱃지 | ⏳ 대기 |
-| ACTIVITY-01-6 | Watch 구독 기능 | ⏳ 대기 |
-| MICRO-01-1 | 버튼 ripple/scale 전역 적용 | ⏳ 대기 |
-| MICRO-01-2 | 토스트 3D 슬라이드 애니메이션 | ⏳ 대기 |
-| MICRO-01-3 | 탭 콘텐츠 morphing 트랜지션 | ⏳ 대기 |
-| MICRO-01-4 | 스크롤 기반 헤더 축소 | ⏳ 대기 |
-| MICRO-01-5 | shimmer skeleton + pulse | ⏳ 대기 |
-| MICRO-01-6 | 숫자 counting 애니메이션 | ⏳ 대기 |
+| ACTIVITY-01-1 | 엔드포인트별 활동 조회 서버 액션 | ✅ 완료 |
+| ACTIVITY-01-2 | 상세 패널 활동 타임라인 | ✅ 완료 |
+| ACTIVITY-01-3 | 활동 유형별 아이콘/색상 | ✅ 완료 |
+| ACTIVITY-01-4 | DashboardOverview 실제 활동 연결 | ✅ 완료 |
+| ACTIVITY-01-5 | "최근 변경" 뱃지 | ✅ 완료 |
+| ACTIVITY-01-6 | Watch 구독 기능 | ✅ 완료 |
+| MICRO-01-1 | 버튼 ripple/scale 전역 적용 | ✅ 완료 |
+| MICRO-01-2 | 토스트 3D 슬라이드 애니메이션 | ✅ 완료 |
+| MICRO-01-3 | 탭 콘텐츠 morphing 트랜지션 | ✅ 완료 |
+| MICRO-01-4 | 스크롤 기반 헤더 축소 | ✅ 완료 |
+| MICRO-01-5 | shimmer skeleton + pulse | ✅ 완료 |
+| MICRO-01-6 | 숫자 counting 애니메이션 | ✅ 완료 |
+
+### Sprint 16 산출물
+
+- `src/app/actions/endpoint-activity.ts` - 엔드포인트별 활동 조회 서버 액션
+- `src/components/activity/EndpointActivityTimeline.tsx` - 활동 타임라인 컴포넌트
+- `src/lib/activity-utils.ts` - 활동 유형별 아이콘/색상 유틸리티
+- `src/components/DashboardOverview.tsx` - 실제 활동 데이터 연결
+- `src/components/ui/ApiList.tsx` - 최근 변경 뱃지 추가
+- `src/app/actions/watchers.ts` - Watch 구독 기능 서버 액션
+- `src/components/ui/RippleButton.tsx` - Ripple 효과 버튼 컴포넌트
+- `src/hooks/useRipple.ts` - Ripple 효과 훅
+- `src/components/ui/Toast3D.tsx` - 3D 토스트 컴포넌트
+- `src/components/ui/ToastContainer.tsx` - 토스트 컨테이너
+- `src/hooks/useToast.ts` - 토스트 관리 훅
+- `src/components/ui/AnimatedTabs.tsx` - Morphing 트랜지션 탭
+- `src/components/ui/ShrinkableHeader.tsx` - 스크롤 축소 헤더
+- `src/hooks/useScrollShrink.ts` - 스크롤 축소 훅
+- `src/components/ui/ShimmerSkeleton.tsx` - Shimmer + Pulse 스켈레톤
+- `src/components/ui/AnimatedCounter.tsx` - 숫자 카운팅 애니메이션
+- `src/hooks/useAnimatedValue.ts` - 값 애니메이션 훅
+- `init.sql` - endpoint_watchers 테이블 추가
+
+### Sprint 16 주요 기능
+
+1. **엔드포인트 활동 추적**
+   - 엔드포인트별 활동 조회 서버 액션 (getEndpointActivity)
+   - 활동 타임라인 UI (EndpointActivityTimeline)
+   - 16가지 활동 유형별 아이콘/색상 매핑
+   - DashboardOverview 실제 활동 데이터 연결
+   - 엔드포인트 카드 "최근 변경" 뱃지 (24시간 이내)
+
+2. **Watch 구독 기능**
+   - endpoint_watchers 테이블 추가
+   - watchEndpoint/unwatchEndpoint 서버 액션
+   - getWatchedEndpoints 조회 액션
+   - 구독자 수 표시 기능
+
+3. **마이크로인터랙션**
+   - RippleButton: 클릭 위치 기반 Ripple + Scale 효과
+   - Toast3D: 3D 슬라이드 인/아웃 애니메이션
+   - AnimatedTabs: 탭 전환 시 Morphing 트랜지션
+   - ShrinkableHeader: 스크롤 기반 헤더 축소
+   - ShimmerSkeleton: Shimmer + Pulse 조합 프리셋
+   - AnimatedCounter: Easing 기반 숫자 카운팅
+
+4. **재사용 가능 훅**
+   - useRipple: Ripple 효과 로직
+   - useToast: 토스트 관리 (추가/제거/알림)
+   - useScrollShrink: 스크롤 위치 기반 상태 관리
+   - useAnimatedValue: 값 변화 애니메이션
 
 ---
 
@@ -962,6 +1012,26 @@ Phase 4C 협업 강화: ░░░░░░░░░░ 0% ⏳ 대기
 | - | TypeScript 빌드 검증 통과 | ✅ |
 | - | Architect 검증 완료 | ✅ |
 | - | Sprint 15 완료 | ✅ |
+
+### 2026-02-03
+
+| 시간 | 작업 | 상태 |
+|------|------|------|
+| - | Sprint 16 시작 (최근활동 & 마이크로인터랙션) | ✅ |
+| - | ACTIVITY-01-1: 엔드포인트별 활동 조회 서버 액션 | ✅ |
+| - | ACTIVITY-01-2~3: EndpointActivityTimeline + activity-utils | ✅ |
+| - | ACTIVITY-01-4: DashboardOverview 실제 활동 연결 | ✅ |
+| - | ACTIVITY-01-5: 엔드포인트 카드 최근 변경 뱃지 | ✅ |
+| - | ACTIVITY-01-6: Watch 구독 기능 (endpoint_watchers) | ✅ |
+| - | MICRO-01-1: RippleButton, useRipple | ✅ |
+| - | MICRO-01-2: Toast3D, ToastContainer, useToast | ✅ |
+| - | MICRO-01-3: AnimatedTabs | ✅ |
+| - | MICRO-01-4: ShrinkableHeader, useScrollShrink | ✅ |
+| - | MICRO-01-5: ShimmerSkeleton 프리셋 | ✅ |
+| - | MICRO-01-6: AnimatedCounter, useAnimatedValue | ✅ |
+| - | TypeScript 빌드 검증 통과 | ✅ |
+| - | Sprint 16 완료 | ✅ |
+| - | **Phase 4B 완료** | ✅ |
 
 ---
 
