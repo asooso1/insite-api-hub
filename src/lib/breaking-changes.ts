@@ -1,4 +1,4 @@
-import { FieldDiff, DtoDiff, BreakingChangeSummary } from './dto-diff';
+import { FieldDiff, DtoDiff, BreakingChangeSummary, compareDtoFields } from './dto-diff';
 
 /**
  * Breaking Change Categories
@@ -318,4 +318,111 @@ export function estimateImpactLevel(diffs: DtoDiff[]): 'CRITICAL' | 'HIGH' | 'ME
   }
 
   return 'LOW';
+}
+
+/**
+ * Breaking Change 인터페이스 (알림용)
+ */
+export interface BreakingChange {
+  fieldPath: string;
+  category: BreakingChangeCategory;
+  message: string;
+  severity: 'BREAKING' | 'MINOR' | 'PATCH';
+  before?: {
+    type: string;
+    required: boolean;
+  };
+  after?: {
+    type: string;
+    required: boolean;
+  };
+}
+
+/**
+ * 엔드포인트 비교를 위한 간단한 타입 정의
+ */
+export interface EndpointData {
+  requestBody?: any;  // ApiModel 또는 JSON
+  responseBody?: any; // ApiModel 또는 JSON
+  path?: string;
+  method?: string;
+  summary?: string;
+}
+
+/**
+ * 엔드포인트 간 Breaking Change 감지
+ * @param oldEndpoint - 이전 버전 엔드포인트 데이터
+ * @param newEndpoint - 새 버전 엔드포인트 데이터
+ * @returns Breaking Change 목록
+ */
+export function detectBreakingChanges(
+  oldEndpoint: EndpointData,
+  newEndpoint: EndpointData
+): BreakingChange[] {
+  const breakingChanges: BreakingChange[] = [];
+
+  // Request Body 비교
+  if (oldEndpoint.requestBody && newEndpoint.requestBody) {
+    const requestDiff = compareDtoFields(oldEndpoint.requestBody, newEndpoint.requestBody);
+    const requestBreaking = requestDiff.fields.filter(f => f.severity === 'BREAKING');
+
+    requestBreaking.forEach(field => {
+      const category = categorizeBreakingChange(field);
+      if (category) {
+        breakingChanges.push({
+          fieldPath: `Request.${field.path.join('.')}`,
+          category,
+          message: formatBreakingChangeMessage(field),
+          severity: field.severity,
+          before: field.before,
+          after: field.after,
+        });
+      }
+    });
+  }
+
+  // Response Body 비교
+  if (oldEndpoint.responseBody && newEndpoint.responseBody) {
+    const responseDiff = compareDtoFields(oldEndpoint.responseBody, newEndpoint.responseBody);
+    const responseBreaking = responseDiff.fields.filter(f => f.severity === 'BREAKING');
+
+    responseBreaking.forEach(field => {
+      const category = categorizeBreakingChange(field);
+      if (category) {
+        breakingChanges.push({
+          fieldPath: `Response.${field.path.join('.')}`,
+          category,
+          message: formatBreakingChangeMessage(field),
+          severity: field.severity,
+          before: field.before,
+          after: field.after,
+        });
+      }
+    });
+  }
+
+  return breakingChanges;
+}
+
+/**
+ * Breaking Change를 간단한 요약 문자열로 변환
+ * @param changes - Breaking Change 목록
+ * @returns 간단한 요약 문자열 (최대 5개)
+ */
+export function generateBreakingChangeSummary(changes: BreakingChange[]): string {
+  if (changes.length === 0) {
+    return '변경 사항 없음';
+  }
+
+  const summary = changes.slice(0, 5).map(change => {
+    const prefix = change.fieldPath.split('.')[0]; // Request or Response
+    const field = change.fieldPath.split('.').slice(1).join('.');
+    return `• [${prefix}] ${field}: ${change.category.replace(/_/g, ' ')}`;
+  });
+
+  if (changes.length > 5) {
+    summary.push(`... 외 ${changes.length - 5}개 더`);
+  }
+
+  return summary.join('\n');
 }

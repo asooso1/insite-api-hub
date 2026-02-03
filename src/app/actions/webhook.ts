@@ -10,6 +10,7 @@ import {
 } from '@/lib/webhook-types';
 import { importRepository } from './import-repo';
 import { sendDoorayMessage } from './notification';
+import { notifyBreakingChange } from './breaking-change-notification';
 
 /**
  * Process a GitHub webhook push event
@@ -72,6 +73,9 @@ export async function processWebhookEvent(
       commitMessage
     );
 
+    // 4-1. 이전 엔드포인트 데이터 저장 (Breaking Change 비교용)
+    const oldEndpoints = await getProjectEndpoints(project.id);
+
     // 5. Trigger project rescan
     const rescanSuccess = await triggerProjectRescan(project.id, repositoryUrl, branch);
 
@@ -86,6 +90,9 @@ export async function processWebhookEvent(
         changesDetected: true,
       };
     }
+
+    // 5-1. Breaking Change 감지 및 알림
+    await detectAndNotifyBreakingChanges(project.id, oldEndpoints, 'WEBHOOK');
 
     // 6. Send notification
     await notifyApiChanges(project.id, project.name, event, changeAnalysis);
@@ -408,5 +415,102 @@ export async function logWebhookDelivery(
   } catch (error) {
     console.error('[Webhook] Error logging webhook delivery:', error);
     // 로깅 실패가 웹훅 처리를 중단시키지 않도록 throw하지 않음
+  }
+}
+
+/**
+ * 프로젝트의 모든 엔드포인트 데이터 조회 (Breaking Change 비교용)
+ *
+ * @param projectId - 프로젝트 ID
+ * @returns 엔드포인트 ID를 키로 하는 Map
+ */
+async function getProjectEndpoints(projectId: string): Promise<Map<string, any>> {
+  try {
+    const result = await db.query(
+      `SELECT
+        id,
+        path,
+        method,
+        summary,
+        request_body,
+        response_body
+       FROM endpoints
+       WHERE project_id = $1`,
+      [projectId]
+    );
+
+    const endpointsMap = new Map<string, any>();
+
+    for (const row of result.rows) {
+      endpointsMap.set(row.id, {
+        id: row.id,
+        path: row.path,
+        method: row.method,
+        summary: row.summary,
+        requestBody: row.request_body,
+        responseBody: row.response_body,
+      });
+    }
+
+    return endpointsMap;
+  } catch (error) {
+    console.error('[Webhook] Error getting project endpoints:', error);
+    return new Map();
+  }
+}
+
+/**
+ * Breaking Change 감지 및 알림 전송
+ *
+ * @param projectId - 프로젝트 ID
+ * @param oldEndpoints - 이전 엔드포인트 데이터 Map
+ * @param actorId - 변경한 사용자 ID (또는 'WEBHOOK')
+ */
+async function detectAndNotifyBreakingChanges(
+  projectId: string,
+  oldEndpoints: Map<string, any>,
+  actorId: string
+): Promise<void> {
+  try {
+    // 새로운 엔드포인트 데이터 조회
+    const newEndpoints = await getProjectEndpoints(projectId);
+
+    // 공통으로 존재하는 엔드포인트만 비교
+    for (const [endpointId, newData] of newEndpoints.entries()) {
+      const oldData = oldEndpoints.get(endpointId);
+
+      // 새로 추가된 엔드포인트는 비교 안 함
+      if (!oldData) continue;
+
+      // 경로나 메서드가 변경된 경우는 별도 처리 필요 (TODO)
+      if (oldData.path !== newData.path || oldData.method !== newData.method) {
+        console.log(`[Breaking Change] Endpoint path/method changed: ${endpointId}`);
+        continue;
+      }
+
+      // Breaking Change 알림 전송
+      await notifyBreakingChange({
+        projectId,
+        endpointId,
+        actorId,
+        oldVersion: {
+          requestBody: oldData.requestBody,
+          responseBody: oldData.responseBody,
+          path: oldData.path,
+          method: oldData.method,
+          summary: oldData.summary,
+        },
+        newVersion: {
+          requestBody: newData.requestBody,
+          responseBody: newData.responseBody,
+          path: newData.path,
+          method: newData.method,
+          summary: newData.summary,
+        },
+      });
+    }
+  } catch (error) {
+    console.error('[Webhook] Error detecting breaking changes:', error);
+    // 에러 발생해도 webhook 처리 전체를 중단하지 않음
   }
 }
