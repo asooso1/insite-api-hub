@@ -22,6 +22,10 @@ import {
     type DigestSettings,
 } from '@/app/actions/digest';
 
+interface Props {
+    userId: string;
+}
+
 interface DigestOption {
     id: keyof DigestSettings;
     label: string;
@@ -56,20 +60,18 @@ const DIGEST_OPTIONS: DigestOption[] = [
     },
 ];
 
-export default function DigestSettings() {
+export default function DigestSettings({ userId }: Props) {
     const [settings, setSettings] = useState<DigestSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         loadSettings();
-    }, []);
+    }, [userId]);
 
     const loadSettings = async () => {
         setLoading(true);
         try {
-            // Mock user ID - in production, get from session
-            const userId = 'current-user-id';
             const data = await getDigestSettings(userId);
             setSettings(data);
         } catch (error) {
@@ -84,8 +86,6 @@ export default function DigestSettings() {
 
         setSaving(true);
         try {
-            // Mock user ID
-            const userId = 'current-user-id';
             const result = await updateDigestSettings(userId, updates);
 
             if (result.success) {
