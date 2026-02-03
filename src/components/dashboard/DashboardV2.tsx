@@ -50,6 +50,7 @@ import { HierarchyContent } from "@/components/hierarchy/HierarchyContent";
 import { DashboardOverview } from "./DashboardOverview";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { MyApiDashboard } from "./MyApiDashboard";
+import { DependencyGraphPanel } from "@/components/dependency/DependencyGraphPanel";
 
 interface DashboardV2Props {
     initialData: MockDB;
@@ -83,7 +84,7 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
         router.push(`/?tab=${tab}`, { scroll: false });
     }, [setActiveTab, router]);
 
-    const validTabs = ['endpoints', 'myApis', 'models', 'test', 'scenarios', 'versions', 'environments', 'settings', 'testResults', 'demo', 'teams', 'projects', 'hierarchy'];
+    const validTabs = ['endpoints', 'myApis', 'models', 'dependencies', 'test', 'scenarios', 'versions', 'environments', 'settings', 'testResults', 'demo', 'teams', 'projects', 'hierarchy'];
 
     // URL 쿼리 파라미터에서 탭 읽기
     useEffect(() => {
@@ -110,6 +111,7 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
         { id: 'endpoints', label: '엔드포인트', icon: <List className="w-4 h-4" />, color: 'blue' },
         { id: 'myApis', label: '내 담당 API', icon: <Target className="w-4 h-4" />, color: 'violet' },
         { id: 'models', label: '데이터 모델', icon: <Layers className="w-4 h-4" />, color: 'purple' },
+        { id: 'dependencies', label: '의존성 그래프', icon: <Network className="w-4 h-4" />, color: 'fuchsia' },
         { id: 'test', label: 'API 테스트', icon: <Zap className="w-4 h-4" />, color: 'amber' },
         { id: 'testResults', label: '테스트 결과', icon: <Monitor className="w-4 h-4" />, color: 'emerald' },
         { id: 'scenarios', label: '자동화 시나리오', icon: <ArrowUpDown className="w-4 h-4" />, color: 'green' },
@@ -332,6 +334,10 @@ export function DashboardV2({ initialData, currentProjectId, session, onVersionS
                                                         projectId={currentProjectId || ""}
                                                         models={Array.from(new Map(initialData.models.map(m => [m.id || m.name, m])).values())}
                                                     />
+                                                )}
+
+                                                {activeTab === 'dependencies' && currentProjectId && (
+                                                    <DependencyGraphPanel projectId={currentProjectId} />
                                                 )}
 
                                                 {activeTab === 'test' && (
