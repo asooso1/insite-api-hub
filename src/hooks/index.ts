@@ -5,3 +5,5 @@
 
 export { useTilt3D } from './useTilt3D';
 export type { Tilt3DOptions, Tilt3DReturn } from './useTilt3D';
+
+export { useRipple } from './useRipple';
