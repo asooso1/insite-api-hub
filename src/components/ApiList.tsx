@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { EmptyState } from "./ui/EmptyState";
 import { useTilt3D } from "@/hooks/useTilt3D";
 import { getRecentlyChangedEndpoints } from "@/app/actions/activity";
+import { getBulkWatchingStatus } from "@/app/actions/watch";
 
 interface ExtendedApiEndpoint extends ApiEndpoint {
     ownerName?: string | null;
@@ -43,6 +44,7 @@ interface EndpointCardItemProps {
     getActiveTab: (apiId: string) => TabType;
     setTabForApi: (apiId: string, tab: TabType) => void;
     recentlyChanged?: { endpoint_id: string; last_modified: string; change_count: number }[];
+    isWatching?: boolean;
 }
 
 function EndpointCardItem({
@@ -56,7 +58,8 @@ function EndpointCardItem({
     toggleExpand,
     getActiveTab,
     setTabForApi,
-    recentlyChanged
+    recentlyChanged,
+    isWatching = false
 }: EndpointCardItemProps) {
     const apiId = api.id || `api-${idx}`;
     const requestModel = allModels.find(m => m.name === api.requestBody);
@@ -142,6 +145,7 @@ function EndpointCardItem({
                                     endpointId={apiId}
                                     userId={userId ?? null}
                                     compact={true}
+                                    initialWatching={isWatching}
                                 />
                                 {/* Owner Badge (Compact) */}
                                 {api.ownerName && (
@@ -347,7 +351,9 @@ export function ApiList({ endpoints, allModels, projectId, userId, userName }: A
     const [activeTab, setActiveTab] = useState<Record<string, TabType>>({});
     const [recentlyChanged, setRecentlyChanged] = useState<{ endpoint_id: string; last_modified: string; change_count: number }[]>([]);
     const [statusFilter, setStatusFilter] = useState<EndpointStatus | 'all'>('all');
+    const [watchingStatus, setWatchingStatus] = useState<Record<string, boolean>>({});
 
+    // 최근 변경 엔드포인트 조회
     useEffect(() => {
         if (!projectId) return;
 
@@ -358,6 +364,21 @@ export function ApiList({ endpoints, allModels, projectId, userId, userName }: A
             setRecentlyChanged(recentChanges);
         });
     }, [projectId]);
+
+    // 배치 Watch 상태 조회 (N+1 쿼리 최적화)
+    useEffect(() => {
+        if (!userId || endpoints.length === 0) return;
+
+        const endpointIds = endpoints
+            .map((ep, idx) => ep.id || `api-${idx}`)
+            .filter((id): id is string => !!id && !id.startsWith('api-'));
+
+        if (endpointIds.length === 0) return;
+
+        getBulkWatchingStatus(endpointIds, userId).then(status => {
+            setWatchingStatus(status);
+        });
+    }, [userId, endpoints]);
 
     if (endpoints.length === 0) {
         return (
@@ -457,6 +478,7 @@ export function ApiList({ endpoints, allModels, projectId, userId, userName }: A
                         getActiveTab={getActiveTab}
                         setTabForApi={setTabForApi}
                         recentlyChanged={recentlyChanged}
+                        isWatching={watchingStatus[apiId] || false}
                     />
                 );
             })}

@@ -70,6 +70,41 @@ export async function isWatching(endpointId: string, userId: string): Promise<bo
 }
 
 /**
+ * 여러 엔드포인트의 구독 상태를 한 번에 조회 (배치 API)
+ * N+1 쿼리 문제 해결용
+ */
+export async function getBulkWatchingStatus(
+    endpointIds: string[],
+    userId: string
+): Promise<Record<string, boolean>> {
+    if (!endpointIds.length || !userId) {
+        return {};
+    }
+
+    try {
+        const res = await db.query(
+            `SELECT endpoint_id FROM endpoint_watchers
+             WHERE user_id = $1 AND endpoint_id = ANY($2::uuid[])`,
+            [userId, endpointIds]
+        );
+
+        // 결과를 { endpointId: true/false } 형태로 변환
+        const watchingSet = new Set(res.rows.map(row => row.endpoint_id));
+        const result: Record<string, boolean> = {};
+
+        for (const id of endpointIds) {
+            result[id] = watchingSet.has(id);
+        }
+
+        return result;
+    } catch (error) {
+        console.error("Failed to get bulk watching status:", error);
+        // 에러 시 모두 false로 반환
+        return endpointIds.reduce((acc, id) => ({ ...acc, [id]: false }), {});
+    }
+}
+
+/**
  * 특정 엔드포인트를 구독 중인 사용자 목록 가져오기
  */
 export async function getWatchers(endpointId: string): Promise<EndpointWatcher[]> {
