@@ -2,7 +2,6 @@
 
 import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { motion } from 'framer-motion';
 import { Database, Server, AlertTriangle, Layers } from 'lucide-react';
 
 interface ModelNodeData {
@@ -27,6 +26,31 @@ interface CustomNodeProps<T> {
     selected?: boolean;
 }
 
+// 커스텀 비교 함수 (불필요한 re-render 방지)
+const areModelPropsEqual = (
+    prev: CustomNodeProps<ModelNodeData>,
+    next: CustomNodeProps<ModelNodeData>
+) => {
+    return (
+        prev.selected === next.selected &&
+        prev.data.name === next.data.name &&
+        prev.data.fieldCount === next.data.fieldCount &&
+        prev.data.isAffected === next.data.isAffected
+    );
+};
+
+const areEndpointPropsEqual = (
+    prev: CustomNodeProps<EndpointNodeData>,
+    next: CustomNodeProps<EndpointNodeData>
+) => {
+    return (
+        prev.selected === next.selected &&
+        prev.data.path === next.data.path &&
+        prev.data.method === next.data.method &&
+        prev.data.isAffected === next.data.isAffected
+    );
+};
+
 /**
  * 모델 노드 컴포넌트
  */
@@ -34,9 +58,7 @@ export const ModelNode = memo(({ data, selected }: CustomNodeProps<ModelNodeData
     const isAffected = data.isAffected;
 
     return (
-        <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+        <div
             className={`
                 relative px-4 py-3 rounded-xl min-w-[180px]
                 bg-gradient-to-br from-violet-500/20 to-purple-600/20
@@ -82,33 +104,30 @@ export const ModelNode = memo(({ data, selected }: CustomNodeProps<ModelNodeData
                 position={Position.Bottom}
                 className="w-3 h-3 !bg-violet-500 border-2 border-white dark:border-gray-900"
             />
-        </motion.div>
+        </div>
     );
-});
+}, areModelPropsEqual);
 
 ModelNode.displayName = 'ModelNode';
 
 /**
  * 엔드포인트 노드 컴포넌트
  */
+// HTTP 메소드 색상 (컴포넌트 외부에서 정의하여 재생성 방지)
+const METHOD_COLORS: Record<string, string> = {
+    GET: 'bg-emerald-500/30 text-emerald-400',
+    POST: 'bg-blue-500/30 text-blue-400',
+    PUT: 'bg-amber-500/30 text-amber-400',
+    PATCH: 'bg-orange-500/30 text-orange-400',
+    DELETE: 'bg-red-500/30 text-red-400',
+};
+
 export const EndpointNode = memo(({ data, selected }: CustomNodeProps<EndpointNodeData>) => {
     const isAffected = data.isAffected;
-
-    const getMethodColor = (method?: string) => {
-        switch (method?.toUpperCase()) {
-            case 'GET': return 'bg-emerald-500/30 text-emerald-400';
-            case 'POST': return 'bg-blue-500/30 text-blue-400';
-            case 'PUT': return 'bg-amber-500/30 text-amber-400';
-            case 'PATCH': return 'bg-orange-500/30 text-orange-400';
-            case 'DELETE': return 'bg-red-500/30 text-red-400';
-            default: return 'bg-gray-500/30 text-gray-400';
-        }
-    };
+    const methodColor = METHOD_COLORS[data.method?.toUpperCase() || ''] || 'bg-gray-500/30 text-gray-400';
 
     return (
-        <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+        <div
             className={`
                 relative px-4 py-3 rounded-xl min-w-[220px]
                 bg-gradient-to-br from-emerald-500/20 to-teal-600/20
@@ -139,7 +158,7 @@ export const EndpointNode = memo(({ data, selected }: CustomNodeProps<EndpointNo
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                         {data.method && (
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getMethodColor(data.method)}`}>
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${methodColor}`}>
                                 {data.method}
                             </span>
                         )}
@@ -158,9 +177,9 @@ export const EndpointNode = memo(({ data, selected }: CustomNodeProps<EndpointNo
                 position={Position.Bottom}
                 className="w-3 h-3 !bg-emerald-500 border-2 border-white dark:border-gray-900"
             />
-        </motion.div>
+        </div>
     );
-});
+}, areEndpointPropsEqual);
 
 EndpointNode.displayName = 'EndpointNode';
 

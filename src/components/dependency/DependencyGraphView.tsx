@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import {
     ReactFlow,
     Background,
@@ -35,6 +35,11 @@ interface NodeData {
     affectedBy?: string[];
 }
 
+// 영향 분석 캐시 타입
+interface ImpactCache {
+    [modelName: string]: ImpactAnalysis;
+}
+
 interface DependencyGraphViewProps {
     projectId: string;
     initialNodes: Node[];
@@ -66,10 +71,16 @@ export function DependencyGraphView({
     const [filterType, setFilterType] = useState<'all' | 'models' | 'endpoints'>('all');
     const [searchQuery, setSearchQuery] = useState('');
 
+    // 영향받는 노드 ID Set (별도 상태로 관리하여 re-render 최소화)
+    const [affectedNodeIds, setAffectedNodeIds] = useState<Set<string>>(new Set());
+
+    // 영향 분석 캐시 (동일 모델 재클릭 시 API 호출 방지)
+    const impactCacheRef = useRef<ImpactCache>({});
+
     // 노드 데이터 접근 헬퍼
     const getNodeData = (node: Node): NodeData => node.data as NodeData;
 
-    // 필터링된 노드
+    // 필터링된 노드 (하이라이트 상태를 별도로 적용하여 불필요한 re-render 방지)
     const filteredNodes = useMemo(() => {
         let result = nodes;
 
@@ -93,8 +104,19 @@ export function DependencyGraphView({
             });
         }
 
+        // 하이라이트 상태 적용 (affectedNodeIds가 있을 때만)
+        if (affectedNodeIds.size > 0) {
+            result = result.map(n => ({
+                ...n,
+                data: {
+                    ...n.data,
+                    isAffected: affectedNodeIds.has(n.id)
+                }
+            }));
+        }
+
         return result;
-    }, [nodes, filterType, searchQuery]);
+    }, [nodes, filterType, searchQuery, affectedNodeIds]);
 
     // 필터링된 엣지 (보이는 노드와 연결된 것만)
     const filteredEdges = useMemo(() => {
@@ -104,52 +126,65 @@ export function DependencyGraphView({
         );
     }, [edges, filteredNodes]);
 
-    // 노드 선택 핸들러
+    // 노드 선택 핸들러 (캐싱 및 최적화된 하이라이트)
     const onNodeClick = useCallback(async (_: React.MouseEvent, node: Node) => {
         setSelectedNode(node);
         const nodeData = getNodeData(node);
 
         // 모델 노드 선택 시 영향 분석
         if (node.type === 'modelNode' && onAnalyzeImpact && nodeData.name) {
+            const modelName = nodeData.name;
+
+            // 캐시 확인 (동일 모델 재클릭 시 API 호출 방지)
+            if (impactCacheRef.current[modelName]) {
+                const cachedAnalysis = impactCacheRef.current[modelName];
+                setImpactAnalysis(cachedAnalysis);
+
+                // 영향받는 노드 ID Set 업데이트 (노드 객체 변경 없이)
+                const newAffectedIds = new Set<string>();
+                for (const n of nodes) {
+                    const nData = getNodeData(n);
+                    if ((nData.name && cachedAnalysis.affectedModels.includes(nData.name)) ||
+                        (nData.label && cachedAnalysis.affectedEndpoints.some(ep => nData.label?.includes(ep)))) {
+                        newAffectedIds.add(n.id);
+                    }
+                }
+                setAffectedNodeIds(newAffectedIds);
+                return;
+            }
+
             setIsAnalyzing(true);
             try {
-                const analysis = await onAnalyzeImpact(nodeData.name);
+                const analysis = await onAnalyzeImpact(modelName);
+
+                // 캐시에 저장
+                impactCacheRef.current[modelName] = analysis;
                 setImpactAnalysis(analysis);
 
-                // 영향받는 노드 하이라이트
-                setNodes(nds =>
-                    nds.map(n => {
-                        const nData = getNodeData(n);
-                        return {
-                            ...n,
-                            data: {
-                                ...n.data,
-                                isAffected:
-                                    (nData.name && analysis.affectedModels.includes(nData.name)) ||
-                                    (nData.label && analysis.affectedEndpoints.some(ep => nData.label?.includes(ep)))
-                            }
-                        };
-                    })
-                );
+                // 영향받는 노드 ID Set 업데이트 (노드 객체 변경 없이)
+                const newAffectedIds = new Set<string>();
+                for (const n of nodes) {
+                    const nData = getNodeData(n);
+                    if ((nData.name && analysis.affectedModels.includes(nData.name)) ||
+                        (nData.label && analysis.affectedEndpoints.some(ep => nData.label?.includes(ep)))) {
+                        newAffectedIds.add(n.id);
+                    }
+                }
+                setAffectedNodeIds(newAffectedIds);
             } catch (error) {
                 console.error('Impact analysis failed:', error);
             } finally {
                 setIsAnalyzing(false);
             }
         }
-    }, [onAnalyzeImpact, setNodes]);
+    }, [onAnalyzeImpact, nodes]);
 
-    // 영향 분석 초기화
+    // 영향 분석 초기화 (노드 객체 변경 없이 Set만 비움)
     const clearImpactAnalysis = useCallback(() => {
         setSelectedNode(null);
         setImpactAnalysis(null);
-        setNodes(nds =>
-            nds.map(n => ({
-                ...n,
-                data: { ...n.data, isAffected: false }
-            }))
-        );
-    }, [setNodes]);
+        setAffectedNodeIds(new Set());
+    }, []);
 
     // 연결 핸들러 (드래그로 새 연결 생성 - 읽기 전용이므로 비활성화)
     const onConnect = useCallback(
