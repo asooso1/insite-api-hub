@@ -130,7 +130,7 @@ function EndpointCardItem({
                                 {/* Watch Button */}
                                 <WatchButton
                                     endpointId={apiId}
-                                    userId={userId}
+                                    userId={userId ?? null}
                                     compact={true}
                                 />
                                 {/* Owner Badge (Compact) */}
