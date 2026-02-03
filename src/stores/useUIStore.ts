@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type DashboardTab = 'endpoints' | 'myApis' | 'models' | 'test' | 'scenarios' | 'versions' | 'environments' | 'settings' | 'testResults' | 'demo' | 'teams' | 'projects' | 'hierarchy';
+type DashboardTab = 'endpoints' | 'myApis' | 'models' | 'dependencies' | 'test' | 'scenarios' | 'versions' | 'environments' | 'settings' | 'testResults' | 'demo' | 'teams' | 'projects' | 'hierarchy';
 type ViewMode = 'grid' | 'list';
 type Theme = 'light' | 'dark' | 'system';
 
