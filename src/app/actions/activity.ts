@@ -116,18 +116,23 @@ export async function logActivity(
     const { userId, entityType, entityId, metadata } = options || {};
 
     try {
+        // details JSONB에 description과 metadata 병합
+        const details = {
+            description,
+            ...(metadata || {})
+        };
+
         await db.query(
-            `INSERT INTO activity_logs (project_id, user_id, activity_type, title, description, entity_type, entity_id, metadata)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            `INSERT INTO activity_logs (project_id, user_id, action, target_name, target_type, target_id, details)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [
                 projectId,
                 userId || null,
                 activityType,
                 title,
-                description,
                 entityType || null,
                 entityId || null,
-                metadata ? JSON.stringify(metadata) : null
+                JSON.stringify(details)
             ]
         );
         return { success: true };
@@ -146,17 +151,17 @@ export async function getActivityStats(projectId: string, days: number = 7) {
 
         const res = await db.query(
             `SELECT
-                activity_type,
+                action,
                 COUNT(*) as count
              FROM activity_logs
              WHERE project_id = $1
                AND created_at >= $2
-             GROUP BY activity_type`,
+             GROUP BY action`,
             [projectId, cutoffDate.toISOString()]
         );
 
         return res.rows.reduce((acc, row) => {
-            acc[row.activity_type] = parseInt(row.count, 10);
+            acc[row.action] = parseInt(row.count, 10);
             return acc;
         }, {} as Record<ActivityType, number>);
     } catch (error) {
