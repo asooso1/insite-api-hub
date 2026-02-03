@@ -11,7 +11,10 @@ export type NotificationType =
     | 'QUESTION_RESOLVED' // 질문 해결됨
     | 'API_CHANGE'        // API 변경 알림
     | 'TEST_FAILED'       // 테스트 실패
-    | 'WEBHOOK_EVENT';    // 웹훅 이벤트
+    | 'WEBHOOK_EVENT'     // 웹훅 이벤트
+    | 'REVIEW_REQUEST'    // 리뷰 요청
+    | 'REVIEW_APPROVED'   // 리뷰 승인
+    | 'REVIEW_REJECTED';  // 리뷰 거절
 
 export interface Notification {
     id: string;
@@ -84,6 +87,16 @@ export async function createNotification(
     }
 ) {
     try {
+        // Import shouldNotify dynamically to avoid circular dependency
+        const { shouldNotify } = await import('./notification-settings');
+
+        // Check if user has this notification type enabled
+        const allowed = await shouldNotify(userId, type);
+        if (!allowed) {
+            console.log(`Notification skipped for user ${userId}, type ${type} is disabled`);
+            return { success: true, skipped: true };
+        }
+
         const { link, actorId, metadata } = options || {};
 
         await db.query(

@@ -223,7 +223,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
     project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-    type TEXT NOT NULL, -- MENTION, COMMENT, REPLY, QUESTION_RESOLVED, API_CHANGE, TEST_FAILED, WEBHOOK_EVENT
+    type TEXT NOT NULL, -- MENTION, COMMENT, REPLY, QUESTION_RESOLVED, API_CHANGE, TEST_FAILED, WEBHOOK_EVENT, REVIEW_REQUEST, REVIEW_APPROVED, REVIEW_REJECTED
     title TEXT NOT NULL,
     message TEXT,
     link TEXT,
@@ -263,6 +263,37 @@ CREATE TABLE IF NOT EXISTS endpoint_watchers (
 );
 CREATE INDEX IF NOT EXISTS idx_endpoint_watchers_endpoint_id ON endpoint_watchers(endpoint_id);
 CREATE INDEX IF NOT EXISTS idx_endpoint_watchers_user_id ON endpoint_watchers(user_id);
+
+-- 18. 알림 설정 테이블
+CREATE TABLE IF NOT EXISTS notification_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    notification_type TEXT NOT NULL,  -- 'COMMENT', 'REPLY', 'MENTION', 'API_CHANGE', 'TEST_FAILED', 'WEBHOOK_EVENT', 'QUESTION_RESOLVED'
+    enabled BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, notification_type)
+);
+CREATE INDEX IF NOT EXISTS idx_notification_settings_user_id ON notification_settings(user_id);
+
+-- 19. 변경 사항 리뷰 요청 테이블
+CREATE TABLE IF NOT EXISTS review_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    endpoint_id UUID NOT NULL REFERENCES endpoints(id) ON DELETE CASCADE,
+    requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reviewer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    status TEXT DEFAULT 'pending', -- pending, approved, rejected, cancelled
+    title TEXT NOT NULL,
+    description TEXT,
+    comment TEXT, -- 리뷰어의 코멘트 (승인/거절 이유)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX IF NOT EXISTS idx_review_requests_endpoint ON review_requests(endpoint_id);
+CREATE INDEX IF NOT EXISTS idx_review_requests_requester ON review_requests(requester_id);
+CREATE INDEX IF NOT EXISTS idx_review_requests_reviewer ON review_requests(reviewer_id);
+CREATE INDEX IF NOT EXISTS idx_review_requests_status ON review_requests(status);
 
 -- 프로젝트 테이블에 git_token 및 git_url 컬럼 추가
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_token TEXT;
